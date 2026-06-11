@@ -1,0 +1,9 @@
+id_actividad,fecha_a,actividad_a,alarma_a,id_administrador_fk,id_trabajador_fk,id_estudiante_fk
+1,2026-06-15,Entrega de Taller de Matemáticas Financieras,SI,1,2,1
+2,2026-06-18,Proyecto Final de Programación de Software,SI,2,9,3
+4,2026-06-22,Recuperación de bitácoras del PPI,SI,3,2,4
+6,2026-06-26,Reunión de Personal de Apoyo Académico,SI,7,3,null
+7,2026-06-29,Entrega de informe contable mensual,SI,8,8,null
+8,2026-07-02,Ensayo Literario de Lengua Castellana,SI,6,5,8
+9,2026-07-05,Examen acumulativo de Física Mecánica,SI,6,9,7
+10,2026-07-10,Presentación del prototipo de baja fidelidad,SI,4,6,6
