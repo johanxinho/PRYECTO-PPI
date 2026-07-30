@@ -1,0 +1,242 @@
+.app-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef2ff 0%, #faf5ff 100%);
+  padding: 32px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-card {
+  width: min(920px, 100%);
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(112, 79, 255, 0.12);
+  padding: 36px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.form-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 2.4vw, 2.5rem);
+  color: #2c2b44;
+}
+
+.form-header p {
+  margin: 12px auto 0;
+  max-width: 720px;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.student-form {
+  display: grid;
+  gap: 20px;
+}
+
+.field-group,
+.fieldset,
+.range-row,
+.field-row {
+  display: grid;
+  gap: 10px;
+}
+
+.field-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-group label,
+.fieldset legend,
+.checkbox-label,
+.radio-label {
+  font-weight: 600;
+  color: #37304a;
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea,
+.radio-label input,
+.checkbox-label input {
+  font: inherit;
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea {
+  width: 100%;
+  border: 1px solid #d8d4e4;
+  border-radius: 14px;
+  background: #f8f7ff;
+  color: #2c2b44;
+  padding: 12px 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+}
+
+.range-row {
+  align-items: center;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+}
+
+.range-row input {
+  width: 100%;
+}
+
+.range-value {
+  min-width: 48px;
+  text-align: center;
+  font-weight: 700;
+  color: #5b4d8c;
+}
+
+.fieldset {
+  border: 1px solid #e9e7f1;
+  border-radius: 18px;
+  padding: 18px 20px;
+  background: #fbfbff;
+}
+
+.fieldset legend {
+  padding: 0 6px;
+}
+
+.checkbox-label,
+.radio-label,
+.terms-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #454050;
+  cursor: pointer;
+}
+
+.checkbox-label input,
+.radio-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: #7c3aed;
+}
+
+.terms-label {
+  margin-top: 10px;
+  font-size: 0.98rem;
+}
+
+.submit-button {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background: #7c3aed;
+  color: #ffffff;
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.submit-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.submit-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(124, 58, 237, 0.18);
+}
+
+.image-preview,
+.summary-image {
+  margin-top: 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f7f5ff;
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.08);
+}
+
+.image-preview p {
+  margin: 0;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #5b4d8c;
+}
+
+.image-preview img,
+.summary-image img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.error-message {
+  color: #dc2626;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.form-summary {
+  margin-top: 28px;
+  border-top: 1px solid #e9e7f1;
+  padding-top: 24px;
+}
+
+.form-summary h2 {
+  margin: 0 0 18px;
+  font-size: 1.5rem;
+  color: #322f41;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 12px 30px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summary-grid p {
+  margin: 0;
+  color: #4b4a60;
+  line-height: 1.6;
+}
+
+.color-chip {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
+  border-radius: 8px;
+  border: 1px solid #d8d4e4;
+  vertical-align: middle;
+}
+
+.summary-image {
+  margin-top: 22px;
+}
