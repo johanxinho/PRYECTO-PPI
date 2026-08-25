@@ -1,16 +1,17 @@
-# React + Vite
+# Ejercicio dia-30-07
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación React/Vite independiente del proyecto principal. Muestra un formulario de registro de estudiante con validaciones de correo y edad, selección de lenguajes, modalidad, país, foto, color y resumen de datos enviados.
 
-Currently, two official plugins are available:
+No es la aplicación principal de RECORDATE y no comparte autenticación, tareas ni estado con `ppi-react`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+npm audit
+```
 
-## React Compiler
+La dependencia vulnerable `nanoid` fue actualizada a `3.3.18` en `package-lock.json`. La auditoría actual reporta `0 vulnerabilities`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+La documentación global y el mapa completo del repositorio están en [`../docs/PROJECT-DOCUMENTATION.md`](../docs/PROJECT-DOCUMENTATION.md).

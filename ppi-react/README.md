@@ -1,16 +1,28 @@
-# React + Vite
+# RECORDATE
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación principal del Proyecto Pedagógico Integrador: sistema de recordatorio de actividades académicas para la IE La Candelaria.
 
-Currently, two official plugins are available:
+## Inicio
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requiere Node.js 20 o superior.
 
-## React Compiler
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Las variables de Supabase son opcionales para explorar el acceso DEMO. Para autenticación real, define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env`. Nunca uses una clave `service_role` en el frontend.
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Comando | Uso |
+| --- | --- |
+| `npm run dev` | Servidor de desarrollo Vite |
+| `npm run lint` | Validación ESLint |
+| `npm run build` | Compilación de producción |
+| `npm run preview` | Servir la compilación local |
+
+## Documentación
+
+La guía técnica del repositorio está en [`../docs/PROJECT-DOCUMENTATION.md`](../docs/PROJECT-DOCUMENTATION.md). Allí se explican los componentes, el modelo de tareas, el flujo de autenticación, la persistencia local, las funcionalidades DEMO y la conexión futura con Supabase.
