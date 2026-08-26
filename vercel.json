@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd ppi-react && npm run build",
+  "outputDirectory": "ppi-react/dist",
+  "installCommand": "cd ppi-react && npm install",
+  "framework": "vite",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
