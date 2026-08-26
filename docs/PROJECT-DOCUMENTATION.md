@@ -22,6 +22,7 @@ PRYECTO-PPI/
 │   │   ├── App.css                    # Estilos de la aplicación y responsive
 │   │   ├── index.css                  # Tokens globales, tipografías y reset base
 │   │   ├── supabaseClient.js          # Cliente Supabase condicionado por variables env
+│   │   ├── dataService.js             # Perfiles, tareas y operaciones persistentes
 │   │   ├── components/Login.jsx       # Inicio de sesión, registro y acceso DEMO
 │   │   └── components/                # Componentes heredados no usados actualmente
 │   ├── public/                        # Recursos públicos servidos por Vite
@@ -48,9 +49,9 @@ La aplicación principal usa:
 - React 19 para la interfaz y el estado.
 - Vite 8 como servidor de desarrollo y empaquetador.
 - JavaScript con JSX, sin TypeScript.
-- Supabase JS para autenticación opcional.
+- Supabase JS para autenticación y persistencia real.
 - CSS propio para la identidad visual; Bootstrap figura como dependencia instalada, pero la interfaz actual no depende de sus clases.
-- `localStorage` para conservar las tareas del navegador en el modo actual.
+- Migración SQL de Supabase para perfiles, tareas, agendas compartidas y mensajes.
 - ESLint para validación estática.
 
 `dia-30-07` usa React 19, Vite 8 y Oxlint, pero no forma parte del arranque de RECORDATE.
@@ -61,13 +62,13 @@ La aplicación principal usa:
 2. `App` inicia en la landing de RECORDATE.
 3. Los botones de inicio abren `components/Login.jsx`.
 4. El usuario puede:
-   - autenticarse con Supabase si existen las variables de entorno;
-   - registrarse con nombre, correo y contraseña;
-   - entrar al acceso DEMO sin enviar credenciales.
+  - autenticarse con Supabase si existen las variables de entorno;
+  - registrarse con nombre, correo y contraseña;
+  - cargar su perfil y sus tareas desde Supabase.
 5. Una sesión válida muestra el dashboard.
 6. `App` consulta la sesión existente y escucha `onAuthStateChange` cuando Supabase está configurado.
-7. Las tareas se cargan inicialmente desde `localStorage`; si no existen, usa tres actividades DEMO definidas en `initialTasks`.
-8. Cada cambio en las tareas vuelve a guardarse en `localStorage`.
+7. Las tareas se cargan desde `public.tasks` usando la sesión activa.
+8. Cada alta, edición, cambio de estado o eliminación se persiste mediante `dataService.js` y queda protegida por RLS.
 
 No existe un router externo. La navegación interna se controla con los estados `screen` (`landing`, `auth`, `app`) y `view` (`Inicio`, `Mis tareas`, `Calendario`, etc.).
 
@@ -84,13 +85,13 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 - `Stats`: tarjetas con métricas calculadas desde las tareas reales del navegador.
 - `TaskList`: lista reutilizable con estado vacío y modo de selección para enfoque.
 - `Calendar`: días que tienen tareas y agenda del día seleccionado.
-- `SharePanel`: selección de actividad y preparación de envío por correo.
-- `Chat`: conversación DEMO local con envío de mensajes en memoria.
+- `SharePanel`: selección de actividad y preparación visual de envío por correo.
+- `Chat`: interfaz visual pendiente de conectar a las operaciones de mensajes.
 - `Profile`: perfil y configuración de notificaciones de la sesión actual.
 
 ### Estado principal
 
-- `session`: sesión Supabase o usuario DEMO.
+- `session`: sesión Supabase del usuario actual.
 - `screen`: determina landing, autenticación o aplicación.
 - `view`: sección activa del dashboard.
 - `tasks`: actividades académicas actuales.
@@ -100,10 +101,10 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 - `notice`: confirmaciones y errores de acciones.
 - `mobileNav`: apertura del sidebar en celular.
 - `notificationsOpen`: visibilidad del panel de notificaciones.
-- `shareEmail` y `shared`: flujo local de compartir agendas.
+- `shareEmail` y `shared`: estado visual temporal del flujo de compartir agendas.
 - `message`: texto que se está escribiendo en el chat.
 
-### Modelo local de actividad
+### Modelo de actividad
 
 ```js
 {
@@ -125,21 +126,23 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 | --- | --- | --- |
 | Landing responsive | Funcional | Contenido estático del PPI |
 | Inicio de sesión | Funcional con Supabase configurado | Supabase Auth |
-| Registro | Funcional con Supabase configurado | Supabase Auth |
-| Acceso DEMO | Funcional | Estado local del navegador |
-| Crear, editar y eliminar tareas | Funcional | `localStorage` |
-| Completar y desmarcar tareas | Funcional | `localStorage` |
-| Búsqueda por título o materia | Funcional en tiempo real | Estado `tasks` |
-| Métricas del dashboard | Dinámicas | Estado `tasks` |
-| Calendario | Funcional con fechas de las tareas | Estado `tasks` |
-| Recordatorios | Lista de tareas pendientes | Estado `tasks` |
-| Prioridades | Orden por Alta, Media y Baja | Estado `tasks` |
-| Modo enfoque | Funcional para una tarea | Estado `focusTask` |
-| Notificaciones | Panel visual basado en tareas pendientes | Estado `tasks` |
-| Compartir agendas | Flujo DEMO local, sin envío real | Estado local |
-| Chat | Conversación DEMO local, sin servidor | Estado React |
-| Perfil | Visualiza sesión e institución | Sesión actual |
-| Configuración | Preferencias visuales locales | Estado del formulario |
+| Registro y perfil | Funcional con Supabase configurado | Supabase Auth + `public.profiles` |
+| Sesión persistente y cierre de sesión | Funcional con Supabase configurado | Supabase Auth |
+| Rutas privadas | Parcial: protección por estado y URL | Estado React + sesión Supabase |
+| Crear, editar y eliminar tareas | Funcional con Supabase configurado | `public.tasks` + RLS |
+| Completar y desmarcar tareas | Funcional con Supabase configurado | `public.tasks` + RLS |
+| Aislamiento de tareas por usuario | Funcional tras aplicar la migración | RLS de Supabase |
+| Búsqueda por título o materia | Funcional en tiempo real | Estado cargado desde `public.tasks` |
+| Métricas del dashboard | Dinámicas | Estado cargado desde `public.tasks` |
+| Calendario | Funcional con fechas reales | Estado cargado desde `public.tasks` |
+| Recordatorios | Lista real de tareas pendientes | Estado cargado desde `public.tasks` |
+| Prioridades | Funcional con Alta, Media y Baja | `public.tasks` + RLS |
+| Modo enfoque | Funcional para una tarea real | Estado + `public.tasks` |
+| Notificaciones | Recordatorios del navegador mientras la aplicación está abierta y con permiso | API `Notification` + estado de tareas |
+| Compartir agendas | Funcional con usuario destinatario registrado | `task_shares` + `share_task_by_email` |
+| Chat | Funcional con persistencia y Realtime configurado | `messages` + `supabase_realtime` |
+| Roles `student/admin` | Estructura y protección del rol preparadas | `profiles.role` + trigger |
+| Configuración | Preferencias persistentes de recordatorios y tareas completadas | `public.profiles` + RLS |
 | Adjuntar imágenes | No implementado en la versión principal | Requiere almacenamiento/backend |
 | Alarmas del sistema | No implementadas como notificaciones del dispositivo | Requiere servicio adicional |
 
@@ -166,7 +169,7 @@ La autenticación utiliza:
 - `supabase.auth.signUp()` para registrar.
 - `supabase.auth.signOut()` para cerrar sesión.
 
-La persistencia de tareas todavía es por navegador. Para producción se debe crear una tabla de actividades con políticas RLS y asociarla al usuario autenticado.
+La migración reproducible está en [`../supabase/migrations/20260826_recordate.sql`](../supabase/migrations/20260826_recordate.sql). Debe ejecutarse en el SQL Editor del proyecto antes de probar el registro o las tareas. Nunca se usa `service_role` en el frontend.
 
 ## 8. Archivo de datos del PPI
 
