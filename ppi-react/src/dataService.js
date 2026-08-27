@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 
 const taskColumns =
-  "id,title,description,subject,date,time,priority,reminder,completed,created_at";
+  "id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at";
 
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
@@ -25,7 +25,7 @@ export async function getProfile(user) {
   ensureBackend();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed")
+    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled")
     .eq("id", user.id)
     .single();
   if (error) throw error;
@@ -43,7 +43,7 @@ export async function ensureProfile(user, fullName = "") {
   const { data, error } = await supabase
     .from("profiles")
     .upsert(profile, { onConflict: "id" })
-    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed")
+    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled")
     .single();
   if (error) throw error;
   return data;
@@ -55,7 +55,7 @@ export async function updateProfileSettings(settings) {
     .from("profiles")
     .update(settings)
     .eq("id", (await supabase.auth.getUser()).data.user.id)
-    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed")
+    .select("id,full_name,email,role,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled")
     .single();
   if (error) throw error;
   return data;
@@ -127,6 +127,22 @@ export async function shareTask(taskId, email) {
   });
   if (error) throw error;
   return data;
+}
+
+export async function listSharedTasks() {
+  ensureBackend();
+  const { data, error } = await supabase
+    .from("task_shares")
+    .select("id,task_id,recipient_id,created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function revokeSharedTask(shareId) {
+  ensureBackend();
+  const { error } = await supabase.from("task_shares").delete().eq("id", shareId);
+  if (error) throw error;
 }
 
 export async function listMessages() {

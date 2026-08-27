@@ -22,14 +22,72 @@ function signupErrorMessage(error) {
   return "No fue posible crear la cuenta. Revisa los datos e inténtalo de nuevo.";
 }
 
+function verificationErrorMessage(error) {
+  const details = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
+  if (details.includes("expired") || details.includes("invalid")) {
+    return "El código de verificación es incorrecto o expiró.";
+  }
+  if (details.includes("rate limit") || details.includes("too many")) {
+    return "Se alcanzó el límite de intentos. Espera unos minutos e inténtalo de nuevo.";
+  }
+  return "No fue posible verificar el código. Inténtalo de nuevo.";
+}
+
 function Login({ onLogin, onBack }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const verifyCode = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    if (!/^\d{6}$/.test(verificationCode)) {
+      setMessage("Escribe el código de verificación de 6 dígitos.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: verificationEmail,
+        token: verificationCode,
+        type: "signup",
+      });
+      if (error) {
+        setMessage(verificationErrorMessage(error));
+      } else if (data.session) {
+        onLogin(data.session);
+      } else {
+        setMessage("Correo verificado. Ahora puedes iniciar sesión.");
+        setNeedsVerification(false);
+        setIsSignUp(false);
+      }
+    } catch {
+      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const resendCode = async () => {
+    setMessage("");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: verificationEmail,
+      });
+      setMessage(error ? verificationErrorMessage(error) : "Te enviamos un nuevo código de verificación.");
+    } catch {
+      setMessage("No fue posible reenviar el código. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -69,7 +127,12 @@ function Login({ onLogin, onBack }) {
           });
       if (result.error) setMessage(isSignUp ? signupErrorMessage(result.error) : "El correo o la contraseña son incorrectos.");
       else if (result.data.session) onLogin(result.data.session);
-      else setMessage("Revisa tu correo para confirmar la cuenta.");
+      else {
+        setVerificationEmail(email.trim());
+        setVerificationCode("");
+        setNeedsVerification(true);
+        setMessage("Te enviamos un código de 6 dígitos a tu correo.");
+      }
     } catch {
       setMessage(
         "No fue posible conectar con el servicio. Inténtalo de nuevo.",
@@ -99,15 +162,43 @@ function Login({ onLogin, onBack }) {
           <Brand />
         </div>
         <span className="eyebrow accent-label">
-          {isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
+          {needsVerification ? "Confirma tu correo" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
         </span>
-        <h2>{isSignUp ? "Crea tu cuenta." : "Entra a tu agenda."}</h2>
+        <h2>{needsVerification ? "Verifica tu cuenta." : isSignUp ? "Crea tu cuenta." : "Entra a tu agenda."}</h2>
         <p className="auth-subtitle">
-          {isSignUp
-            ? "Organiza tus actividades académicas desde el primer día."
-            : "Tus tareas y recordatorios te están esperando."}
+          {needsVerification
+            ? `Escribe el código que enviamos a ${verificationEmail}.`
+            : isSignUp
+              ? "Organiza tus actividades académicas desde el primer día."
+              : "Tus tareas y recordatorios te están esperando."}
         </p>
-        <form onSubmit={handleSubmit} noValidate>
+        {needsVerification ? (
+          <>
+            <form onSubmit={verifyCode} noValidate>
+              <label>
+                Código de verificación
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength="6"
+                  value={verificationCode}
+                  onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ""))}
+                  required
+                />
+              </label>
+              {message && <p className="auth-message" role="alert">{message}</p>}
+              <button className="primary-button auth-submit" type="submit" disabled={loading}>
+                {loading ? "Verificando..." : "Verificar código"}<span>→</span>
+              </button>
+            </form>
+            <button className="switch-button" type="button" onClick={resendCode} disabled={loading}>
+              Reenviar código
+            </button>
+            <button className="switch-button" type="button" onClick={() => { setNeedsVerification(false); setMessage(""); }}>
+              Volver al registro
+            </button>
+          </>
+        ) : <form onSubmit={handleSubmit} noValidate>
           {isSignUp && (
             <label>
               Nombre
@@ -166,7 +257,8 @@ function Login({ onLogin, onBack }) {
                 : "Iniciar sesión"}
             <span>→</span>
           </button>
-        </form>
+        </form>}
+        {!needsVerification && (
         <button
           className="switch-button"
           type="button"
@@ -179,6 +271,7 @@ function Login({ onLogin, onBack }) {
             ? "¿Ya tienes cuenta? Inicia sesión"
             : "¿No tienes cuenta? Regístrate"}
         </button>
+        )}
         <p className="auth-note">No guardamos contraseñas en este navegador.</p>
       </section>
     </main>

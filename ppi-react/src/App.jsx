@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Login from "./components/Login";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import {
@@ -12,6 +12,8 @@ import {
   subscribeToMessages,
   updateProfileSettings,
   updateTask,
+  listSharedTasks,
+  revokeSharedTask,
 } from "./dataService";
 import "./App.css";
 
@@ -25,7 +27,24 @@ const navItems = [
   "Compartir agendas",
   "Mensajes",
 ];
-const today = new Date().toISOString().slice(0, 10);
+const localDate = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const today = localDate();
+const reminderOptions = [
+  ["Al momento", 0],
+  ["5 minutos antes", 5 * 60 * 1000],
+  ["10 minutos antes", 10 * 60 * 1000],
+  ["30 minutos antes", 30 * 60 * 1000],
+  ["1 hora antes", 60 * 60 * 1000],
+  ["3 horas antes", 3 * 60 * 60 * 1000],
+  ["12 horas antes", 12 * 60 * 60 * 1000],
+  ["24 horas antes", 24 * 60 * 60 * 1000],
+  ["1 día antes", 24 * 60 * 60 * 1000],
+];
 const formatDate = (date) =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
@@ -234,8 +253,8 @@ function TaskForm({ task, onSave, onCancel }) {
     }
     onSave({
       ...form,
-      id: task?.id || Date.now(),
-      completed: task?.completed || false,
+      ...(task?.id ? { id: task.id } : {}),
+      completed: task?.completed ?? false,
     });
   };
   return (
@@ -291,9 +310,7 @@ function TaskForm({ task, onSave, onCancel }) {
             value={form.reminder}
             onChange={(event) => update("reminder", event.target.value)}
           >
-            <option>Al momento</option>
-            <option>30 minutos antes</option>
-            <option>1 día antes</option>
+            {reminderOptions.map(([label]) => <option key={label}>{label}</option>)}
           </select>
         </label>
       </div>
@@ -391,6 +408,7 @@ function App() {
   const [view, setView] = useState("Inicio");
   const [tasks, setTasks] = useState([]);
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState({ priority: "", status: "", date: "" });
   const [editingTask, setEditingTask] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [focusTask, setFocusTask] = useState(null);
@@ -400,19 +418,22 @@ function App() {
   const [shareEmail, setShareEmail] = useState("");
   const [shared, setShared] = useState([]);
   const [message, setMessage] = useState("");
+  const [alarmTask, setAlarmTask] = useState(null);
+  const alarmedTasks = useRef(new Set());
   useEffect(() => {
     const privatePaths = [
       "/dashboard",
       "/tareas",
       "/calendario",
       "/recordatorios",
+      "/prioridades",
       "/enfoque",
       "/compartir",
       "/mensajes",
       "/perfil",
       "/configuracion",
     ];
-    const routeViews = { "/dashboard": "Inicio", "/tareas": "Mis tareas", "/calendario": "Calendario", "/recordatorios": "Recordatorios", "/enfoque": "Modo enfoque", "/compartir": "Compartir agendas", "/mensajes": "Mensajes", "/perfil": "Perfil", "/configuracion": "Configuración" };
+    const routeViews = { "/dashboard": "Inicio", "/tareas": "Mis tareas", "/calendario": "Calendario", "/recordatorios": "Recordatorios", "/prioridades": "Prioridades", "/enfoque": "Modo enfoque", "/compartir": "Compartir agendas", "/mensajes": "Mensajes", "/perfil": "Perfil", "/configuracion": "Configuración" };
     const handleRoute = () => {
       if (privatePaths.includes(window.location.pathname)) {
         setView(routeViews[window.location.pathname]);
@@ -428,15 +449,24 @@ function App() {
     if (!current) {
       setProfile(null);
       setTasks([]);
+      setShared([]);
       return;
     }
     try {
-      const [currentProfile, currentTasks] = await Promise.all([
+      const [currentProfile, currentTasks, currentShares] = await Promise.all([
         ensureProfile(current.user),
         listTasks(),
+        listSharedTasks(),
       ]);
       setProfile(currentProfile);
       setTasks(currentTasks);
+      setShared(
+        currentShares.map((share) => ({
+          ...share,
+          task: currentTasks.find((task) => task.id === share.task_id)?.title || "Tarea compartida",
+          email: "Usuario registrado",
+        })),
+      );
       setScreen("app");
     } catch {
       setNotice(
@@ -459,26 +489,50 @@ function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (!profile?.reminders_enabled || !("Notification" in window) || Notification.permission !== "granted") return undefined;
-    const timers = tasks.filter((task) => !task.completed).map((task) => {
-      const offsets = { "Al momento": 0, "30 minutos antes": 30 * 60 * 1000, "1 día antes": 24 * 60 * 60 * 1000 };
-      const dueAt = new Date(`${task.date}T${task.time}`).getTime() - (offsets[task.reminder] || 0);
-      const delay = dueAt - Date.now();
-      if (delay <= 0 || delay > 2147483647) return null;
-      return window.setTimeout(() => new Notification("Recordatorio de RECORDATE", { body: `${task.title} · ${task.subject}` }), delay);
-    }).filter(Boolean);
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [profile?.reminders_enabled, tasks]);
+    if (!profile?.reminders_enabled) return undefined;
+    const checkReminders = () => {
+      const now = Date.now();
+      tasks.filter((task) => !task.completed).forEach((task) => {
+        const offset = reminderOptions.find(([label]) => label === task.reminder)?.[1] || 0;
+        const reminderAt = new Date(`${task.date}T${task.time}`).getTime() - offset;
+        if (now < reminderAt || now - reminderAt > 60 * 1000 || alarmedTasks.current.has(task.id)) return;
+        alarmedTasks.current.add(task.id);
+        if (profile.alarms_enabled) setAlarmTask(task);
+        if (profile.alarms_enabled && "AudioContext" in window) {
+          const audioContext = new AudioContext();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.frequency.value = 740;
+          gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.6);
+        }
+        if (profile.browser_notifications_enabled && "Notification" in window && Notification.permission === "granted") {
+          new Notification("Alarma de RECORDATE", { body: `${task.title} · ${task.subject} · Prioridad ${task.priority}` });
+        }
+      });
+    };
+    checkReminders();
+    const timer = window.setInterval(checkReminders, 15000);
+    return () => window.clearInterval(timer);
+  }, [profile, tasks]);
   const userName =
     profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
   const visibleTasks = useMemo(
     () =>
       tasks.filter((task) =>
-        `${task.title} ${task.subject}`
+        `${task.title} ${task.subject} ${task.description}`
           .toLowerCase()
           .includes(query.toLowerCase()),
+      ).filter((task) =>
+        (!filters.priority || task.priority === filters.priority) &&
+        (!filters.status || (filters.status === "Completada" ? task.completed : !task.completed)) &&
+        (!filters.date || task.date === filters.date),
       ),
-    [tasks, query],
+    [tasks, query, filters],
   );
   const pending = tasks.filter((task) => !task.completed);
   const stats = {
@@ -489,9 +543,11 @@ function App() {
   };
   const saveTask = async (task) => {
     try {
-      const saved = task.id ? await updateTask(task) : await createTask(task);
+      const saved = editingTask?.id
+        ? await updateTask(task)
+        : await createTask(task);
       setTasks((current) =>
-        task.id
+        editingTask?.id
           ? current.map((item) => (item.id === saved.id ? saved : item))
           : [saved, ...current],
       );
@@ -525,11 +581,16 @@ function App() {
       setNotice("No fue posible actualizar la actividad.");
     }
   };
+  const completeAlarmTask = async () => {
+    if (alarmTask) await toggleTask(alarmTask.id);
+    setAlarmTask(null);
+  };
   const logout = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
     setTasks([]);
+    setShared([]);
     setScreen("landing");
   };
   const navigate = (nextView) => {
@@ -599,6 +660,33 @@ function App() {
               + Nueva actividad
             </button>
           </section>
+          <div className="search-wrap" aria-label="Filtros de tareas">
+            <select
+              aria-label="Filtrar por prioridad"
+              value={filters.priority}
+              onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}
+            >
+              <option value="">Todas las prioridades</option>
+              <option>Alta</option>
+              <option>Media</option>
+              <option>Baja</option>
+            </select>
+            <select
+              aria-label="Filtrar por estado"
+              value={filters.status}
+              onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
+            >
+              <option value="">Todos los estados</option>
+              <option>Pendiente</option>
+              <option>Completada</option>
+            </select>
+            <input
+              type="date"
+              aria-label="Filtrar por fecha"
+              value={filters.date}
+              onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))}
+            />
+          </div>
           <TaskList
             tasks={visibleTasks}
             onToggle={toggleTask}
@@ -669,14 +757,26 @@ function App() {
           email={shareEmail}
           setEmail={setShareEmail}
           shared={shared}
+          onRevoke={async (share) => {
+            try {
+              await revokeSharedTask(share.id);
+              setShared((current) => current.filter((item) => item.id !== share.id));
+              setNotice("Acceso compartido revocado.");
+            } catch {
+              setNotice("No fue posible revocar el acceso compartido.");
+            }
+          }}
           onShare={async (task) => {
             if (!shareEmail.includes("@")) {
               setNotice("Escribe un correo válido para compartir.");
               return;
             }
             try {
-              await shareTask(task.id, shareEmail);
-              setShared((current) => [...current, { task: task.title, email: shareEmail }]);
+              const createdShare = await shareTask(task.id, shareEmail);
+              setShared((current) => [
+                ...current,
+                { ...createdShare, task: task.title, email: shareEmail },
+              ]);
               setShareEmail("");
               setNotice("Agenda compartida correctamente.");
             } catch (error) {
@@ -888,6 +988,20 @@ function App() {
           </section>
         </div>
       )}
+      {alarmTask && (
+        <div className="modal-backdrop">
+          <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
+            <span className="eyebrow accent-label">Alarma de RECORDATE</span>
+            <h2 id="alarm-title">Es hora de realizar esta actividad</h2>
+            <h3>{alarmTask.title}</h3>
+            <p>{alarmTask.subject} · Prioridad {alarmTask.priority}</p>
+            <div className="form-actions">
+              <button className="primary-button" onClick={completeAlarmTask}>Marcar como completada</button>
+              <button className="text-button" onClick={() => setAlarmTask(null)}>Posponer</button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
@@ -973,7 +1087,19 @@ function TaskList({
 }
 function Calendar({ tasks, onSelect }) {
   const [selected, setSelected] = useState(today);
-  const days = [...new Set(tasks.map((task) => task.date))].sort();
+  const [month, setMonth] = useState(today.slice(0, 7));
+  const [year, monthNumber] = month.split("-").map(Number);
+  const firstDay = new Date(year, monthNumber - 1, 1);
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, index) => {
+    const day = String(index + 1).padStart(2, "0");
+    return `${month}-${day}`;
+  });
+  const shiftMonth = (offset) => {
+    const next = new Date(year, monthNumber - 1 + offset, 1);
+    setMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+    setSelected(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`);
+  };
   const dayTasks = tasks.filter((task) => task.date === selected);
   return (
     <section className="calendar-view">
@@ -982,12 +1108,20 @@ function Calendar({ tasks, onSelect }) {
           <span className="eyebrow">Vista de agenda</span>
           <h2>Calendario académico</h2>
         </div>
-        <span className="calendar-month">Agosto / Septiembre 2026</span>
+        <div className="calendar-controls">
+          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior">←</button>
+          <span className="calendar-month">
+            {new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(firstDay)}
+          </span>
+          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente">→</button>
+        </div>
       </div>
       <div className="calendar-layout">
         <div className="calendar-days">
-          {days.length ? (
-            days.map((day) => (
+          {Array.from({ length: firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 }).map((_, index) => (
+            <span className="calendar-day calendar-day-empty" key={`empty-${index}`} aria-hidden="true" />
+          ))}
+          {days.map((day) => (
               <button
                 className={
                   selected === day ? "calendar-day selected" : "calendar-day"
@@ -1009,12 +1143,7 @@ function Calendar({ tasks, onSelect }) {
                   }
                 />
               </button>
-            ))
-          ) : (
-            <p className="empty-copy">
-              Agrega una tarea para verla en el calendario.
-            </p>
-          )}
+          ))}
         </div>
         <div className="day-agenda">
           <span className="eyebrow">
@@ -1047,7 +1176,7 @@ function Calendar({ tasks, onSelect }) {
     </section>
   );
 }
-function SharePanel({ tasks, email, setEmail, shared, onShare }) {
+function SharePanel({ tasks, email, setEmail, shared, onShare, onRevoke }) {
   return (
     <section className="panel-view">
       <span className="eyebrow accent-label">Coordina con tu equipo</span>
@@ -1092,7 +1221,10 @@ function SharePanel({ tasks, email, setEmail, shared, onShare }) {
           <b>Agendas preparadas</b>
           {shared.map((item, index) => (
             <span key={`${item.email}-${index}`}>
-              ✓ {item.task} · {item.email}
+              ✓ {item.task || "Tarea compartida"} · {item.email || "Usuario registrado"}
+              <button className="text-button" onClick={() => onRevoke(item)}>
+                Revocar
+              </button>
             </span>
           ))}
         </div>
@@ -1193,6 +1325,20 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout })
               <small>Recibe avisos antes de cada entrega.</small>
             </span>
             <input type="checkbox" checked={profile?.reminders_enabled ?? true} onChange={async (event) => { if (event.target.checked && "Notification" in window && Notification.permission === "default") await Notification.requestPermission(); onSettingsChange({ reminders_enabled: event.target.checked }); }} />
+          </label>
+          <label>
+            <span>
+              <b>Notificaciones del navegador</b>
+              <small>Recibe avisos aunque estés en otra pestaña.</small>
+            </span>
+            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && "Notification" in window && Notification.permission !== "granted") { const permission = await Notification.requestPermission(); if (permission !== "granted") return; } onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
+          </label>
+          <label>
+            <span>
+              <b>Alarmas sonoras</b>
+              <small>Emite un sonido mientras RECORDATE está abierto.</small>
+            </span>
+            <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
           </label>
           <label>
             <span>

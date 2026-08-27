@@ -17,19 +17,6 @@ export const authService = {
 
       if (authError) throw authError;
 
-      // Crear perfil en tabla profiles
-      if (authData.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          email,
-          full_name: fullName,
-          created_at: new Date().toISOString(),
-          role: 'student',
-        });
-
-        if (profileError) throw profileError;
-      }
-
       return { success: true, user: authData.user };
     } catch (error) {
       return { success: false, error: error.message };

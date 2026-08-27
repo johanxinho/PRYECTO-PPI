@@ -8,6 +8,8 @@ create table if not exists public.profiles (
 
 alter table public.profiles add column if not exists reminders_enabled boolean not null default true;
 alter table public.profiles add column if not exists show_completed boolean not null default true;
+alter table public.profiles add column if not exists browser_notifications_enabled boolean not null default false;
+alter table public.profiles add column if not exists alarms_enabled boolean not null default true;
 
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
@@ -20,8 +22,23 @@ create table if not exists public.tasks (
   priority text not null default 'Media' check (priority in ('Alta', 'Media', 'Baja')),
   reminder text not null default '30 minutos antes',
   completed boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.tasks add column if not exists updated_at timestamptz not null default now();
+
+create or replace function public.touch_task_updated_at()
+returns trigger language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists tasks_updated_at on public.tasks;
+create trigger tasks_updated_at before update on public.tasks for each row execute procedure public.touch_task_updated_at();
 
 create table if not exists public.task_shares (
   id uuid primary key default gen_random_uuid(),

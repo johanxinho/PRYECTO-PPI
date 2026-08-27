@@ -23,7 +23,7 @@ PRYECTO-PPI/
 │   │   ├── index.css                  # Tokens globales, tipografías y reset base
 │   │   ├── supabaseClient.js          # Cliente Supabase condicionado por variables env
 │   │   ├── dataService.js             # Perfiles, tareas y operaciones persistentes
-│   │   ├── components/Login.jsx       # Inicio de sesión, registro y acceso DEMO
+│   │   ├── components/Login.jsx       # Inicio de sesión, registro y verificación OTP
 │   │   └── components/                # Componentes heredados no usados actualmente
 │   ├── public/                        # Recursos públicos servidos por Vite
 │   └── README.md                      # Guía rápida de la aplicación principal
@@ -126,21 +126,21 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 | --- | --- | --- |
 | Landing responsive | Funcional | Contenido estático del PPI |
 | Inicio de sesión | Funcional con Supabase configurado | Supabase Auth |
-| Registro y perfil | Funcional con Supabase configurado | Supabase Auth + `public.profiles` |
+| Registro, verificación y perfil | Funcional con Supabase configurado; el correo se confirma con código OTP | Supabase Auth + `public.profiles` |
 | Sesión persistente y cierre de sesión | Funcional con Supabase configurado | Supabase Auth |
-| Rutas privadas | Parcial: protección por estado y URL | Estado React + sesión Supabase |
+| Rutas privadas | Protección por estado y URL, incluida Prioridades | Estado React + sesión Supabase |
 | Crear, editar y eliminar tareas | Funcional con Supabase configurado | `public.tasks` + RLS |
 | Completar y desmarcar tareas | Funcional con Supabase configurado | `public.tasks` + RLS |
 | Aislamiento de tareas por usuario | Funcional tras aplicar la migración | RLS de Supabase |
-| Búsqueda por título o materia | Funcional en tiempo real | Estado cargado desde `public.tasks` |
+| Búsqueda por título, materia o descripción | Funcional en tiempo real | Estado cargado desde `public.tasks` |
 | Métricas del dashboard | Dinámicas | Estado cargado desde `public.tasks` |
 | Calendario | Funcional con fechas reales | Estado cargado desde `public.tasks` |
 | Recordatorios | Lista real de tareas pendientes | Estado cargado desde `public.tasks` |
 | Prioridades | Funcional con Alta, Media y Baja | `public.tasks` + RLS |
 | Modo enfoque | Funcional para una tarea real | Estado + `public.tasks` |
-| Notificaciones | Recordatorios del navegador mientras la aplicación está abierta y con permiso | API `Notification` + estado de tareas |
-| Compartir agendas | Funcional con usuario destinatario registrado | `task_shares` + `share_task_by_email` |
-| Chat | Funcional con persistencia y Realtime configurado | `messages` + `supabase_realtime` |
+| Notificaciones | Recordatorios configurables y alarmas mientras la aplicación está abierta y con permiso | API `Notification`, `AudioContext` + estado de tareas |
+| Compartir agendas | Funcional, persistente y revocable con usuario destinatario registrado | `task_shares` + `share_task_by_email` |
+| Chat | Persistente y Realtime configurado; el esquema actual es un canal común para usuarios autenticados | `messages` + `supabase_realtime` |
 | Roles `student/admin` | Estructura y protección del rol preparadas | `profiles.role` + trigger |
 | Configuración | Preferencias persistentes de recordatorios y tareas completadas | `public.profiles` + RLS |
 | Adjuntar imágenes | No implementado en la versión principal | Requiere almacenamiento/backend |
@@ -237,11 +237,12 @@ La auditoría completa de dependencias se ejecuta con `npm audit`. La alerta que
 
 1. Separar los componentes de `App.jsx` en `components/`, `pages/` y `services/` cuando se vaya a ampliar el proyecto.
 2. Crear tablas Supabase para perfiles y actividades con `user_id`, timestamps y políticas RLS.
-3. Migrar las tareas de `localStorage` a Supabase manteniendo el fallback DEMO.
-4. Conectar compartir agendas y chat a tablas o funciones Edge de Supabase.
+3. Implementar un endpoint seguro para el asistente de IA y sus acciones confirmadas; no existe un proveedor configurado actualmente.
+4. Convertir el canal común de mensajes en conversaciones con destinatario y políticas RLS por conversación.
 5. Añadir Supabase Storage para imágenes de actividades.
-6. Añadir pruebas de interacción para crear, editar, completar, eliminar, filtrar y enfocar actividades.
+6. Añadir Web Push/VAPID y una función programada para notificaciones con la aplicación cerrada.
+7. Añadir pruebas de interacción para crear, editar, completar, eliminar, filtrar y enfocar actividades.
 
 ## 12. Última verificación
 
-La aplicación principal pasa `npm run build` y `npm run lint`. El ejercicio `dia-30-07` pasa `npm run build`, `npm run lint` y `npm audit` sin vulnerabilidades reportadas.
+La aplicación principal pasa `npm run build` y `npm run lint` después de las mejoras de OTP, CRUD, calendario, filtros, shares persistentes, recordatorios configurables y alarmas en primer plano. El ejercicio `dia-30-07` conserva sus propias comprobaciones independientes.
