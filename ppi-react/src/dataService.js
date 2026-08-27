@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 
 const taskColumns =
-  "id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at";
+  "id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
@@ -18,6 +18,7 @@ function mapTask(task) {
     priority: task.priority,
     reminder: task.reminder,
     completed: task.completed,
+    attachments: task.task_attachments || [],
   };
 }
 
@@ -149,21 +150,95 @@ export async function listMessages() {
   ensureBackend();
   const { data, error } = await supabase
     .from("messages")
-    .select("id,sender_id,body,created_at")
+    .select("id,sender_id,recipient_id,body,read_at,created_at")
+    .not("recipient_id", "is", null)
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data;
 }
 
-export async function sendMessage(body) {
+export async function findUserByEmail(email) {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("find_profile_by_email", { requested_email: email.trim().toLowerCase() });
+  if (error) throw error;
+  return data?.[0] || null;
+}
+
+export async function sendMessage(body, recipientId) {
   ensureBackend();
   const { data, error } = await supabase
     .from("messages")
-    .insert({ body: body.trim() })
-    .select("id,sender_id,body,created_at")
+    .insert({ body: body.trim(), recipient_id: recipientId })
+    .select("id,sender_id,recipient_id,body,read_at,created_at")
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function listNotifications() {
+  ensureBackend();
+  const { data, error } = await supabase.from("notifications").select("id,task_id,type,title,body,read_at,created_at").order("created_at", { ascending: false }).limit(30);
+  if (error) throw error;
+  return data || [];
+}
+
+export async function markNotificationRead(id) {
+  ensureBackend();
+  const { error } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead() {
+  ensureBackend();
+  const { error } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+  if (error) throw error;
+}
+
+export async function savePushSubscription(subscription) {
+  ensureBackend();
+  const keys = subscription.toJSON().keys;
+  const { error } = await supabase.from("push_subscriptions").upsert({
+    endpoint: subscription.endpoint,
+    p256dh: keys.p256dh,
+    auth: keys.auth,
+  }, { onConflict: "endpoint" });
+  if (error) throw error;
+}
+
+export async function uploadTaskAttachment(taskId, file) {
+  ensureBackend();
+  const { data: { user } } = await supabase.auth.getUser();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${user.id}/${taskId}/${crypto.randomUUID()}-${safeName}`;
+  const { error: uploadError } = await supabase.storage.from("task-attachments").upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) throw uploadError;
+  const { data, error } = await supabase.from("task_attachments").insert({ task_id: taskId, storage_path: path, file_name: file.name, content_type: file.type }).select().single();
+  if (error) {
+    await supabase.storage.from("task-attachments").remove([path]);
+    throw error;
+  }
+  return data;
+}
+
+export async function getAttachmentUrl(path) {
+  ensureBackend();
+  const { data, error } = await supabase.storage.from("task-attachments").createSignedUrl(path, 300);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function deleteTaskAttachment(attachment) {
+  ensureBackend();
+  const { error: storageError } = await supabase.storage.from("task-attachments").remove([attachment.storage_path]);
+  if (storageError) throw storageError;
+  const { error } = await supabase.from("task_attachments").delete().eq("id", attachment.id);
+  if (error) throw error;
+}
+
+export function subscribeToNotifications(onChange) {
+  if (!supabase) return () => {};
+  const channel = supabase.channel("recordate-notifications").on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, onChange).subscribe();
+  return () => supabase.removeChannel(channel);
 }
 
 export function subscribeToMessages(onChange) {

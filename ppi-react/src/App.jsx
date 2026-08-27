@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Login from "./components/Login";
+import Assistant from "./components/Assistant";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import {
   createTask,
@@ -14,6 +15,15 @@ import {
   updateTask,
   listSharedTasks,
   revokeSharedTask,
+  findUserByEmail,
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  savePushSubscription,
+  uploadTaskAttachment,
+  getAttachmentUrl,
+  deleteTaskAttachment,
+  subscribeToNotifications,
 } from "./dataService";
 import "./App.css";
 
@@ -49,6 +59,7 @@ const formatDate = (date) =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
   );
+const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
 
 function Brand() {
   return (
@@ -236,6 +247,7 @@ function TaskForm({ task, onSave, onCancel }) {
     },
   );
   const [error, setError] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState(null);
   const update = (field, value) =>
     setForm((current) => ({ ...current, [field]: value }));
   const submit = (event) => {
@@ -253,6 +265,7 @@ function TaskForm({ task, onSave, onCancel }) {
     }
     onSave({
       ...form,
+      attachmentFile,
       ...(task?.id ? { id: task.id } : {}),
       completed: task?.completed ?? false,
     });
@@ -323,6 +336,10 @@ function TaskForm({ task, onSave, onCancel }) {
           placeholder="Agrega detalles para recordar qué debes hacer..."
         />
       </label>
+      <label>
+        Adjuntar imagen
+        <input type="file" accept="image/*" onChange={(event) => setAttachmentFile(event.target.files?.[0] || null)} />
+      </label>
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -346,7 +363,7 @@ function PriorityBadge({ priority }) {
     </span>
   );
 }
-function TaskCard({ task, onToggle, onEdit, onDelete, onFocus }) {
+function TaskCard({ task, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
   return (
     <article className={`task-card ${task.completed ? "is-complete" : ""}`}>
       <button
@@ -370,6 +387,12 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onFocus }) {
         {task.description && (
           <p className="task-description">{task.description}</p>
         )}
+        {task.attachments?.map((attachment) => (
+          <span className="task-attachment" key={attachment.id}>
+            <button className="text-button" onClick={async () => { const url = await getAttachmentUrl(attachment.storage_path); window.open(url, "_blank", "noopener,noreferrer"); }}>Ver imagen</button>
+            <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>×</button>
+          </span>
+        ))}
       </div>
       <div className="task-actions">
         <button
@@ -418,8 +441,22 @@ function App() {
   const [shareEmail, setShareEmail] = useState("");
   const [shared, setShared] = useState([]);
   const [message, setMessage] = useState("");
+  const [notifications, setNotifications] = useState([]);
   const [alarmTask, setAlarmTask] = useState(null);
   const alarmedTasks = useRef(new Set());
+  const enablePushNotifications = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+      setNotice("Las notificaciones avanzadas requieren configurar Web Push.");
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return false;
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    const existing = await registration.pushManager.getSubscription();
+    const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
+    await savePushSubscription(subscription);
+    return true;
+  };
   useEffect(() => {
     const privatePaths = [
       "/dashboard",
@@ -453,10 +490,11 @@ function App() {
       return;
     }
     try {
-      const [currentProfile, currentTasks, currentShares] = await Promise.all([
+      const [currentProfile, currentTasks, currentShares, currentNotifications] = await Promise.all([
         ensureProfile(current.user),
         listTasks(),
         listSharedTasks(),
+        listNotifications(),
       ]);
       setProfile(currentProfile);
       setTasks(currentTasks);
@@ -467,6 +505,7 @@ function App() {
           email: "Usuario registrado",
         })),
       );
+      setNotifications(currentNotifications);
       setScreen("app");
     } catch {
       setNotice(
@@ -488,6 +527,11 @@ function App() {
     );
     return () => listener.subscription.unsubscribe();
   }, []);
+  useEffect(() => {
+    if (!session) return undefined;
+    const unsubscribe = subscribeToNotifications((payload) => setNotifications((current) => [payload.new, ...current]));
+    return unsubscribe;
+  }, [session]);
   useEffect(() => {
     if (!profile?.reminders_enabled) return undefined;
     const checkReminders = () => {
@@ -546,10 +590,16 @@ function App() {
       const saved = editingTask?.id
         ? await updateTask(task)
         : await createTask(task);
+      const attachment = task.attachmentFile
+        ? await uploadTaskAttachment(saved.id, task.attachmentFile)
+        : null;
+      const savedTask = attachment
+        ? { ...saved, attachments: [...(saved.attachments || []), attachment] }
+        : saved;
       setTasks((current) =>
         editingTask?.id
-          ? current.map((item) => (item.id === saved.id ? saved : item))
-          : [saved, ...current],
+          ? current.map((item) => (item.id === savedTask.id ? savedTask : item))
+          : [savedTask, ...current],
       );
       setShowForm(false);
       setEditingTask(null);
@@ -585,12 +635,22 @@ function App() {
     if (alarmTask) await toggleTask(alarmTask.id);
     setAlarmTask(null);
   };
+  const removeAttachment = async (taskId, attachment) => {
+    try {
+      await deleteTaskAttachment(attachment);
+      setTasks((current) => current.map((task) => task.id === taskId ? { ...task, attachments: task.attachments.filter((item) => item.id !== attachment.id) } : task));
+      setNotice("Imagen eliminada correctamente.");
+    } catch {
+      setNotice("No fue posible eliminar la imagen.");
+    }
+  };
   const logout = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
     setTasks([]);
     setShared([]);
+    setNotifications([]);
     setScreen("landing");
   };
   const navigate = (nextView) => {
@@ -696,6 +756,7 @@ function App() {
             }}
             onDelete={removeTask}
             onFocus={setFocusTask}
+            onAttachmentDelete={removeAttachment}
             empty="No tienes actividades registradas."
           />
         </>
@@ -713,6 +774,7 @@ function App() {
           }}
           onDelete={removeTask}
           onFocus={setFocusTask}
+          onAttachmentDelete={removeAttachment}
           empty="No tienes recordatorios pendientes."
         />
       );
@@ -733,6 +795,7 @@ function App() {
           }}
           onDelete={removeTask}
           onFocus={setFocusTask}
+          onAttachmentDelete={removeAttachment}
           empty="No tienes actividades priorizadas."
         />
       );
@@ -746,6 +809,7 @@ function App() {
           onEdit={() => {}}
           onDelete={() => {}}
           onFocus={setFocusTask}
+          onAttachmentDelete={removeAttachment}
           empty="No hay actividades disponibles para enfocar."
           focusOnly
         />
@@ -794,6 +858,7 @@ function App() {
           userName={userName}
           email={session.user.email}
           profile={profile}
+          onEnablePush={enablePushNotifications}
           onSettingsChange={async (settings) => {
             try {
               const updatedProfile = await updateProfileSettings(settings);
@@ -853,6 +918,7 @@ function App() {
           }}
           onDelete={removeTask}
           onFocus={setFocusTask}
+          onAttachmentDelete={removeAttachment}
           empty="No tienes tareas pendientes."
           compact
         />
@@ -927,20 +993,19 @@ function App() {
               aria-label="Ver notificaciones"
               onClick={() => setNotificationsOpen((current) => !current)}
             >
-              ♢<span className="notification-dot" />
+              ♢{notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
             </button>
             {notificationsOpen && (
               <div className="notification-panel">
                 <strong>Notificaciones</strong>
+                <button className="text-button" onClick={async () => { await markAllNotificationsRead(); setNotifications((current) => current.map((item) => ({ ...item, read_at: new Date().toISOString() }))); }}>Marcar todas como leídas</button>
                 <p>
-                  {pending.length
-                    ? `Tienes ${pending.length} actividades pendientes.`
-                    : "No hay novedades."}
+                  {notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}
                 </p>
-                {pending.slice(0, 2).map((task) => (
-                  <span key={task.id}>
-                    ◷ {task.title} · {formatDate(task.date)}
-                  </span>
+                {notifications.slice(0, 5).map((item) => (
+                  <button className="notification-item" key={item.id} onClick={async () => { if (!item.read_at) { await markNotificationRead(item.id); setNotifications((current) => current.map((notification) => notification.id === item.id ? { ...notification, read_at: new Date().toISOString() } : notification)); } }}>
+                    {item.title}<small>{item.body || ""}</small>
+                  </button>
                 ))}
               </div>
             )}
@@ -957,6 +1022,7 @@ function App() {
         )}
         <div className="content-area">{renderMain()}</div>
       </section>
+      <Assistant session={session} onActionDone={() => loadUserData(session)} />
       {showForm && (
         <div className="modal-backdrop">
           <section
@@ -1034,6 +1100,7 @@ function TaskList({
   empty,
   compact = false,
   focusOnly = false,
+  onAttachmentDelete,
 }) {
   return (
     <section className={`task-list-section ${compact ? "compact-list" : ""}`}>
@@ -1071,6 +1138,7 @@ function TaskList({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onFocus={onFocus}
+                onAttachmentDelete={onAttachmentDelete}
               />
             ),
           )}
@@ -1234,6 +1302,9 @@ function SharePanel({ tasks, email, setEmail, shared, onShare, onRevoke }) {
 }
 function Chat({ message, setMessage, userId }) {
   const [messages, setMessages] = useState([]);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipient, setRecipient] = useState(null);
+  const [chatError, setChatError] = useState("");
   useEffect(() => {
     let mounted = true;
     listMessages().then((data) => {
@@ -1251,10 +1322,15 @@ function Chat({ message, setMessage, userId }) {
     event.preventDefault();
     if (!message.trim()) return;
     try {
-      await sendMessage(message);
+      setChatError("");
+      const target = recipient || await findUserByEmail(recipientEmail);
+      if (!target) { setChatError("No encontramos un usuario con ese correo."); return; }
+      setRecipient(target);
+      const sent = await sendMessage(message, target.id);
+      setMessages((current) => [...current, sent]);
       setMessage("");
     } catch {
-      return;
+      setChatError("No fue posible enviar el mensaje.");
     }
   };
   return (
@@ -1266,13 +1342,14 @@ function Chat({ message, setMessage, userId }) {
       </p>
       <div className="chat-window">
         <div className="chat-contact">
-          <span className="avatar small-avatar">E</span>
+          <span className="avatar small-avatar">{recipient?.full_name?.charAt(0).toUpperCase() || "?"}</span>
           <span>
-            <b>Equipo PPI</b>
-            <small>Conversación del equipo</small>
+            <b>{recipient?.full_name || "Nuevo mensaje"}</b>
+            <small>{recipient?.email || "Escribe el correo del destinatario"}</small>
           </span>
           <i />
         </div>
+        <label className="chat-recipient">Destinatario <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" /></label>
         <div className="chat-messages">
           {messages.map((item, index) => (
             <p
@@ -1294,11 +1371,12 @@ function Chat({ message, setMessage, userId }) {
             Enviar
           </button>
         </form>
+        {chatError && <p className="form-error" role="alert">{chatError}</p>}
       </div>
     </section>
   );
 }
-function Profile({ view, userName, email, profile, onSettingsChange, onLogout }) {
+function Profile({ view, userName, email, profile, onSettingsChange, onLogout, onEnablePush }) {
   return (
     <section className="panel-view profile-view">
       <span className="eyebrow accent-label">Tu cuenta</span>
@@ -1331,7 +1409,7 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout })
               <b>Notificaciones del navegador</b>
               <small>Recibe avisos aunque estés en otra pestaña.</small>
             </span>
-            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && "Notification" in window && Notification.permission !== "granted") { const permission = await Notification.requestPermission(); if (permission !== "granted") return; } onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
+            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnablePush())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
           </label>
           <label>
             <span>
@@ -1352,6 +1430,10 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout })
         <div className="profile-info">
           <span>Institución</span>
           <b>IE La Candelaria · Medellín</b>
+          <span>Rol</span>
+          <b>{profile?.role || "student"}</b>
+          <span>Fecha de registro</span>
+          <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b>
           <span>Proyecto</span>
           <b>Proyecto Pedagógico Integrador · Grado 11</b>
         </div>
