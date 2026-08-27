@@ -14,6 +14,33 @@ function Assistant({ session, onActionDone }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
+  const request = async (body) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75000);
+    try {
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const responseText = await response.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        throw new Error(`El servidor devolvió una respuesta no válida (HTTP ${response.status}).`);
+      }
+      if (!response.ok) throw new Error(data?.error || `El servidor respondió HTTP ${response.status}.`);
+      if (!data) throw new Error("El servidor devolvió una respuesta vacía.");
+      return data;
+    } catch (error) {
+      if (error.name === "AbortError") throw new Error("El asistente tardó demasiado en responder.", { cause: error });
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
   const send = async (text = input) => {
     const content = text.trim();
     if (!content || loading) return;
@@ -22,13 +49,7 @@ function Assistant({ session, onActionDone }) {
     setInput("");
     setLoading(true);
     try {
-      const response = await fetch("/api/assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ messages: next, conversationId }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      const data = await request({ messages: next, conversationId });
       setMessages([...next, { role: "assistant", content: data.message }]);
       setConversationId(data.conversationId || conversationId);
       setPendingAction(data.pendingAction || null);
@@ -42,13 +63,7 @@ function Assistant({ session, onActionDone }) {
     if (!pendingAction) return;
     setLoading(true);
     try {
-      const response = await fetch("/api/assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ action: pendingAction }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      await request({ action: pendingAction });
       setMessages((current) => [...current, { role: "assistant", content: "Listo. Actualicé tu agenda correctamente." }]);
       setPendingAction(null);
       onActionDone();

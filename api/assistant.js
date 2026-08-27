@@ -11,15 +11,30 @@ const tools = [{ functionDeclarations: [
   { name: "delete_task", description: "Prepara eliminar una tarea. Siempre requiere confirmación.", parameters: { type: "OBJECT", properties: { id: { type: "STRING" } }, required: ["id"] } },
 ] }];
 
+const SUPABASE_TIMEOUT_MS = 15000;
+const GEMINI_TIMEOUT_MS = 20000;
+const MAX_TOOL_TURNS = 4;
+
 function json(status, body) {
   return { statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+}
+
+function fetchWithTimeout(input, init = {}, timeoutMs = SUPABASE_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timeout));
 }
 
 function serviceClient(token) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("Backend Supabase no configurado");
-  return createClient(url, key, { global: { headers: { Authorization: `Bearer ${token}` } } });
+  return createClient(url, key, {
+    global: {
+      headers: { Authorization: `Bearer ${token}` },
+      fetch: (input, init) => fetchWithTimeout(input, init),
+    },
+  });
 }
 
 async function executeTool(supabase, userId, name, args) {
@@ -70,29 +85,47 @@ async function persistMessage(supabase, userId, conversationId, role, content) {
 }
 
 async function callGemini(contents, systemInstruction) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
-  const response = await fetch(endpoint, {
+  const response = await fetchWithTimeout(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ systemInstruction: { parts: [{ text: systemInstruction }] }, contents, tools, generationConfig: { temperature: 0.2 } }),
-  });
-  if (!response.ok) throw new Error("Gemini request failed");
-  return response.json();
+  }, GEMINI_TIMEOUT_MS);
+  const responseText = await response.text();
+  let data;
+  try {
+    data = responseText ? JSON.parse(responseText) : null;
+  } catch {
+    throw new Error("Gemini devolvió una respuesta no válida");
+  }
+  if (!response.ok) {
+    const error = new Error(data?.error?.message || `Gemini respondió HTTP ${response.status}`);
+    error.name = "GeminiError";
+    throw error;
+  }
+  if (!data?.candidates?.[0]) throw new Error("Gemini no devolvió candidatos");
+  return data;
 }
 
 export default async function handler(req) {
+  console.log("[assistant] request received");
   if (req.method !== "POST") return json(405, { error: "Método no permitido" });
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
   if (!token) return json(401, { error: "Debes iniciar sesión para usar el asistente." });
   if (!process.env.GEMINI_API_KEY) return json(503, { error: "El asistente de IA aún no está configurado." });
+  let stage = "initializing";
   try {
+    stage = "creating Supabase client";
     const supabase = serviceClient(token);
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return json(401, { error: "Sesión inválida." });
+    console.log("[assistant] auth verified");
+    stage = "checking rate limit";
     const { data: allowed, error: limitError } = await supabase.rpc("consume_ai_request", { request_limit: 30 });
     if (limitError) return json(503, { error: "El asistente no está disponible temporalmente." });
     if (!allowed) return json(429, { error: "Has alcanzado temporalmente el límite de uso del asistente. Inténtalo nuevamente más tarde." });
+    console.log("[assistant] rate limit checked");
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const conversationId = body.conversationId;
     if (body.action) {
@@ -103,28 +136,41 @@ export default async function handler(req) {
     let activeConversationId = await persistMessage(supabase, user.id, conversationId, "user", messages.at(-1)?.content || "");
     const systemInstruction = `Eres el asistente académico de RECORDATE. Responde en español, de forma clara y breve. Hoy es ${new Date().toISOString().slice(0, 10)}. Nunca inventes tareas: usa las herramientas. Las acciones de modificación requieren confirmación y debes explicar qué se cambiaría.`;
     let contents = messages.map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] }));
+    stage = "calling Gemini";
+    console.log("[assistant] calling Gemini");
     let result = await callGemini(contents, systemInstruction);
+    console.log("[assistant] Gemini response received");
     let assistantContent = result.candidates?.[0]?.content;
     let pendingAction = null;
     let turns = 0;
-    while (assistantContent?.parts?.some((part) => part.functionCall) && turns < 4) {
+    while (assistantContent?.parts?.some((part) => part.functionCall) && turns < MAX_TOOL_TURNS) {
       turns += 1;
       contents.push(assistantContent);
       const responses = [];
       for (const part of assistantContent.parts.filter((item) => item.functionCall)) {
+        stage = "processing tool call";
+        console.log("[assistant] processing tool call");
         const call = part.functionCall;
         const toolResult = await executeTool(supabase, user.id, call.name, call.args || {});
         if (toolResult?.confirmation_required) pendingAction = toolResult.action;
         responses.push({ functionResponse: { name: call.name, response: toolResult } });
       }
       contents.push({ role: "user", parts: responses });
+      stage = "calling Gemini";
+      console.log("[assistant] calling Gemini");
       result = await callGemini(contents, "Resume solo datos obtenidos de las herramientas y, si hay confirmation_required, presenta la acción y pide confirmación.");
+      console.log("[assistant] Gemini response received");
       assistantContent = result.candidates?.[0]?.content;
     }
+    if (assistantContent?.parts?.some((part) => part.functionCall)) throw new Error("Se alcanzó el límite de llamadas a herramientas");
     const answer = assistantContent?.parts?.filter((part) => part.text).map((part) => part.text).join("\n") || "No pude obtener una respuesta.";
     activeConversationId = await persistMessage(supabase, user.id, activeConversationId, "assistant", answer);
+    console.log("[assistant] sending response");
     return json(200, { message: answer, pendingAction, conversationId: activeConversationId });
-  } catch {
+  } catch (error) {
+    console.error(`[assistant] failed at ${stage}: ${error?.message || "unknown error"}`);
+    if (error?.name === "GeminiError") return json(502, { error: "Gemini no pudo procesar la solicitud." });
+    if (error?.name === "AbortError") return json(504, { error: "El asistente tardó demasiado en responder." });
     return json(500, { error: "No fue posible procesar la solicitud del asistente." });
   }
 }
