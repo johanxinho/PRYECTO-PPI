@@ -85,7 +85,7 @@ async function persistMessage(supabase, userId, conversationId, role, content) {
 }
 
 async function callGemini(contents, systemInstruction) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.7-flash";
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
   const response = await fetchWithTimeout(endpoint, {
     method: "POST",
