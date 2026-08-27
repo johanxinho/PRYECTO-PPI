@@ -12,7 +12,10 @@ const tools = [{ functionDeclarations: [
 ] }];
 
 const SUPABASE_TIMEOUT_MS = 15000;
-const GEMINI_TIMEOUT_MS = 20000;
+const GEMINI_TIMEOUT_MS = 12000;
+const GEMINI_REQUEST_TIMEOUT_MS = 60000;
+const GEMINI_MAX_RETRIES = 2;
+const GEMINI_RETRY_DELAYS_MS = [500, 1000];
 const MAX_TOOL_TURNS = 4;
 
 function json(status, body) {
@@ -84,28 +87,64 @@ async function persistMessage(supabase, userId, conversationId, role, content) {
   return id;
 }
 
-async function callGemini(contents, systemInstruction) {
-  const model = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+function isRetryableGeminiError(error) {
+  return error?.name === "AbortError" || error?.name === "TypeError" || error?.status === 429 || error?.status >= 500;
+}
+
+class GeminiUnavailableError extends Error {
+  constructor() {
+    super("Gemini no está disponible temporalmente");
+    this.name = "GeminiUnavailableError";
+    this.status = 503;
+  }
+}
+
+async function callGeminiModel(contents, systemInstruction, model, deadline) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
-  const response = await fetchWithTimeout(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ systemInstruction: { parts: [{ text: systemInstruction }] }, contents, tools, generationConfig: { temperature: 0.2 } }),
-  }, GEMINI_TIMEOUT_MS);
-  const responseText = await response.text();
-  let data;
+  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt += 1) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new DOMException("Gemini request deadline exceeded", "AbortError");
+    try {
+      const response = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: systemInstruction }] }, contents, tools, generationConfig: { temperature: 0.2 } }),
+      }, Math.min(GEMINI_TIMEOUT_MS, remaining));
+      const responseText = await response.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        throw new Error("Gemini devolvió una respuesta no válida");
+      }
+      if (!response.ok) {
+        const error = new Error(data?.error?.message || `Gemini respondió HTTP ${response.status}`);
+        error.name = "GeminiError";
+        error.status = response.status;
+        throw error;
+      }
+      if (!data?.candidates?.[0]) throw new Error("Gemini no devolvió candidatos");
+      return data;
+    } catch (error) {
+      if (!isRetryableGeminiError(error) || attempt === GEMINI_MAX_RETRIES) throw error;
+      const delay = Math.min(GEMINI_RETRY_DELAYS_MS[attempt], deadline - Date.now());
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+      console.log(`[assistant] Gemini retry ${attempt + 1}/${GEMINI_MAX_RETRIES}`);
+    }
+  }
+  throw new GeminiUnavailableError();
+}
+
+async function callGemini(contents, systemInstruction, deadline) {
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || "gemini-3-flash-preview";
   try {
-    data = responseText ? JSON.parse(responseText) : null;
-  } catch {
-    throw new Error("Gemini devolvió una respuesta no válida");
+    return await callGeminiModel(contents, systemInstruction, primaryModel, deadline);
+  } catch (error) {
+    if (!isRetryableGeminiError(error) || primaryModel === fallbackModel || Date.now() >= deadline) throw error;
+    console.log("[assistant] switching to Gemini fallback model");
+    return callGeminiModel(contents, systemInstruction, fallbackModel, deadline);
   }
-  if (!response.ok) {
-    const error = new Error(data?.error?.message || `Gemini respondió HTTP ${response.status}`);
-    error.name = "GeminiError";
-    throw error;
-  }
-  if (!data?.candidates?.[0]) throw new Error("Gemini no devolvió candidatos");
-  return data;
 }
 
 export default async function handler(req) {
@@ -136,9 +175,10 @@ export default async function handler(req) {
     let activeConversationId = await persistMessage(supabase, user.id, conversationId, "user", messages.at(-1)?.content || "");
     const systemInstruction = `Eres el asistente académico de RECORDATE. Responde en español, de forma clara y breve. Hoy es ${new Date().toISOString().slice(0, 10)}. Nunca inventes tareas: usa las herramientas. Las acciones de modificación requieren confirmación y debes explicar qué se cambiaría.`;
     let contents = messages.map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] }));
+    const geminiDeadline = Date.now() + GEMINI_REQUEST_TIMEOUT_MS;
     stage = "calling Gemini";
     console.log("[assistant] calling Gemini");
-    let result = await callGemini(contents, systemInstruction);
+    let result = await callGemini(contents, systemInstruction, geminiDeadline);
     console.log("[assistant] Gemini response received");
     let assistantContent = result.candidates?.[0]?.content;
     let pendingAction = null;
@@ -158,7 +198,7 @@ export default async function handler(req) {
       contents.push({ role: "user", parts: responses });
       stage = "calling Gemini";
       console.log("[assistant] calling Gemini");
-      result = await callGemini(contents, "Resume solo datos obtenidos de las herramientas y, si hay confirmation_required, presenta la acción y pide confirmación.");
+      result = await callGemini(contents, "Resume solo datos obtenidos de las herramientas y, si hay confirmation_required, presenta la acción y pide confirmación.", geminiDeadline);
       console.log("[assistant] Gemini response received");
       assistantContent = result.candidates?.[0]?.content;
     }
@@ -169,7 +209,9 @@ export default async function handler(req) {
     return json(200, { message: answer, pendingAction, conversationId: activeConversationId });
   } catch (error) {
     console.error(`[assistant] failed at ${stage}: ${error?.message || "unknown error"}`);
-    if (error?.name === "GeminiError") return json(502, { error: "Gemini no pudo procesar la solicitud." });
+    if (error?.name === "GeminiUnavailableError" || error?.name === "GeminiError" && [429, 500, 502, 503, 504].includes(error.status)) {
+      return json(503, { error: "No pude conectar con el asistente en este momento. Inténtalo nuevamente en unos segundos." });
+    }
     if (error?.name === "AbortError") return json(504, { error: "El asistente tardó demasiado en responder." });
     return json(500, { error: "No fue posible procesar la solicitud del asistente." });
   }
