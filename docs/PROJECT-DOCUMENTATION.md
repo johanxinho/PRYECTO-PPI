@@ -237,7 +237,6 @@ La auditoría completa de dependencias se ejecuta con `npm audit`. La alerta que
 
 1. Separar los componentes de `App.jsx` en `components/`, `pages/` y `services/` cuando se vaya a ampliar el proyecto.
 2. Crear tablas Supabase para perfiles y actividades con `user_id`, timestamps y políticas RLS.
-3. Configurar el proveedor IA y probar las acciones confirmadas en un despliegue real.
 4. Añadir un emisor backend programado para enviar Push con la aplicación cerrada.
 5. Añadir pruebas de interacción para crear, editar, completar, eliminar, filtrar y enfocar actividades.
 
@@ -247,8 +246,6 @@ La aplicación principal pasa `npm run build` y `npm run lint` después de las m
 
 ## Funcionalidades avanzadas
 
-La función `api/assistant.js` implementa el asistente IA con Grok (xAI) como función serverless de Vercel. Valida el JWT con Supabase, limita las consultas conversacionales a 60 por hora mediante `consume_ai_request` y no descuenta las confirmaciones de acciones. Conserva la confirmación obligatoria para crear, editar, completar o eliminar tareas. Requiere estas variables privadas en Vercel: `XAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `ASSISTANT_ACTION_SECRET`; opcionalmente `XAI_MODEL` (por defecto, `grok-4.5-latest`). `ASSISTANT_ACTION_SECRET` debe ser un valor aleatorio y privado: firma las confirmaciones de crear, editar, completar y eliminar tareas, que expiran a los 10 minutos. La clave IA nunca debe usar el prefijo `VITE_`.
-
-El historial se guarda en `ai_conversations` y `ai_messages`, ambos protegidos por RLS. Las notificaciones persistentes viven en `notifications` y se generan para nuevas tareas, mensajes privados y tareas compartidas. Los mensajes requieren `sender_id` y `recipient_id`, y sus políticas RLS solo permiten ver al emisor o destinatario.
+El proyecto no incluye asistente ni proveedor de IA. Las notificaciones persistentes viven en `notifications` y se generan para nuevas tareas, mensajes privados y tareas compartidas. Los mensajes requieren `sender_id` y `recipient_id`, y sus políticas RLS solo permiten ver al emisor o destinatario.
 
 Las imágenes se almacenan en el bucket privado `task-attachments`; las URLs de lectura son firmadas y temporales. Las suscripciones Web Push se guardan en `push_subscriptions` con RLS. El Service Worker puede recibir Push, pero el envío automático con el sitio cerrado requiere un emisor backend con VAPID privado y cron. Esa parte necesita configurar `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` y un proceso programado; no se declara operativa hasta desplegar y probar ese emisor.
