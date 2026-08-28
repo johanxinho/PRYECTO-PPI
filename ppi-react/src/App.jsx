@@ -1297,6 +1297,7 @@ function Calendar({ tasks, onSelect }) {
 }
 function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke }) {
   const [sharingTaskId, setSharingTaskId] = useState(null);
+  const shareableTasks = tasks.filter((task) => task.userId === currentUserId && !task.completed);
   const sentShares = shared.filter((item) => item.owner_id === currentUserId);
   const receivedShares = shared.filter((item) => item.recipient_id === currentUserId);
   const share = async (task) => {
@@ -1324,10 +1325,9 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
             placeholder="compañero@ejemplo.com"
           />
         </label>
-        <div className="share-list">
-          {tasks
-            .filter((task) => !task.completed)
-            .map((task) => (
+        {shareableTasks.length ? (
+          <div className="share-list" aria-label="Actividades pendientes para compartir">
+            {shareableTasks.map((task) => (
               <div className="share-row" key={task.id}>
                 <span>
                   <b>{task.title}</b>
@@ -1339,12 +1339,19 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
                   className="outline-button"
                   onClick={() => share(task)}
                   disabled={sharingTaskId === task.id}
+                  type="button"
                 >
                   {sharingTaskId === task.id ? "Buscando..." : "Compartir"}
                 </button>
               </div>
             ))}
-        </div>
+          </div>
+        ) : (
+          <div className="share-empty" role="status">
+            <strong>No tienes actividades pendientes para compartir.</strong>
+            <span>Crea una actividad pendiente para enviarla a un compañero.</span>
+          </div>
+        )}
       </div>
       <div className="shared-success">
           <b>Actividades que compartiste</b>
