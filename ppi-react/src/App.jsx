@@ -60,6 +60,10 @@ const formatDate = (date) =>
     new Date(`${date}T12:00:00`),
   );
 const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
+const supabaseErrorMessage = (error, fallback) => {
+  const details = [error?.code && `Código: ${error.code}`, error?.message, error?.details && `Detalles: ${error.details}`, error?.hint && `Sugerencia: ${error.hint}`].filter(Boolean);
+  return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
+};
 
 function Brand() {
   return (
@@ -521,10 +525,8 @@ function App() {
       );
       setNotifications(currentNotifications);
       setScreen("app");
-    } catch {
-      setNotice(
-        "No fue posible cargar tu agenda. Verifica la configuración de Supabase.",
-      );
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible cargar tu agenda."));
     } finally {
       setLoadingData(false);
     }
@@ -849,8 +851,8 @@ function App() {
               await revokeSharedTask(share.id);
               setShared((current) => current.filter((item) => item.id !== share.id));
               setNotice("Acceso compartido revocado.");
-            } catch {
-              setNotice("No fue posible revocar el acceso compartido.");
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible revocar el acceso compartido."));
             }
           }}
           onShare={async (task) => {
@@ -882,7 +884,7 @@ function App() {
               setNotice("Agenda compartida correctamente.");
               return true;
             } catch (error) {
-              setNotice(error.message || "No fue posible compartir la agenda.");
+              setNotice(supabaseErrorMessage(error, "No fue posible compartir la agenda."));
               return false;
             }
           }}
