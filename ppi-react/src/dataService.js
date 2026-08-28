@@ -207,7 +207,14 @@ export async function savePushSubscription(subscription) {
 
 export async function uploadTaskAttachment(taskId, file) {
   ensureBackend();
+  if (!file || !file.type.startsWith("image/")) {
+    throw new Error("Solo puedes adjuntar imágenes.");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("La imagen no puede superar los 5 MB.");
+  }
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${user.id}/${taskId}/${crypto.randomUUID()}-${safeName}`;
   const { error: uploadError } = await supabase.storage.from("task-attachments").upload(path, file, { contentType: file.type, upsert: false });

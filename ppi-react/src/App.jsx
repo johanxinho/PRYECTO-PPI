@@ -248,6 +248,7 @@ function TaskForm({ task, onSave, onCancel }) {
   );
   const [error, setError] = useState("");
   const [attachmentFile, setAttachmentFile] = useState(null);
+  const [saving, setSaving] = useState(false);
   const update = (field, value) =>
     setForm((current) => ({ ...current, [field]: value }));
   const submit = (event) => {
@@ -263,12 +264,13 @@ function TaskForm({ task, onSave, onCancel }) {
       );
       return;
     }
+    setSaving(true);
     onSave({
       ...form,
       attachmentFile,
       ...(task?.id ? { id: task.id } : {}),
       completed: task?.completed ?? false,
-    });
+    }).finally(() => setSaving(false));
   };
   return (
     <form className="task-form" onSubmit={submit} noValidate>
@@ -338,7 +340,17 @@ function TaskForm({ task, onSave, onCancel }) {
       </label>
       <label>
         Adjuntar imagen
-        <input type="file" accept="image/*" onChange={(event) => setAttachmentFile(event.target.files?.[0] || null)} />
+        <input type="file" accept="image/*" onChange={(event) => {
+          const file = event.target.files?.[0] || null;
+          if (file && file.size > 5 * 1024 * 1024) {
+            setError("La imagen no puede superar los 5 MB.");
+            setAttachmentFile(null);
+            event.target.value = "";
+            return;
+          }
+          setError("");
+          setAttachmentFile(file);
+        }} />
       </label>
       {error && (
         <p className="form-error" role="alert">
@@ -346,8 +358,8 @@ function TaskForm({ task, onSave, onCancel }) {
         </p>
       )}
       <div className="form-actions">
-        <button className="primary-button" type="submit">
-          {task ? "Guardar cambios" : "Crear tarea"}
+        <button className="primary-button" type="submit" disabled={saving}>
+          {saving ? "Guardando..." : task ? "Guardar cambios" : "Crear tarea"}
         </button>
         <button className="text-button" type="button" onClick={onCancel}>
           Cancelar
@@ -443,6 +455,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [alarmTask, setAlarmTask] = useState(null);
+  const [loadingData, setLoadingData] = useState(false);
   const alarmedTasks = useRef(new Set());
   const enablePushNotifications = async () => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !import.meta.env.VITE_VAPID_PUBLIC_KEY) {
@@ -489,6 +502,7 @@ function App() {
       setShared([]);
       return;
     }
+    setLoadingData(true);
     try {
       const [currentProfile, currentTasks, currentShares, currentNotifications] = await Promise.all([
         ensureProfile(current.user),
@@ -511,6 +525,8 @@ function App() {
       setNotice(
         "No fue posible cargar tu agenda. Verifica la configuración de Supabase.",
       );
+    } finally {
+      setLoadingData(false);
     }
   };
   useEffect(() => {
@@ -604,8 +620,10 @@ function App() {
       setShowForm(false);
       setEditingTask(null);
       setNotice("Actividad guardada correctamente.");
+      return true;
     } catch {
       setNotice("No fue posible guardar la actividad.");
+      return false;
     }
   };
   const removeTask = async (id) => {
@@ -1020,7 +1038,14 @@ function App() {
             </button>
           </div>
         )}
-        <div className="content-area">{renderMain()}</div>
+        <div className="content-area">
+          {loadingData ? (
+            <div className="empty-state loading-state" role="status">
+              <span className="loading-spinner" />
+              Cargando tu agenda...
+            </div>
+          ) : renderMain()}
+        </div>
       </section>
       <Assistant session={session} onActionDone={() => loadUserData(session)} />
       {showForm && (
@@ -1047,6 +1072,7 @@ function App() {
               </button>
             </div>
             <TaskForm
+              key={editingTask?.id || "new-task"}
               task={editingTask}
               onSave={saveTask}
               onCancel={() => setShowForm(false)}
@@ -1305,11 +1331,17 @@ function Chat({ message, setMessage, userId }) {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipient, setRecipient] = useState(null);
   const [chatError, setChatError] = useState("");
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [sending, setSending] = useState(false);
   useEffect(() => {
     let mounted = true;
     listMessages().then((data) => {
       if (mounted) setMessages(data);
-    }).catch(() => {});
+    }).catch(() => {
+      if (mounted) setChatError("No fue posible cargar tus mensajes.");
+    }).finally(() => {
+      if (mounted) setLoadingMessages(false);
+    });
     const unsubscribe = subscribeToMessages((payload) => {
       if (payload.eventType === "INSERT") setMessages((current) => [...current, payload.new]);
     });
@@ -1323,6 +1355,7 @@ function Chat({ message, setMessage, userId }) {
     if (!message.trim()) return;
     try {
       setChatError("");
+      setSending(true);
       const target = recipient || await findUserByEmail(recipientEmail);
       if (!target) { setChatError("No encontramos un usuario con ese correo."); return; }
       setRecipient(target);
@@ -1331,6 +1364,8 @@ function Chat({ message, setMessage, userId }) {
       setMessage("");
     } catch {
       setChatError("No fue posible enviar el mensaje.");
+    } finally {
+      setSending(false);
     }
   };
   return (
@@ -1351,6 +1386,8 @@ function Chat({ message, setMessage, userId }) {
         </div>
         <label className="chat-recipient">Destinatario <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" /></label>
         <div className="chat-messages">
+          {loadingMessages && <p className="empty-copy" role="status">Cargando mensajes...</p>}
+          {!loadingMessages && !messages.length && <p className="empty-copy">Aún no hay mensajes en esta conversación.</p>}
           {messages.map((item, index) => (
             <p
               className={item.sender_id === userId ? "outgoing" : "incoming"}
@@ -1367,8 +1404,8 @@ function Chat({ message, setMessage, userId }) {
             onChange={(event) => setMessage(event.target.value)}
             placeholder="Escribe un mensaje..."
           />
-          <button className="primary-button" type="submit">
-            Enviar
+          <button className="primary-button" type="submit" disabled={sending || !message.trim()}>
+            {sending ? "Enviando..." : "Enviar"}
           </button>
         </form>
         {chatError && <p className="form-error" role="alert">{chatError}</p>}
