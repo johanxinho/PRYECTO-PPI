@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Login from "./components/Login";
-import Assistant from "./components/Assistant";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import {
   createTask,
@@ -26,6 +25,7 @@ import {
   subscribeToNotifications,
 } from "./dataService";
 import "./App.css";
+import "./Professional.css";
 
 const navItems = [
   "Inicio",
@@ -1071,7 +1071,6 @@ function App() {
           ) : renderMain()}
         </div>
       </section>
-      <Assistant session={session} onActionDone={() => loadUserData(session)} />
       {showForm && (
         <div className="modal-backdrop">
           <section
