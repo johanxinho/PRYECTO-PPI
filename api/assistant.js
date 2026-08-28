@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_TIMEOUT_MS = 15000;
@@ -7,6 +8,7 @@ const GROK_MAX_RETRIES = 2;
 const GROK_RETRY_DELAYS_MS = [900, 1800];
 const MAX_TOOL_TURNS = 4;
 const MAX_MESSAGE_LENGTH = 2000;
+const CONFIRMATION_TOKEN_TTL_MS = 10 * 60 * 1000;
 const taskFields = ["title", "subject", "date", "time", "priority", "description", "reminder", "completed"];
 const priorities = new Set(["Alta", "Media", "Baja"]);
 
@@ -134,6 +136,30 @@ async function callGrok(messages, deadline) {
   throw new Error("Grok no está disponible temporalmente");
 }
 function parseToolArguments(call) { try { return call.function?.arguments ? JSON.parse(call.function.arguments) : {}; } catch { return {}; } }
+function confirmationError(message, status = 400) { const error = new Error(message); error.name = "ConfirmationError"; error.status = status; return error; }
+function confirmationSecret() {
+  const secret = process.env.ASSISTANT_ACTION_SECRET;
+  if (!secret) throw confirmationError("El asistente no puede confirmar acciones hasta configurar ASSISTANT_ACTION_SECRET en Vercel.", 503);
+  return secret;
+}
+function signConfirmation(payload) { return createHmac("sha256", confirmationSecret()).update(payload).digest("base64url"); }
+function createConfirmationToken(userId, action) {
+  const payload = Buffer.from(JSON.stringify({ userId, action, expiresAt: Date.now() + CONFIRMATION_TOKEN_TTL_MS })).toString("base64url");
+  return `${payload}.${signConfirmation(payload)}`;
+}
+function readConfirmationToken(token, userId) {
+  const [payload, signature, ...extra] = String(token || "").split(".");
+  if (!payload || !signature || extra.length) throw confirmationError("La confirmación no es válida. Vuelve a solicitar la acción.");
+  const expected = signConfirmation(payload);
+  const receivedBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (receivedBuffer.length !== expectedBuffer.length || !timingSafeEqual(receivedBuffer, expectedBuffer)) throw confirmationError("La confirmación no es válida. Vuelve a solicitar la acción.");
+  let data;
+  try { data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")); } catch { throw confirmationError("La confirmación no es válida. Vuelve a solicitar la acción."); }
+  if (data.userId !== userId || !Number.isFinite(data.expiresAt) || data.expiresAt < Date.now()) throw confirmationError("La confirmación expiró. Vuelve a solicitar la acción.");
+  if (!["create_task", "update_task", "complete_task", "delete_task"].includes(data.action?.name) || !data.action?.args || typeof data.action.args !== "object") throw confirmationError("La confirmación no es válida. Vuelve a solicitar la acción.");
+  return data.action;
+}
 
 export default async function handler(req) {
   if (req.method !== "POST") return json(405, { error: "Método no permitido" });
@@ -147,7 +173,8 @@ export default async function handler(req) {
     const supabase = serviceClient(token);
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return json(401, { error: "Sesión inválida." });
-    if (body.action) return json(200, { result: await executeConfirmed(supabase, user.id, body.action), conversationId: body.conversationId || null });
+    if (body.action) return json(400, { error: "Las acciones deben confirmarse desde el asistente." });
+    if (body.confirmationToken) return json(200, { result: await executeConfirmed(supabase, user.id, readConfirmationToken(body.confirmationToken, user.id)), conversationId: body.conversationId || null });
     const messages = Array.isArray(body.messages) ? body.messages.slice(-20).map((message) => ({ role: message.role === "assistant" ? "assistant" : "user", content: String(message.content || "").slice(0, MAX_MESSAGE_LENGTH) })).filter((message) => message.content) : [];
     if (!messages.length) return json(400, { error: "Escribe un mensaje para el asistente." });
     stage = "checking rate limit";
@@ -166,7 +193,7 @@ export default async function handler(req) {
       grokMessages.push({ role: "assistant", content: response.content || "", tool_calls: response.tool_calls });
       for (const call of response.tool_calls) {
         const result = await executeTool(supabase, user.id, call.function?.name, parseToolArguments(call));
-        if (result?.confirmation_required) pendingAction = result.action;
+        if (result?.confirmation_required) pendingAction = { confirmationToken: createConfirmationToken(user.id, result.action) };
         grokMessages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
       }
     }
@@ -176,6 +203,7 @@ export default async function handler(req) {
     return json(200, { message: answer, pendingAction, conversationId: activeConversationId });
   } catch (error) {
     console.error(`[assistant] failed at ${stage}: ${error?.message || "unknown error"}`);
+    if (error?.name === "ConfirmationError") return json(error.status || 400, { error: error.message });
     if (error?.name === "GrokError" && error.status === 401) return json(503, { error: "La clave de Grok configurada en Vercel no es válida." });
     if (error?.name === "GrokError" && error.status === 429) return json(429, { error: "Grok alcanzó su límite temporal. Inténtalo en unos segundos." });
     if (error?.name === "GrokError" && [500, 502, 503, 504].includes(error.status)) return json(503, { error: "Grok no está disponible en este momento. Inténtalo de nuevo en unos segundos." });

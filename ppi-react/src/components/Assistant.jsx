@@ -67,7 +67,7 @@ function Assistant({ session, onActionDone }) {
     if (!pendingAction) return;
     setLoading(true);
     try {
-      await request({ action: pendingAction });
+      await request({ confirmationToken: pendingAction.confirmationToken });
       setMessages((current) => [...current, { role: "assistant", content: "Listo. Actualicé tu agenda correctamente." }]);
       setPendingAction(null);
       onActionDone();
