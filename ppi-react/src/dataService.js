@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 
 const taskColumns =
-  "id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+  "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
@@ -10,6 +10,7 @@ function ensureBackend() {
 function mapTask(task) {
   return {
     id: task.id,
+    userId: task.user_id,
     title: task.title,
     description: task.description || "",
     subject: task.subject,
@@ -132,10 +133,7 @@ export async function shareTask(taskId, email) {
 
 export async function listSharedTasks() {
   ensureBackend();
-  const { data, error } = await supabase
-    .from("task_shares")
-    .select("id,task_id,recipient_id,created_at")
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("list_task_shares");
   if (error) throw error;
   return data || [];
 }

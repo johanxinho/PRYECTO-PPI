@@ -101,7 +101,7 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 - `notice`: confirmaciones y errores de acciones.
 - `mobileNav`: apertura del sidebar en celular.
 - `notificationsOpen`: visibilidad del panel de notificaciones.
-- `shareEmail` y `shared`: estado visual temporal del flujo de compartir agendas.
+- `shareEmail` y `shared`: correo objetivo y relaciones persistentes de agendas compartidas, separadas entre enviadas y recibidas.
 - `message`: texto que se está escribiendo en el chat.
 
 ### Modelo de actividad

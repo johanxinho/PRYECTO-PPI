@@ -375,7 +375,8 @@ function PriorityBadge({ priority }) {
     </span>
   );
 }
-function TaskCard({ task, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
+function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
+  const canManage = task.userId === userId;
   return (
     <article className={`task-card ${task.completed ? "is-complete" : ""}`}>
       <button
@@ -402,7 +403,7 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onFocus, onAttachmentDelet
         {task.attachments?.map((attachment) => (
           <span className="task-attachment" key={attachment.id}>
             <button className="text-button" onClick={async () => { const url = await getAttachmentUrl(attachment.storage_path); window.open(url, "_blank", "noopener,noreferrer"); }}>Ver imagen</button>
-            <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>×</button>
+            {canManage && <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>×</button>}
           </span>
         ))}
       </div>
@@ -415,22 +416,22 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onFocus, onAttachmentDelet
         >
           ◎
         </button>
-        <button
+        {canManage && <button
           className="icon-button"
           aria-label="Editar tarea"
           title="Editar tarea"
           onClick={() => onEdit(task)}
         >
           ✎
-        </button>
-        <button
+        </button>}
+        {canManage && <button
           className="icon-button danger"
           aria-label="Eliminar tarea"
           title="Eliminar tarea"
           onClick={() => onDelete(task.id)}
         >
           ×
-        </button>
+        </button>}
       </div>
     </article>
   );
@@ -515,8 +516,7 @@ function App() {
       setShared(
         currentShares.map((share) => ({
           ...share,
-          task: currentTasks.find((task) => task.id === share.task_id)?.title || "Tarea compartida",
-          email: "Usuario registrado",
+          task: share.task_title || currentTasks.find((task) => task.id === share.task_id)?.title || "Tarea compartida",
         })),
       );
       setNotifications(currentNotifications);
@@ -766,6 +766,7 @@ function App() {
             />
           </div>
           <TaskList
+            userId={session.user.id}
             tasks={visibleTasks}
             onToggle={toggleTask}
             onEdit={(task) => {
@@ -782,6 +783,7 @@ function App() {
     if (view === "Recordatorios")
       return (
         <TaskList
+          userId={session.user.id}
           title="Recordatorios"
           subtitle="Las próximas fechas que merecen tu atención."
           tasks={pending}
@@ -799,6 +801,7 @@ function App() {
     if (view === "Prioridades")
       return (
         <TaskList
+          userId={session.user.id}
           title="Prioridades"
           subtitle="Ordena tu energía empezando por lo más importante."
           tasks={[...pending].sort(
@@ -820,6 +823,7 @@ function App() {
     if (view === "Modo enfoque")
       return (
         <TaskList
+          userId={session.user.id}
           title="Modo enfoque"
           subtitle="Elige una actividad para trabajar sin distracciones."
           tasks={pending}
@@ -836,6 +840,7 @@ function App() {
       return (
         <SharePanel
           tasks={tasks}
+          currentUserId={session.user.id}
           email={shareEmail}
           setEmail={setShareEmail}
           shared={shared}
@@ -849,20 +854,36 @@ function App() {
             }
           }}
           onShare={async (task) => {
-            if (!shareEmail.includes("@")) {
+            const normalizedEmail = shareEmail.trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
               setNotice("Escribe un correo válido para compartir.");
-              return;
+              return false;
             }
             try {
-              const createdShare = await shareTask(task.id, shareEmail);
+              const recipient = await findUserByEmail(normalizedEmail);
+              if (!recipient) {
+                setNotice("No existe un usuario registrado con ese correo.");
+                return false;
+              }
+              if (recipient.id === session.user.id) {
+                setNotice("No puedes compartir una actividad contigo mismo.");
+                return false;
+              }
+              if (shared.some((share) => share.task_id === task.id && share.recipient_id === recipient.id)) {
+                setNotice("Esta actividad ya está compartida con ese usuario.");
+                return false;
+              }
+              const createdShare = await shareTask(task.id, recipient.email);
               setShared((current) => [
                 ...current,
-                { ...createdShare, task: task.title, email: shareEmail },
+                { ...createdShare, task: task.title, recipient_email: recipient.email, recipient_name: recipient.full_name },
               ]);
               setShareEmail("");
               setNotice("Agenda compartida correctamente.");
+              return true;
             } catch (error) {
               setNotice(error.message || "No fue posible compartir la agenda.");
+              return false;
             }
           }}
         />
@@ -928,6 +949,7 @@ function App() {
           </button>
         </section>
         <TaskList
+          userId={session.user.id}
           tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)}
           onToggle={toggleTask}
           onEdit={(task) => {
@@ -1118,6 +1140,7 @@ function Stats({ stats }) {
 function TaskList({
   title,
   subtitle,
+  userId,
   tasks,
   onToggle,
   onEdit,
@@ -1160,6 +1183,7 @@ function TaskList({
               <TaskCard
                 key={task.id}
                 task={task}
+                userId={userId}
                 onToggle={onToggle}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -1270,14 +1294,24 @@ function Calendar({ tasks, onSelect }) {
     </section>
   );
 }
-function SharePanel({ tasks, email, setEmail, shared, onShare, onRevoke }) {
+function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke }) {
+  const [sharingTaskId, setSharingTaskId] = useState(null);
+  const sentShares = shared.filter((item) => item.owner_id === currentUserId);
+  const receivedShares = shared.filter((item) => item.recipient_id === currentUserId);
+  const share = async (task) => {
+    setSharingTaskId(task.id);
+    try {
+      await onShare(task);
+    } finally {
+      setSharingTaskId(null);
+    }
+  };
   return (
     <section className="panel-view">
       <span className="eyebrow accent-label">Coordina con tu equipo</span>
       <h2>Compartir agendas</h2>
       <p className="panel-intro">
-        Envía una actividad a un compañero. La conexión con usuarios reales se
-        habilita al configurar el backend.
+        Comparte actividades con compañeros registrados y consulta las que han compartido contigo.
       </p>
       <div className="share-form">
         <label>
@@ -1302,27 +1336,32 @@ function SharePanel({ tasks, email, setEmail, shared, onShare, onRevoke }) {
                 </span>
                 <button
                   className="outline-button"
-                  onClick={() => onShare(task)}
+                  onClick={() => share(task)}
+                  disabled={sharingTaskId === task.id}
                 >
-                  Compartir
+                  {sharingTaskId === task.id ? "Buscando..." : "Compartir"}
                 </button>
               </div>
             ))}
         </div>
       </div>
-      {shared.length > 0 && (
-        <div className="shared-success">
-          <b>Agendas preparadas</b>
-          {shared.map((item, index) => (
-            <span key={`${item.email}-${index}`}>
-              ✓ {item.task || "Tarea compartida"} · {item.email || "Usuario registrado"}
+      <div className="shared-success">
+          <b>Actividades que compartiste</b>
+          {sentShares.length ? sentShares.map((item) => (
+            <span key={item.id}>
+              ✓ {item.task || "Tarea compartida"} · {item.recipient_name || item.recipient_email}
               <button className="text-button" onClick={() => onRevoke(item)}>
                 Revocar
               </button>
             </span>
-          ))}
-        </div>
-      )}
+          )) : <small>Aún no has compartido actividades.</small>}
+      </div>
+      <div className="shared-success received-shares">
+        <b>Actividades compartidas contigo</b>
+        {receivedShares.length ? receivedShares.map((item) => (
+          <span key={item.id}>↓ {item.task || "Tarea compartida"} · {item.owner_name || item.owner_email}</span>
+        )) : <small>No tienes actividades compartidas por otros usuarios.</small>}
+      </div>
     </section>
   );
 }
