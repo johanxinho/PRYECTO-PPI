@@ -49,3 +49,30 @@ $$;
 
 revoke all on function public.list_task_shares() from public;
 grant execute on function public.list_task_shares() to authenticated;
+revoke all on function public.share_task_by_email(uuid, text) from public;
+grant execute on function public.share_task_by_email(uuid, text) to authenticated;
+revoke all on function public.find_profile_by_email(text) from public;
+grant execute on function public.find_profile_by_email(text) to authenticated;
+
+drop policy if exists "attachments owner rows" on public.task_attachments;
+drop policy if exists "attachments owner read" on public.task_attachments;
+drop policy if exists "attachments shared read" on public.task_attachments;
+drop policy if exists "attachments owner insert" on public.task_attachments;
+drop policy if exists "attachments owner update" on public.task_attachments;
+drop policy if exists "attachments owner delete" on public.task_attachments;
+create policy "attachments owner read" on public.task_attachments for select using (user_id = auth.uid());
+create policy "attachments shared read" on public.task_attachments for select using (exists (select 1 from public.task_shares where task_id = task_attachments.task_id and recipient_id = auth.uid()));
+create policy "attachments owner insert" on public.task_attachments for insert with check (user_id = auth.uid() and exists (select 1 from public.tasks where id = task_id and user_id = auth.uid()));
+create policy "attachments owner update" on public.task_attachments for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "attachments owner delete" on public.task_attachments for delete using (user_id = auth.uid());
+
+drop policy if exists "task attachments own read" on storage.objects;
+drop policy if exists "task attachments shared read" on storage.objects;
+create policy "task attachments own read" on storage.objects for select using (bucket_id = 'task-attachments' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "task attachments shared read" on storage.objects for select using (
+  bucket_id = 'task-attachments' and exists (
+    select 1 from public.task_attachments attachment
+    join public.task_shares share on share.task_id = attachment.task_id
+    where attachment.storage_path = name and share.recipient_id = auth.uid()
+  )
+);

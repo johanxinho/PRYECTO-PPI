@@ -33,8 +33,9 @@ function verificationErrorMessage(error) {
   return "No fue posible verificar el código. Inténtalo de nuevo.";
 }
 
-function Login({ onLogin, onBack }) {
+function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(recovery);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,6 +45,49 @@ function Login({ onLogin, onBack }) {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const requestRecovery = async (event) => {
+    event.preventDefault();
+    if (!email.includes("@")) {
+      setMessage("Escribe un correo electrónico válido.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
+      setMessage(error ? "No fue posible enviar el enlace de recuperación." : "Te enviamos un enlace para recuperar tu contraseña.");
+    } catch {
+      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const updatePassword = async (event) => {
+    event.preventDefault();
+    if (newPassword.length < 6) {
+      setMessage("La contraseña debe tener mínimo 6 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setMessage("Las contraseñas no coinciden.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) setMessage("No fue posible actualizar la contraseña.");
+      else {
+        setMessage("Contraseña actualizada correctamente.");
+        setIsRecovery(false);
+        onRecoveryDone?.();
+      }
+    } catch {
+      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
   const verifyCode = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -162,12 +206,13 @@ function Login({ onLogin, onBack }) {
           <Brand />
         </div>
         <span className="eyebrow accent-label">
-          {needsVerification ? "Confirma tu correo" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
+          {needsVerification ? "Confirma tu correo" : isRecovery ? "Recupera tu acceso" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
         </span>
-        <h2>{needsVerification ? "Verifica tu cuenta." : isSignUp ? "Crea tu cuenta." : "Entra a tu agenda."}</h2>
+        <h2>{needsVerification ? "Verifica tu cuenta." : isRecovery ? recovery ? "Crea una nueva contraseña." : "Recupera tu contraseña." : isSignUp ? "Crea tu cuenta." : "Entra a tu agenda."}</h2>
         <p className="auth-subtitle">
           {needsVerification
             ? `Escribe el código que enviamos a ${verificationEmail}.`
+            : isRecovery ? recovery ? "Elige una contraseña nueva para volver a entrar." : "Te enviaremos un enlace seguro a tu correo."
             : isSignUp
               ? "Organiza tus actividades académicas desde el primer día."
               : "Tus tareas y recordatorios te están esperando."}
@@ -198,7 +243,16 @@ function Login({ onLogin, onBack }) {
               Volver al registro
             </button>
           </>
-        ) : <form onSubmit={handleSubmit} noValidate>
+        ) : isRecovery && recovery ? <form onSubmit={updatePassword} noValidate>
+          <label> Nueva contraseña <input type="password" minLength="6" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
+          <label> Confirmar nueva contraseña <input type="password" minLength="6" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} required /></label>
+          {message && <p className="auth-message" role="alert">{message}</p>}
+          <button className="primary-button auth-submit" type="submit" disabled={loading}>{loading ? "Actualizando..." : "Actualizar contraseña"}</button>
+        </form> : isRecovery ? <form onSubmit={requestRecovery} noValidate>
+          <label>Correo electrónico <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+          {message && <p className="auth-message" role="alert">{message}</p>}
+          <button className="primary-button auth-submit" type="submit" disabled={loading}>{loading ? "Enviando..." : "Enviar enlace"}</button>
+        </form> : <form onSubmit={handleSubmit} noValidate>
           {isSignUp && (
             <label>
               Nombre
@@ -258,11 +312,15 @@ function Login({ onLogin, onBack }) {
             <span>→</span>
           </button>
         </form>}
+        {!needsVerification && !isRecovery && !isSignUp && (
+          <button className="switch-button" type="button" onClick={() => { setIsRecovery(true); setMessage(""); }}>¿Olvidaste tu contraseña?</button>
+        )}
         {!needsVerification && (
         <button
           className="switch-button"
           type="button"
           onClick={() => {
+            if (isRecovery) { setIsRecovery(false); setMessage(""); return; }
             setIsSignUp((current) => !current);
             setMessage("");
           }}

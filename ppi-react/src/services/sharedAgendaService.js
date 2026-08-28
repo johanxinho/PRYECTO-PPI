@@ -4,28 +4,17 @@ export const sharedAgendaService = {
   // Share agenda with another user
   async shareAgenda(userId, targetEmail, tasks = []) {
     try {
-      // Find target user by email
-      const { data: targetUser, error: findError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', targetEmail)
-        .single();
-
-      if (findError) throw new Error('Usuario no encontrado');
-
-      // Create shared agenda record
-      const { data, error } = await supabase.from('shared_agendas').insert({
-        owner_id: userId,
-        shared_with_id: targetUser.id,
-        tasks_data: tasks,
-        created_at: new Date().toISOString(),
-        status: 'active',
-      });
-
-      if (error) throw error;
-      return { success: true, data };
+      if (!tasks.length) throw new Error('No hay actividades para compartir');
+      const results = await Promise.all(tasks.map(async (task) => {
+        const { data, error } = await supabase.rpc('share_task_by_email', {
+          requested_task_id: task.id,
+          recipient_email: targetEmail.trim().toLowerCase(),
+        });
+        if (error) throw error;
+        return data;
+      }));
+      return { success: true, data: results };
     } catch (error) {
-      console.error('Error sharing agenda:', error);
       return { success: false, error: error.message };
     }
   },
@@ -34,17 +23,15 @@ export const sharedAgendaService = {
   async getSharedAgendas(userId) {
     try {
       const { data, error } = await supabase
-        .from('shared_agendas')
-        .select('*, owner:profiles!owner_id(full_name, email)')
-        .eq('shared_with_id', userId)
-        .eq('status', 'active')
+        .from('task_shares')
+        .select('id,task_id,owner_id,recipient_id,created_at,tasks(title,subject,date,time,priority,completed)')
+        .or(`owner_id.eq.${userId},recipient_id.eq.${userId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching shared agendas:', error);
-      return [];
+      return { success: false, error: error.message };
     }
   },
 
@@ -52,14 +39,13 @@ export const sharedAgendaService = {
   async revokeSharedAgenda(agendaId) {
     try {
       const { error } = await supabase
-        .from('shared_agendas')
-        .update({ status: 'revoked' })
+        .from('task_shares')
+        .delete()
         .eq('id', agendaId);
 
       if (error) throw error;
       return { success: true };
     } catch (error) {
-      console.error('Error revoking agenda:', error);
       return { success: false, error: error.message };
     }
   },

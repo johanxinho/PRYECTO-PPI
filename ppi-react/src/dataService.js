@@ -240,16 +240,16 @@ export async function deleteTaskAttachment(attachment) {
   if (error) throw error;
 }
 
-export function subscribeToNotifications(onChange) {
+export function subscribeToNotifications(userId, onChange) {
   if (!supabase) return () => {};
-  const channel = supabase.channel("recordate-notifications").on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, onChange).subscribe();
+  const channel = supabase.channel(`recordate-notifications-${userId}`).on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, onChange).subscribe();
   return () => supabase.removeChannel(channel);
 }
 
-export function subscribeToMessages(onChange) {
+export function subscribeToMessages(userId, onChange) {
   if (!supabase) return () => {};
   const channel = supabase
-    .channel("recordate-messages")
+    .channel(`recordate-messages-${userId}`)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "messages" },

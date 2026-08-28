@@ -381,10 +381,21 @@ function PriorityBadge({ priority }) {
 }
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
   const canManage = task.userId === userId;
+  const [attachmentError, setAttachmentError] = useState("");
+  const openAttachment = async (attachment) => {
+    try {
+      setAttachmentError("");
+      const url = await getAttachmentUrl(attachment.storage_path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setAttachmentError(supabaseErrorMessage(error, "No fue posible abrir la imagen."));
+    }
+  };
   return (
     <article className={`task-card ${task.completed ? "is-complete" : ""}`}>
       <button
         className="check-button"
+        disabled={!canManage}
         aria-label={
           task.completed ? "Marcar como pendiente" : "Marcar como completada"
         }
@@ -406,10 +417,11 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
         )}
         {task.attachments?.map((attachment) => (
           <span className="task-attachment" key={attachment.id}>
-            <button className="text-button" onClick={async () => { const url = await getAttachmentUrl(attachment.storage_path); window.open(url, "_blank", "noopener,noreferrer"); }}>Ver imagen</button>
+            <button className="text-button" onClick={() => openAttachment(attachment)}>Ver imagen</button>
             {canManage && <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>×</button>}
           </span>
         ))}
+        {attachmentError && <small className="form-error" role="alert">{attachmentError}</small>}
       </div>
       <div className="task-actions">
         <button
@@ -443,6 +455,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
 
 function App() {
   const [session, setSession] = useState(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [profile, setProfile] = useState(null);
   const [screen, setScreen] = useState("landing");
   const [view, setView] = useState("Inicio");
@@ -455,6 +468,7 @@ function App() {
   const [notice, setNotice] = useState("");
   const [mobileNav, setMobileNav] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationAction, setNotificationAction] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
   const [shared, setShared] = useState([]);
   const [message, setMessage] = useState("");
@@ -538,8 +552,13 @@ function App() {
       loadUserData(current);
     });
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, current) => {
+      (event, current) => {
         setSession(current);
+        if (event === "PASSWORD_RECOVERY") {
+          setPasswordRecovery(true);
+          setScreen("auth");
+          return;
+        }
         loadUserData(current);
       },
     );
@@ -547,7 +566,7 @@ function App() {
   }, []);
   useEffect(() => {
     if (!session) return undefined;
-    const unsubscribe = subscribeToNotifications((payload) => setNotifications((current) => [payload.new, ...current]));
+    const unsubscribe = subscribeToNotifications(session.user.id, (payload) => setNotifications((current) => current.some((item) => item.id === payload.new.id) ? current : [payload.new, ...current]));
     return unsubscribe;
   }, [session]);
   useEffect(() => {
@@ -585,7 +604,7 @@ function App() {
     profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
   const visibleTasks = useMemo(
     () =>
-      tasks.filter((task) =>
+      (profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks).filter((task) =>
         `${task.title} ${task.subject} ${task.description}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -594,7 +613,7 @@ function App() {
         (!filters.status || (filters.status === "Completada" ? task.completed : !task.completed)) &&
         (!filters.date || task.date === filters.date),
       ),
-    [tasks, query, filters],
+    [tasks, query, filters, profile?.show_completed],
   );
   const pending = tasks.filter((task) => !task.completed);
   const stats = {
@@ -623,8 +642,8 @@ function App() {
       setEditingTask(null);
       setNotice("Actividad guardada correctamente.");
       return true;
-    } catch {
-      setNotice("No fue posible guardar la actividad.");
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible guardar la actividad."));
       return false;
     }
   };
@@ -634,8 +653,8 @@ function App() {
       await deleteTask(id);
       setTasks((current) => current.filter((task) => task.id !== id));
       setNotice("Actividad eliminada.");
-    } catch {
-      setNotice("No fue posible eliminar la actividad.");
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible eliminar la actividad."));
     }
   };
   const toggleTask = async (id) => {
@@ -647,8 +666,8 @@ function App() {
         current.map((item) => (item.id === id ? updated : item)),
       );
       setFocusTask((current) => (current?.id === id ? updated : current));
-    } catch {
-      setNotice("No fue posible actualizar la actividad.");
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible actualizar la actividad."));
     }
   };
   const completeAlarmTask = async () => {
@@ -660,8 +679,8 @@ function App() {
       await deleteTaskAttachment(attachment);
       setTasks((current) => current.map((task) => task.id === taskId ? { ...task, attachments: task.attachments.filter((item) => item.id !== attachment.id) } : task));
       setNotice("Imagen eliminada correctamente.");
-    } catch {
-      setNotice("No fue posible eliminar la imagen.");
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible eliminar la imagen."));
     }
   };
   const logout = async () => {
@@ -673,6 +692,26 @@ function App() {
     setNotifications([]);
     setScreen("landing");
   };
+  const markAllRead = async () => {
+    setNotificationAction(true);
+    try {
+      await markAllNotificationsRead();
+      setNotifications((current) => current.map((item) => ({ ...item, read_at: new Date().toISOString() })));
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible marcar las notificaciones."));
+    } finally {
+      setNotificationAction(false);
+    }
+  };
+  const markOneRead = async (notification) => {
+    if (notification.read_at) return;
+    try {
+      await markNotificationRead(notification.id);
+      setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read_at: new Date().toISOString() } : item));
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
+    }
+  };
   const navigate = (nextView) => {
     setView(nextView);
     const route = { Inicio: "/dashboard", "Mis tareas": "/tareas", Calendario: "/calendario", Recordatorios: "/recordatorios", Prioridades: "/prioridades", "Modo enfoque": "/enfoque", "Compartir agendas": "/compartir", Mensajes: "/mensajes", Perfil: "/perfil", Configuración: "/configuracion" }[nextView];
@@ -682,13 +721,16 @@ function App() {
   };
   if (screen === "landing")
     return <Landing onStart={() => setScreen("auth")} />;
-  if (!session)
+  if (!session || passwordRecovery)
     return (
       <Login
+        recovery={passwordRecovery}
         onLogin={(nextSession) => {
           setSession(nextSession);
+          setPasswordRecovery(false);
           loadUserData(nextSession);
         }}
+        onRecoveryDone={() => setPasswordRecovery(false)}
         onBack={() => setScreen("landing")}
       />
     );
@@ -721,7 +763,7 @@ function App() {
         </section>
       );
     if (view === "Calendario")
-      return <Calendar tasks={tasks} onSelect={setFocusTask} />;
+      return <Calendar tasks={profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks} onSelect={setFocusTask} />;
     if (view === "Mis tareas")
       return (
         <>
@@ -905,8 +947,8 @@ function App() {
               const updatedProfile = await updateProfileSettings(settings);
               setProfile(updatedProfile);
               setNotice("Configuración guardada correctamente.");
-            } catch {
-              setNotice("No fue posible guardar la configuración.");
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible guardar la configuración."));
             }
           }}
           onLogout={logout}
@@ -1040,12 +1082,12 @@ function App() {
             {notificationsOpen && (
               <div className="notification-panel">
                 <strong>Notificaciones</strong>
-                <button className="text-button" onClick={async () => { await markAllNotificationsRead(); setNotifications((current) => current.map((item) => ({ ...item, read_at: new Date().toISOString() }))); }}>Marcar todas como leídas</button>
+                <button className="text-button" onClick={markAllRead} disabled={notificationAction}>Marcar todas como leídas</button>
                 <p>
                   {notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}
                 </p>
                 {notifications.slice(0, 5).map((item) => (
-                  <button className="notification-item" key={item.id} onClick={async () => { if (!item.read_at) { await markNotificationRead(item.id); setNotifications((current) => current.map((notification) => notification.id === item.id ? { ...notification, read_at: new Date().toISOString() } : notification)); } }}>
+                  <button className="notification-item" key={item.id} onClick={() => markOneRead(item)}>
                     {item.title}<small>{item.body || ""}</small>
                   </button>
                 ))}
@@ -1389,14 +1431,14 @@ function Chat({ message, setMessage, userId }) {
     }).finally(() => {
       if (mounted) setLoadingMessages(false);
     });
-    const unsubscribe = subscribeToMessages((payload) => {
-      if (payload.eventType === "INSERT") setMessages((current) => [...current, payload.new]);
+    const unsubscribe = subscribeToMessages(userId, (payload) => {
+      if (payload.eventType === "INSERT" && (payload.new.sender_id === userId || payload.new.recipient_id === userId)) setMessages((current) => current.some((item) => item.id === payload.new.id) ? current : [...current, payload.new]);
     });
     return () => {
       mounted = false;
       unsubscribe();
     };
-  }, []);
+  }, [userId]);
   const send = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
@@ -1407,10 +1449,10 @@ function Chat({ message, setMessage, userId }) {
       if (!target) { setChatError("No encontramos un usuario con ese correo."); return; }
       setRecipient(target);
       const sent = await sendMessage(message, target.id);
-      setMessages((current) => [...current, sent]);
+      setMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
       setMessage("");
-    } catch {
-      setChatError("No fue posible enviar el mensaje.");
+    } catch (error) {
+      setChatError(supabaseErrorMessage(error, "No fue posible enviar el mensaje."));
     } finally {
       setSending(false);
     }
@@ -1434,8 +1476,9 @@ function Chat({ message, setMessage, userId }) {
         <label className="chat-recipient">Destinatario <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" /></label>
         <div className="chat-messages">
           {loadingMessages && <p className="empty-copy" role="status">Cargando mensajes...</p>}
-          {!loadingMessages && !messages.length && <p className="empty-copy">Aún no hay mensajes en esta conversación.</p>}
-          {messages.map((item, index) => (
+          {!loadingMessages && !recipient && <p className="empty-copy">Busca un compañero para iniciar una conversación.</p>}
+          {!loadingMessages && recipient && !messages.some((item) => item.sender_id === recipient.id || item.recipient_id === recipient.id) && <p className="empty-copy">Aún no hay mensajes con este compañero.</p>}
+          {messages.filter((item) => recipient && (item.sender_id === recipient.id || item.recipient_id === recipient.id)).map((item, index) => (
             <p
               className={item.sender_id === userId ? "outgoing" : "incoming"}
               key={item.id || `${item.body}-${index}`}
