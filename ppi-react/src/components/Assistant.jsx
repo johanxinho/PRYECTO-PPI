@@ -17,8 +17,8 @@ function Assistant({ session, onActionDone }) {
   const [conversationId, setConversationId] = useState(null);
   const request = async (body) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 75000);
-    const retryNotice = setTimeout(() => setRetrying(true), 10000);
+    const timeout = setTimeout(() => controller.abort(), 95000);
+    const retryNotice = setTimeout(() => setRetrying(true), 16000);
     try {
       const response = await fetch("/api/assistant", {
         method: "POST",
@@ -88,7 +88,7 @@ function Assistant({ session, onActionDone }) {
         <div className="assistant-messages">
           {!messages.length && <div className="assistant-welcome"><strong>¿En qué te ayudo?</strong><p>Consulta tus tareas o organiza tu semana.</p><div className="assistant-suggestions">{suggestions.map((suggestion) => <button key={suggestion} onClick={() => send(suggestion)}>{suggestion}</button>)}</div></div>}
           {messages.map((item, index) => <p className={`assistant-message ${item.role}`} key={`${item.role}-${index}`}>{item.content}</p>)}
-          {loading && <p className="assistant-typing" aria-live="polite">{retrying ? "El asistente está recibiendo muchas solicitudes. Estoy intentando nuevamente..." : "Escribiendo..."}</p>}
+          {loading && <p className="assistant-typing" aria-live="polite">{retrying ? "La respuesta está tardando un poco más de lo habitual..." : "Pensando..."}</p>}
         </div>
         {pendingAction && <div className="assistant-confirm"><strong>¿Confirmas esta acción?</strong><div><button className="primary-button" onClick={confirmAction}>Confirmar</button><button className="text-button" onClick={() => setPendingAction(null)}>Cancelar</button></div></div>}
         <form className="assistant-input" onSubmit={(event) => { event.preventDefault(); send(); }}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Pregunta sobre tu agenda..." aria-label="Mensaje para el asistente" /><button className="primary-button" disabled={loading}>Enviar</button></form>

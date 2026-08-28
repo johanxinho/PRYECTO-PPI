@@ -26,6 +26,7 @@ import {
   subscribeToNotifications,
 } from "./dataService";
 import "./App.css";
+import "./Professional.css";
 
 const navItems = [
   "Inicio",
