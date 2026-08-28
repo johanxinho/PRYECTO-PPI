@@ -247,7 +247,7 @@ La aplicación principal pasa `npm run build` y `npm run lint` después de las m
 
 ## Funcionalidades avanzadas
 
-La función `api/assistant.js` implementa el asistente IA con Gemini como función serverless de Vercel. Valida el JWT con Supabase, limita cada consulta al usuario autenticado a 30 solicitudes por hora mediante `consume_ai_request`, y exige confirmación para crear, editar, completar o eliminar tareas. Requiere estas variables privadas en Vercel: `GEMINI_API_KEY`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`; opcionalmente `GEMINI_MODEL`. La clave IA nunca debe usar el prefijo `VITE_`.
+La función `api/assistant.js` implementa el asistente IA con Grok (xAI) como función serverless de Vercel. Valida el JWT con Supabase, limita las consultas conversacionales a 60 por hora mediante `consume_ai_request` y no descuenta las confirmaciones de acciones. Conserva la confirmación obligatoria para crear, editar, completar o eliminar tareas. Requiere estas variables privadas en Vercel: `XAI_API_KEY`, `SUPABASE_URL` y `SUPABASE_ANON_KEY`; opcionalmente `XAI_MODEL` (por defecto, `grok-4.5-latest`). La clave IA nunca debe usar el prefijo `VITE_`.
 
 El historial se guarda en `ai_conversations` y `ai_messages`, ambos protegidos por RLS. Las notificaciones persistentes viven en `notifications` y se generan para nuevas tareas, mensajes privados y tareas compartidas. Los mensajes requieren `sender_id` y `recipient_id`, y sus políticas RLS solo permiten ver al emisor o destinatario.
 
