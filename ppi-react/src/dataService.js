@@ -1,12 +1,18 @@
 import { supabase } from "./supabaseClient";
 
+// dataService concentra toda la lógica de lectura y escritura con Supabase.
+// Aquí se protegen las operaciones con validaciones de sesión y se normalizan
+// los datos para que la interfaz React pueda consumirlos de manera uniforme.
 const taskColumns =
   "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
+// ensureBackend: evita ejecutar operaciones si el cliente de Supabase no está disponible.
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
 }
 
+// mapTask: convierte el formato devuelto por Supabase a un modelo más simple
+// para uso dentro de la UI de React.
 function mapTask(task) {
   return {
     id: task.id,
@@ -23,6 +29,7 @@ function mapTask(task) {
   };
 }
 
+// getProfile: devuelve el perfil del usuario autenticado desde la tabla profiles.
 export async function getProfile(user) {
   ensureBackend();
   const { data, error } = await supabase
@@ -34,6 +41,8 @@ export async function getProfile(user) {
   return data;
 }
 
+// ensureProfile: crea o actualiza el perfil del usuario con el nombre completo
+// y el correo de autenticación para mantener la sincronización con Supabase Auth.
 export async function ensureProfile(user, fullName = "") {
   ensureBackend();
   const profile = {
@@ -51,6 +60,7 @@ export async function ensureProfile(user, fullName = "") {
   return data;
 }
 
+// updateProfileSettings: guarda cambios de configuración del perfil.
 export async function updateProfileSettings(settings) {
   ensureBackend();
   const { data, error } = await supabase
@@ -63,6 +73,7 @@ export async function updateProfileSettings(settings) {
   return data;
 }
 
+// listTasks: obtiene todas las tareas del usuario ordenadas por fecha y hora.
 export async function listTasks() {
   ensureBackend();
   const { data, error } = await supabase
@@ -74,6 +85,7 @@ export async function listTasks() {
   return data.map(mapTask);
 }
 
+// createTask: inserta una nueva tarea con la estructura requerida por la base de datos.
 export async function createTask(task) {
   ensureBackend();
   const { data, error } = await supabase
@@ -94,6 +106,7 @@ export async function createTask(task) {
   return mapTask(data);
 }
 
+// updateTask: modifica una tarea existente y recalcula su fecha de actualización.
 export async function updateTask(task) {
   ensureBackend();
   const { data, error } = await supabase
@@ -115,12 +128,14 @@ export async function updateTask(task) {
   return mapTask(data);
 }
 
+// deleteTask: elimina una tarea por su identificador.
 export async function deleteTask(id) {
   ensureBackend();
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) throw error;
 }
 
+// shareTask: comparte una tarea con otro usuario registrado usando la función SQL segura.
 export async function shareTask(taskId, email) {
   ensureBackend();
   const { data, error } = await supabase.rpc("share_task_by_email", {
@@ -131,6 +146,7 @@ export async function shareTask(taskId, email) {
   return data;
 }
 
+// listSharedTasks: devuelve las tareas compartidas con el usuario actual o por él.
 export async function listSharedTasks() {
   ensureBackend();
   const { data, error } = await supabase.rpc("list_task_shares");
@@ -138,12 +154,14 @@ export async function listSharedTasks() {
   return data || [];
 }
 
+// revokeSharedTask: elimina una relación de compartición existente.
 export async function revokeSharedTask(shareId) {
   ensureBackend();
   const { error } = await supabase.from("task_shares").delete().eq("id", shareId);
   if (error) throw error;
 }
 
+// listMessages: carga los mensajes del usuario para mostrar conversaciones internas.
 export async function listMessages() {
   ensureBackend();
   const { data, error } = await supabase
@@ -155,6 +173,7 @@ export async function listMessages() {
   return data;
 }
 
+// findUserByEmail: busca el perfil de un usuario por correo para compartir tareas o mensajes.
 export async function findUserByEmail(email) {
   ensureBackend();
   const { data, error } = await supabase.rpc("find_profile_by_email", { requested_email: email.trim().toLowerCase() });
@@ -162,6 +181,7 @@ export async function findUserByEmail(email) {
   return data?.[0] || null;
 }
 
+// sendMessage: crea un mensaje nuevo dirigido a otro usuario con validación de destinatario.
 export async function sendMessage(body, recipientId) {
   ensureBackend();
   const { data, error } = await supabase
@@ -173,6 +193,7 @@ export async function sendMessage(body, recipientId) {
   return data;
 }
 
+// listNotifications: retorna las últimas notificaciones del usuario.
 export async function listNotifications() {
   ensureBackend();
   const { data, error } = await supabase.from("notifications").select("id,task_id,type,title,body,read_at,created_at").order("created_at", { ascending: false }).limit(30);
@@ -180,18 +201,21 @@ export async function listNotifications() {
   return data || [];
 }
 
+// markNotificationRead: marca una notificación como leída.
 export async function markNotificationRead(id) {
   ensureBackend();
   const { error } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;
 }
 
+// markAllNotificationsRead: marca todas las notificaciones pendientes como leídas.
 export async function markAllNotificationsRead() {
   ensureBackend();
   const { error } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
   if (error) throw error;
 }
 
+// savePushSubscription: guarda la suscripción del navegador para recibir notificaciones Web Push.
 export async function savePushSubscription(subscription) {
   ensureBackend();
   const keys = subscription.toJSON().keys;
@@ -203,6 +227,7 @@ export async function savePushSubscription(subscription) {
   if (error) throw error;
 }
 
+// uploadTaskAttachment: valida y sube una imagen asociada a una tarea al bucket de storage.
 export async function uploadTaskAttachment(taskId, file) {
   ensureBackend();
   if (!file || !file.type.startsWith("image/")) {
@@ -225,6 +250,7 @@ export async function uploadTaskAttachment(taskId, file) {
   return data;
 }
 
+// getAttachmentUrl: genera una URL firmada temporal para abrir una imagen adjunta.
 export async function getAttachmentUrl(path) {
   ensureBackend();
   const { data, error } = await supabase.storage.from("task-attachments").createSignedUrl(path, 300);
@@ -232,6 +258,7 @@ export async function getAttachmentUrl(path) {
   return data.signedUrl;
 }
 
+// deleteTaskAttachment: elimina el archivo del storage y limpia su registro en la tabla task_attachments.
 export async function deleteTaskAttachment(attachment) {
   ensureBackend();
   const { error: storageError } = await supabase.storage.from("task-attachments").remove([attachment.storage_path]);
@@ -240,12 +267,14 @@ export async function deleteTaskAttachment(attachment) {
   if (error) throw error;
 }
 
+// subscribeToNotifications: escucha inserts nuevos en la tabla notifications para actualizar la UI en tiempo real.
 export function subscribeToNotifications(userId, onChange) {
   if (!supabase) return () => {};
   const channel = supabase.channel(`recordate-notifications-${userId}`).on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, onChange).subscribe();
   return () => supabase.removeChannel(channel);
 }
 
+// subscribeToMessages: escucha cambios en mensajes para mantener conversaciones sincronizadas en tiempo real.
 export function subscribeToMessages(userId, onChange) {
   if (!supabase) return () => {};
   const channel = supabase

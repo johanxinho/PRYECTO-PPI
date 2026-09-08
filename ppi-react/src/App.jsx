@@ -65,6 +65,10 @@ const supabaseErrorMessage = (error, fallback) => {
   return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
 };
 
+// Archivo principal de la interfaz de RECORDATE.
+// Aquí se define la landing page, el flujo de autenticación, la gestión de tareas,
+// los recordatorios, el calendario, el panel de mensajes, el perfil y la configuración.
+
 function Brand() {
   return (
     <div className="brand">
@@ -73,6 +77,8 @@ function Brand() {
     </div>
   );
 }
+// Landing: muestra la vista pública de presentación del producto y redirige
+// al usuario hacia el proceso de inicio de sesión o registro.
 function Landing({ onStart }) {
   return (
     <div className="landing">
@@ -191,6 +197,8 @@ function Landing({ onStart }) {
     </div>
   );
 }
+// DashboardPreview: representa una vista previa visual del panel principal
+// para ilustrar la experiencia de uso de la agenda académica.
 function DashboardPreview() {
   return (
     <div className="dashboard-preview">
@@ -238,6 +246,9 @@ function DashboardPreview() {
     </div>
   );
 }
+// TaskForm: formulario reutilizable para crear o editar una actividad.
+// Recibe una tarea existente o nula, valida campos obligatorios y guarda
+// la información junto con una posible imagen adjunta.
 function TaskForm({ task, onSave, onCancel }) {
   const [form, setForm] = useState(
     task || {
@@ -372,6 +383,7 @@ function TaskForm({ task, onSave, onCancel }) {
     </form>
   );
 }
+// PriorityBadge: etiqueta visual para mostrar la prioridad de cada tarea.
 function PriorityBadge({ priority }) {
   return (
     <span className={`priority priority-${priority.toLowerCase()}`}>
@@ -379,6 +391,8 @@ function PriorityBadge({ priority }) {
     </span>
   );
 }
+// TaskCard: tarjeta individual de tarea con acciones de completar, editar,
+// eliminar, abrir modo enfoque y visualizar o borrar adjuntos de imagen.
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
   const canManage = task.userId === userId;
   const [attachmentError, setAttachmentError] = useState("");
@@ -453,6 +467,9 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
   );
 }
 
+// App: componente principal que coordina el estado global de la aplicación.
+// Aquí se manejan sesiones, carga de datos, recordatorios, navegación,
+// notificaciones y renderizado del contenido según la vista activa.
 function App() {
   const [session, setSession] = useState(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
@@ -1162,6 +1179,8 @@ function App() {
     </main>
   );
 }
+// Stats: muestra los indicadores resumidos de tareas pendientes, de hoy,
+// prioridad alta y completadas para que el usuario entienda su avance.
 function Stats({ stats }) {
   return (
     <section className="stats-grid">
@@ -1180,6 +1199,8 @@ function Stats({ stats }) {
     </section>
   );
 }
+// TaskList: lista reutilizable de tareas que se muestra en diferentes vistas
+// como Inicio, Mis tareas, Recordatorios, Prioridades y Modo enfoque.
 function TaskList({
   title,
   subtitle,
@@ -1246,6 +1267,8 @@ function TaskList({
     </section>
   );
 }
+// Calendar: vista semanal/mensual simplificada para revisar actividades por fecha
+// y seleccionar una tarea específica desde el calendario.
 function Calendar({ tasks, onSelect }) {
   const [selected, setSelected] = useState(today);
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -1337,6 +1360,8 @@ function Calendar({ tasks, onSelect }) {
     </section>
   );
 }
+// SharePanel: permite compartir actividades con compañeros registrados y
+// visualizar tanto las tareas compartidas por el usuario como las recibidas.
 function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke }) {
   const [sharingTaskId, setSharingTaskId] = useState(null);
   const shareableTasks = tasks.filter((task) => task.userId === currentUserId && !task.completed);
@@ -1415,6 +1440,8 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
     </section>
   );
 }
+// Chat: panel de mensajes internos para comunicar tareas, horarios y acuerdos
+// con otros usuarios usando la base de datos de Supabase.
 function Chat({ message, setMessage, userId }) {
   const [messages, setMessages] = useState([]);
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -1503,6 +1530,8 @@ function Chat({ message, setMessage, userId }) {
     </section>
   );
 }
+// Profile: panel de perfil y configuración del usuario con controles para
+// activar alarmas, notificaciones y ajustar la visibilidad de tareas completadas.
 function Profile({ view, userName, email, profile, onSettingsChange, onLogout, onEnablePush }) {
   return (
     <section className="panel-view profile-view">

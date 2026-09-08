@@ -1,7 +1,10 @@
 import { supabase } from '../supabaseClient';
 
+// authService contiene las operaciones de autenticación reutilizables para
+// registro, inicio de sesión, cierre de sesión y consulta de sesión.
 export const authService = {
-  // Signup - Crear cuenta
+  // signup: crea una cuenta en Supabase Auth y envía el nombre completo
+  // como metadata extra para que el trigger configure el perfil asociada.
   async signup(email, password, fullName) {
     try {
       // Registrar usuario en Supabase Auth
@@ -23,7 +26,7 @@ export const authService = {
     }
   },
 
-  // Login - Iniciar sesión
+  // login: valida credenciales y devuelve la sesión activa si el usuario existe.
   async login(email, password) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -38,7 +41,7 @@ export const authService = {
     }
   },
 
-  // Logout - Cerrar sesión
+  // logout: cierra la sesión actual del navegador y elimina la autenticación activa.
   async logout() {
     try {
       const { error } = await supabase.auth.signOut();
@@ -49,7 +52,7 @@ export const authService = {
     }
   },
 
-  // Get current session
+  // getSession: obtiene la sesión actual para verificar si el usuario ya está autenticado.
   async getSession() {
     try {
       const { data, error } = await supabase.auth.getSession();
@@ -61,7 +64,7 @@ export const authService = {
     }
   },
 
-  // Get user profile
+  // getUserProfile: consulta el perfil público del usuario desde la tabla profiles.
   async getUserProfile(userId) {
     try {
       const { data, error } = await supabase
@@ -78,7 +81,7 @@ export const authService = {
     }
   },
 
-  // Subscribe to auth state changes
+  // onAuthStateChange: conecta un listener para reaccionar cuando cambia el estado de autenticación.
   onAuthStateChange(callback) {
     return supabase.auth.onAuthStateChange(callback);
   },
