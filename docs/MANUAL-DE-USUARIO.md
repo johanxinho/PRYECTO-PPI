@@ -6,10 +6,26 @@ RECORDATE es una aplicación web para organizar tareas académicas, recordar ent
 ## 2. Requisitos
 - Navegador moderno (Chrome, Edge, Firefox o Safari)
 - Cuenta en Supabase configurada con proyecto activo
-- Variables de entorno `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` definidas
+- Variables de entorno `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` definidas con valores reales
 - Conexión a internet para iniciar sesión y sincronizar datos
 
-## 3. Inicio de la aplicación
+> Importante: si en el archivo `.env` siguen apareciendo valores como `tu_project_url_aqui` o `tu_anon_key_aqui`, la aplicación abrirá, pero la autenticación no funcionará porque esas cadenas no son credenciales reales de Supabase.
+
+## 3. Configuración de Supabase antes de abrir la aplicación
+1. Crea o abre tu proyecto en Supabase.
+2. Entra a `Project Settings` → `API`.
+3. Copia el valor de `Project URL` y `anon public key`.
+4. Abre el archivo `ppi-react/.env` y reemplaza los valores de ejemplo por esos datos reales.
+5. Guarda el archivo y vuelve a iniciar la aplicación.
+
+Ejemplo de `.env` válido:
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_public_key_real
+VITE_VAPID_PUBLIC_KEY=tu_clave_publica_vapid_aqui
+```
+
+## 4. Inicio de la aplicación
 1. Abre una terminal en la carpeta `ppi-react`.
 2. Ejecuta:
    ```bash
@@ -18,6 +34,14 @@ RECORDATE es una aplicación web para organizar tareas académicas, recordar ent
    npm run dev
    ```
 3. Ingresa a la URL local indicada por Vite, normalmente `http://localhost:5173`.
+4. Si el puerto `5173` está ocupado, Vite puede abrir otro como `5174`.
+
+## 5. Registro e inicio de sesión
+1. En la pantalla de inicio, selecciona la opción de registro o inicio de sesión.
+2. Si creas una cuenta, escribe tu nombre completo, correo y contraseña.
+3. Si Supabase está configurado correctamente, la cuenta se crea en Auth y se sincroniza con la tabla `profiles`.
+4. Si se solicita verificación, ingresa el código enviado por correo.
+5. Si olvidaste tu contraseña, usa la opción de recuperación y sigue el enlace enviado por correo.
 
 ## 4. Registro e inicio de sesión
 1. En la pantalla de inicio, selecciona la opción de registro o inicio de sesión.
@@ -94,15 +118,32 @@ Desde perfil/configuración puedes:
 - cerrar sesión
 
 ## 14. Solución rápida de problemas
-### Error de autenticación
-Si aparece el mensaje de que faltan variables de entorno:
-- crea el archivo `.env` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
-- reinicia el proyecto
+### La página no abre o el navegador queda en blanco
+- Ejecuta primero `npm install` dentro de `ppi-react`.
+- Luego inicia con `npm run dev`.
+- Si aparece un puerto ocupado, Vite puede elegir `5174` o similar.
+- Si quieres confirmar que la aplicación compila, usa:
+  ```bash
+  npm run build
+  ```
+- Si el build falla, revisa los mensajes de Vite y corrige el error antes de seguir.
+
+### Error de autenticación o no se puede iniciar sesión
+Si aparece el mensaje de que faltan variables de entorno o que Supabase no está configurado:
+- abre `ppi-react/.env`
+- reemplaza los valores de ejemplo por las claves reales de tu proyecto Supabase
+- asegúrate de que no sigan quedando `tu_project_url_aqui` o `tu_anon_key_aqui`
+- reinicia la aplicación
 
 ### Tareas no se cargan
 - verifica que la base de datos tenga las migraciones ejecutadas
 - comprueba que la sesión de Supabase esté activa
 - revisa las políticas RLS de las tablas
+
+### Supabase no acepta el registro ni la sesión
+- habilita `Email` como proveedor de autenticación en Supabase (`Authentication` → `Providers`)
+- verifica que la tabla `profiles` exista y que la migración SQL haya sido ejecutada
+- revisa que los usuarios se estén creando con la Auth de Supabase y no con un proyecto sin configuración activa
 
 ### No se pueden adjuntar imágenes
 - revisa que la imagen sea tipo imagen
