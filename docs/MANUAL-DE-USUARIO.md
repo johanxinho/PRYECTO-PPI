@@ -1,186 +1,222 @@
 # Manual de usuario - RECORDATE
 
-## 1. Introducción
-RECORDATE es una aplicación web para organizar tareas académicas, recordar entregas importantes y compartir actividades con compañeros. Está pensada para estudiantes de la IE La Candelaria y funciona con Supabase para autenticar usuarios y guardar información.
+## Bienvenido a RECORDATE
+RECORDATE es una plataforma pensada para ayudarte a organizar tus tareas, trabajos, entregas y actividades académicas de forma más clara y ordenada. Con RECORDATE puedes registrar tus pendientes, revisar tu calendario, recibir recordatorios, comunicarte con otros usuarios y mantener un mejor control de tu tiempo.
 
-## 2. Requisitos
-- Navegador moderno (Chrome, Edge, Firefox o Safari)
-- Cuenta en Supabase configurada con proyecto activo
-- Variables de entorno `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` definidas con valores reales
-- Conexión a internet para iniciar sesión y sincronizar datos
+## 1. ¿Qué puedes hacer en RECORDATE?
+Con RECORDATE puedes:
+- Crear tareas académicas y personales.
+- Ver tus actividades en una lista organizada.
+- Buscar tareas por título, materia o descripción.
+- Filtrar tareas por prioridad, estado o fecha.
+- Revisar tu agenda en formato de calendario.
+- Activar recordatorios para no olvidar entregas importantes.
+- Entrar al modo enfoque para trabajar en una sola actividad.
+- Compartir tareas con otros usuarios.
+- Enviar mensajes internos dentro de la plataforma.
+- Configurar tu perfil y preferencias.
 
-> Importante: si en el archivo `.env` siguen apareciendo valores como `tu_project_url_aqui` o `tu_anon_key_aqui`, la aplicación abrirá, pero la autenticación no funcionará porque esas cadenas no son credenciales reales de Supabase.
+## 2. Requisitos para usar la página
+Para utilizar RECORDATE, necesitas:
+- Un navegador actualizado (Chrome, Edge, Firefox o Safari).
+- Conexión a internet.
+- Una cuenta de usuario activa.
+- Permisos de notificaciones del navegador si deseas recibir avisos.
 
-## 3. Configuración de Supabase antes de abrir la aplicación
-1. Crea o abre tu proyecto en Supabase.
-2. Entra a `Project Settings` → `API`.
-3. Copia el valor de `Project URL` y `anon public key`.
-4. Abre el archivo `ppi-react/.env` y reemplaza los valores de ejemplo por esos datos reales.
-5. Guarda el archivo y vuelve a iniciar la aplicación.
+## 3. Cómo abrir la página
+1. Abre tu navegador.
+2. Ingresa la URL de la aplicación.
+3. Espera a que la página cargue.
+4. Si aparece la pantalla de inicio, ya puedes iniciar sesión o crear una cuenta.
 
-Ejemplo de `.env` válido:
-```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu_anon_public_key_real
-VITE_VAPID_PUBLIC_KEY=tu_clave_publica_vapid_aqui
-```
+## 4. Crear una cuenta
+1. En la pantalla principal, pulsa la opción "Regístrate".
+2. Escribe tu nombre completo.
+3. Escribe tu correo electrónico.
+4. Crea una contraseña segura.
+5. Confirma la contraseña.
+6. Presiona "Crear mi cuenta".
+7. Si el sistema solicita verificación, revisa tu correo y escribe el código de 6 dígitos que te enviaron.
 
-> En este proyecto, la app ya fue corregida para que no intente usar valores tipo `tu_project_url_aqui` o `tu_anon_key_aqui` como credenciales reales. Si aún aparecen esos valores, reemplázalos por la URL y la anon key reales de tu proyecto.
+## 5. Iniciar sesión
+1. En la pantalla principal, selecciona "Iniciar sesión".
+2. Escribe tu correo electrónico.
+3. Escribe tu contraseña.
+4. Pulsa "Iniciar sesión".
 
-## 4. Inicio de la aplicación
-1. Abre una terminal en la carpeta `ppi-react`.
-2. Ejecuta:
-   ```bash
-   npm install
-   cp .env.example .env
-   npm run dev -- --host 0.0.0.0
-   ```
-3. Vite indicará la URL local disponible. En este entorno, la aplicación ha quedado disponible normalmente en `http://localhost:5175` si los puertos anteriores están ocupados.
-4. Si el puerto `5173` está ocupado, Vite puede abrir otro como `5174` o `5175`.
-5. Si necesitas comprobar que la aplicación responde sin abrir el navegador, puedes ejecutar:
-   ```bash
-   npm run build
-   ```
+## 6. Recuperar tu contraseña
+Si olvidaste tu contraseña:
+1. Selecciona la opción "¿Olvidaste tu contraseña?".
+2. Escribe tu correo electrónico.
+3. Revisa tu correo para recibir el enlace de recuperación.
+4. Crea una nueva contraseña.
+5. Guarda los cambios.
 
-## 5. Registro e inicio de sesión
-1. En la pantalla de inicio, selecciona la opción de registro o inicio de sesión.
-2. Si creas una cuenta, escribe tu nombre completo, correo y contraseña.
-3. Si Supabase está configurado correctamente, la cuenta se crea en Auth y se sincroniza con la tabla `profiles`.
-4. Si se solicita verificación, ingresa el código enviado por correo.
-5. Si olvidaste tu contraseña, usa la opción de recuperación y sigue el enlace enviado por correo.
+## 7. Conocer el panel principal
+Cuando inicias sesión, verás la pantalla principal con varias secciones:
+- Inicio
+- Mis tareas
+- Calendario
+- Recordatorios
+- Prioridades
+- Modo enfoque
+- Compartir agendas
+- Mensajes
+- Perfil
+- Configuración
 
-## 4. Registro e inicio de sesión
-1. En la pantalla de inicio, selecciona la opción de registro o inicio de sesión.
-2. Si creas una cuenta, escribe tu nombre completo, correo y contraseña.
-3. Si Supabase está configurado correctamente, la cuenta se crea en Auth y se sincroniza con la tabla `profiles`.
-4. Si se solicita verificación, ingresa el código enviado por correo.
-5. Si olvidaste tu contraseña, usa la opción de recuperación y sigue el enlace enviado por correo.
-
-## 5. Vista principal
-Una vez dentro de la aplicación verás:
-- menú lateral con secciones principales
-- resumen de tareas pendientes
-- acceso a calendario, prioridades, mensajes y configuración
-- botón para crear nuevas actividades
-
-## 6. Crear actividades
-1. Haz clic en `+ Nueva actividad`.
-2. Completa los campos:
+## 8. Crear una tarea
+Para registrar una nueva actividad:
+1. Haz clic en el botón para crear una nueva actividad.
+2. Completa los siguientes campos:
    - Título
    - Materia
    - Fecha
    - Hora
    - Prioridad
    - Recordatorio
-   - Descripción (opcional)
-   - Imagen adjunta (opcional, máximo 5 MB)
-3. Guarda la actividad.
+   - Descripción
+3. Si lo deseas, adjunta una imagen.
+4. Guarda la tarea.
 
-## 7. Gestionar tareas
-En la lista de tareas podrás:
-- marcar como completada o pendiente
-- editar una actividad
-- eliminar una tarea
-- abrir el modo enfoque
-- ver o borrar imágenes adjuntas
+### Campos recomendados
+- Título: escribe un nombre claro para tu actividad.
+- Materia: indica la asignatura o área relacionada.
+- Fecha y hora: organiza el momento exacto de la entrega.
+- Prioridad: define si la actividad es alta, media o baja.
+- Recordatorio: ayuda a recibir avisos antes de la fecha.
 
-## 8. Modo enfoque
-El modo enfoque ayuda a concentrarte en una sola tarea. Al entrar, verás la actividad seleccionada con prioridad y detalle. Sirve para trabajar sin distracciones.
+## 9. Editar, eliminar y completar tareas
+Desde la lista de tareas puedes:
+- Marcar una tarea como completada o pendiente.
+- Editar una tarea ya creada si cambió la fecha o la descripción.
+- Eliminar una tarea que ya no necesitas.
+- Buscar tareas por palabras clave.
+- Filtrar la información según prioridad, estado o fecha.
 
-## 9. Calendario
-La vista de calendario permite:
-- revisar actividades por fecha
-- navegar entre meses
-- seleccionar un día para ver la agenda programada
-- abrir una actividad directamente desde el calendario
+## 10. Buscar y filtrar tareas
+La búsqueda te permite encontrar tareas más rápido.
 
-## 10. Recordatorios y notificaciones
-La aplicación puede:
-- mostrar alarmas visuales y sonoras cuando llega la hora
-- enviar notificaciones del navegador si la configuración lo permite
-- registrar avisos para tareas próximas
+### Puedes buscar por:
+- Título
+- Materia
+- Descripción
 
-## 11. Compartir agendas
-1. Abre la sección `Compartir agendas`.
-2. Escribe el correo del compañero.
-3. Selecciona una tarea pendiente para compartir.
-4. El compañero recibirá acceso a esa actividad.
-5. Puedes revocar el acceso desde la misma sección.
+### Puedes filtrar por:
+- Prioridad
+- Estado (completada o pendiente)
+- Fecha específica
 
-## 12. Mensajes
-La sección de mensajes permite:
-- buscar un destinatario por correo
-- iniciar conversaciones internas
-- enviar mensajes con contenido académico o coordinación
-- ver mensajes recientes con cada compañero
+Esto ayuda a ordenar mejor tus pendientes y localizar actividades rápidamente.
 
-## 13. Perfil y configuración
-Desde perfil/configuración puedes:
-- revisar tu información personal
-- activar o desactivar recordatorios automáticos
-- habilitar o deshabilitar notificaciones del navegador
-- activar alarmas sonoras
-- decidir si mostrar tareas completadas
-- cerrar sesión
+## 11. Usar el calendario
+La sección de calendario te permite:
+- Ver tus actividades organizadas por fecha.
+- Navegar entre diferentes meses.
+- Revisar qué tareas tienes programadas para cada día.
+- Abrir directamente una tarea desde el calendario.
 
-## 14. Solución rápida de problemas
-### La página no abre o el navegador queda en blanco
-- Ejecuta primero `npm install` dentro de `ppi-react`.
-- Inicia la app con:
-  ```bash
-  npm run dev -- --host 0.0.0.0
-  ```
-- Si aparece un puerto ocupado, Vite puede elegir `5174`, `5175` o un puerto similar.
-- Si quieres confirmar que la aplicación compila, usa:
-  ```bash
-  npm run build
-  ```
-- Si el build falla, revisa los mensajes de Vite y corrige el error antes de seguir.
-- En este proyecto, también se corrigió un problema en el archivo `ppi-react/src/App.jsx` donde el componente principal quedó en un estado vacío; si ese archivo vuelve a quedar en `return null`, la página no renderiza.
+## 12. Activar recordatorios y notificaciones
+Los recordatorios te ayudan a no olvidar actividades importantes.
 
-### Error de autenticación o no se puede iniciar sesión
-Si aparece el mensaje de que faltan variables de entorno o que Supabase no está configurado:
-- abre `ppi-react/.env`
-- reemplaza los valores de ejemplo por las claves reales de tu proyecto Supabase
-- asegúrate de que no sigan quedando `tu_project_url_aqui` o `tu_anon_key_aqui`
-- reinicia la aplicación
-- si la sesión sigue fallando, revisa en Supabase que `Authentication` → `Providers` tenga activado `Email` y que la migración SQL correspondiente ya haya sido ejecutada
+### Puedes hacer lo siguiente:
+- Activar recordatorios al crear una tarea.
+- Revisar la configuración de tu perfil.
+- Permitir notificaciones del navegador para ver avisos visuales y sonoros.
 
-### Tareas no se cargan
-- verifica que la base de datos tenga las migraciones ejecutadas
-- comprueba que la sesión de Supabase esté activa
-- revisa las políticas RLS de las tablas
+## 13. Modo enfoque
+El modo enfoque está pensado para ayudarte a concentrarte en una sola tarea.
 
-### Supabase no acepta el registro ni la sesión
-- habilita `Email` como proveedor de autenticación en Supabase (`Authentication` → `Providers`)
-- verifica que la tabla `profiles` exista y que la migración SQL haya sido ejecutada
-- revisa que los usuarios se estén creando con la Auth de Supabase y no con un proyecto sin configuración activa
+### Cómo usarlo:
+1. Selecciona una tarea.
+2. Abre el modo enfoque.
+3. Trabaja con esa actividad sin distracciones.
+4. Cuando termines, puedes volver a la vista principal.
 
-### No se pueden adjuntar imágenes
-- revisa que la imagen sea tipo imagen
-- confirma que el archivo no supere 5 MB
-- verifica que el bucket `task-attachments` exista en Supabase Storage
+## 14. Compartir agendas con otros usuarios
+La función de compartir agendas permite colaborar con otras personas.
 
-### Notificaciones no aparecen
-- acepta permisos del navegador
-- verifica que el proyecto tenga la clave VAPID pública
-- revisa que el servicio worker `sw.js` esté funcionando
+### Para compartir una tarea:
+1. Entra a la sección "Compartir agendas".
+2. Escribe el correo de la persona con la que deseas compartir.
+3. Selecciona la actividad que quieres compartir.
+4. Guarda la acción.
 
-## 15. Seguridad
-- No se usa `service_role` en el frontend.
-- La app se conecta con la `anon key` de Supabase.
-- Las operaciones sensibles dependen de políticas RLS y de sesiones autenticadas.
+### También puedes:
+- Ver tareas compartidas.
+- Revocar acceso a una agenda compartida si ya no necesitas compartirla.
 
-## 16. Glosario
-- `profiles`: tabla con información del usuario
-- `tasks`: tareas académicas del usuario
-- `task_shares`: relaciones de tareas compartidas
-- `messages`: conversaciones internas
-- `notifications`: notificaciones del sistema
-- `task_attachments`: archivos de imagen asociados a tareas
+## 15. Enviar y recibir mensajes
+En la sección de mensajes puedes:
+- Buscar a un usuario por correo.
+- Enviar mensajes internos.
+- Leer conversaciones recientes.
+- Mantener comunicación con compañeros o docentes.
 
-## 17. Soporte
-Si necesitas ayuda adicional, revisa:
-- `README.md` del proyecto
-- `docs/PROJECT-DOCUMENTATION.md`
-- la documentación de Supabase oficial
+## 16. Configurar tu perfil
+Desde la sección de perfil y configuración puedes:
+- Ver tu información personal.
+- Activar o desactivar recordatorios.
+- Activar o desactivar alarmas.
+- Habilitar o deshabilitar notificaciones del navegador.
+- Elegir si quieres ver tareas completadas.
+- Cerrar sesión cuando termines.
+
+## 17. Recomendaciones para un mejor uso
+- Usa títulos claros y específicos.
+- Asigna prioridades para distinguir tareas urgentes y simples.
+- Revisa tu calendario cada día.
+- Completa las tareas en orden de importancia.
+- Activa los recordatorios para evitar olvidos.
+- Mantén tu perfil actualizado.
+
+## 18. Solución rápida de problemas
+### No puedo iniciar sesión
+- Verifica que tu correo y contraseña sean correctos.
+- Si olvidaste tu contraseña, usa la opción de recuperación.
+- Si el problema continua, consulta al administrador.
+
+### La página no abre correctamente
+- Verifica tu conexión a internet.
+- Recarga la página.
+- Intenta abrir la aplicación en otro navegador.
+- Si aparece un error persistente, contacta al soporte.
+
+### No puedo crear o ver tareas
+- Asegúrate de haber iniciado sesión.
+- Completa todos los campos obligatorios.
+- Verifica que la información está bien escrita.
+
+### No recibo notificaciones o recordatorios
+- Acepta los permisos de notificación del navegador.
+- Revisa la configuración de recordatorios en tu perfil.
+- Asegúrate de que la tarea tenga un recordatorio configurado.
+
+### No puedo compartir agendas
+- Verifica que el correo ingresado sea correcto.
+- Asegúrate de que la tarea esté pendiente y disponible para compartir.
+- Si el problema continúa, contacta al administrador.
+
+## 19. Preguntas frecuentes
+### ¿Puedo usar RECORDATE desde cualquier navegador?
+Sí, siempre que el navegador sea compatible y tengas conexión a internet.
+
+### ¿Puedo cambiar la fecha o hora de una tarea después de crearla?
+Sí, puedes editar la tarea desde la lista.
+
+### ¿Puedo eliminar tareas que ya no necesito?
+Sí, puedes borrar cualquier tarea que ya no te sirva.
+
+### ¿Qué pasa si no quiero recibir notificaciones?
+Puedes desactivar notificaciones y alarmas desde tu perfil.
+
+### ¿Es necesario completar todas las tareas de una vez?
+No. Puedes ir trabajando en tus pendientes según tu tiempo y prioridad.
+
+## 20. Soporte
+Si necesitas ayuda adicional, puedes comunicarte con:
+- El administrador del sistema.
+- Tu docente encargado del proyecto.
+- El equipo responsable de RECORDATE.
+
+Gracias por usar RECORDATE y esperamos que te ayude a organizar mejor tu tiempo.
