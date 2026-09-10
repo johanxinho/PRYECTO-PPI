@@ -25,16 +25,22 @@ VITE_SUPABASE_ANON_KEY=tu_anon_public_key_real
 VITE_VAPID_PUBLIC_KEY=tu_clave_publica_vapid_aqui
 ```
 
+> En este proyecto, la app ya fue corregida para que no intente usar valores tipo `tu_project_url_aqui` o `tu_anon_key_aqui` como credenciales reales. Si aún aparecen esos valores, reemplázalos por la URL y la anon key reales de tu proyecto.
+
 ## 4. Inicio de la aplicación
 1. Abre una terminal en la carpeta `ppi-react`.
 2. Ejecuta:
    ```bash
    npm install
    cp .env.example .env
-   npm run dev
+   npm run dev -- --host 0.0.0.0
    ```
-3. Ingresa a la URL local indicada por Vite, normalmente `http://localhost:5173`.
-4. Si el puerto `5173` está ocupado, Vite puede abrir otro como `5174`.
+3. Vite indicará la URL local disponible. En este entorno, la aplicación ha quedado disponible normalmente en `http://localhost:5175` si los puertos anteriores están ocupados.
+4. Si el puerto `5173` está ocupado, Vite puede abrir otro como `5174` o `5175`.
+5. Si necesitas comprobar que la aplicación responde sin abrir el navegador, puedes ejecutar:
+   ```bash
+   npm run build
+   ```
 
 ## 5. Registro e inicio de sesión
 1. En la pantalla de inicio, selecciona la opción de registro o inicio de sesión.
@@ -120,13 +126,17 @@ Desde perfil/configuración puedes:
 ## 14. Solución rápida de problemas
 ### La página no abre o el navegador queda en blanco
 - Ejecuta primero `npm install` dentro de `ppi-react`.
-- Luego inicia con `npm run dev`.
-- Si aparece un puerto ocupado, Vite puede elegir `5174` o similar.
+- Inicia la app con:
+  ```bash
+  npm run dev -- --host 0.0.0.0
+  ```
+- Si aparece un puerto ocupado, Vite puede elegir `5174`, `5175` o un puerto similar.
 - Si quieres confirmar que la aplicación compila, usa:
   ```bash
   npm run build
   ```
 - Si el build falla, revisa los mensajes de Vite y corrige el error antes de seguir.
+- En este proyecto, también se corrigió un problema en el archivo `ppi-react/src/App.jsx` donde el componente principal quedó en un estado vacío; si ese archivo vuelve a quedar en `return null`, la página no renderiza.
 
 ### Error de autenticación o no se puede iniciar sesión
 Si aparece el mensaje de que faltan variables de entorno o que Supabase no está configurado:
@@ -134,6 +144,7 @@ Si aparece el mensaje de que faltan variables de entorno o que Supabase no está
 - reemplaza los valores de ejemplo por las claves reales de tu proyecto Supabase
 - asegúrate de que no sigan quedando `tu_project_url_aqui` o `tu_anon_key_aqui`
 - reinicia la aplicación
+- si la sesión sigue fallando, revisa en Supabase que `Authentication` → `Providers` tenga activado `Email` y que la migración SQL correspondiente ya haya sido ejecutada
 
 ### Tareas no se cargan
 - verifica que la base de datos tenga las migraciones ejecutadas
