@@ -36,15 +36,18 @@ function translateAuthError(error) {
 }
 
 export const authService = {
-  async signup(email, password, fullName) {
+  async signup(email, password, fullName, role = 'estudiante') {
     if (!supabase) return missingBackend();
     try {
+      const allowed = ['estudiante', 'padre', 'madre', 'profesor', 'trabajador'];
+      const safeRole = allowed.includes(role) ? role : 'estudiante';
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            role: safeRole,
           },
         },
       });
