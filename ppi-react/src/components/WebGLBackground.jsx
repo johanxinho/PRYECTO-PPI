@@ -116,6 +116,8 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
         canvas.height = height; // Nuevo alto del buffer.
         gl.viewport(0, 0, width, height); // El viewport cubre todo el canvas.
       } // Fin de el bloque.
+      canvas.style.width = "100%"; // El CSS, no el backing store, define el tamaño visual.
+      canvas.style.height = "100%"; // Evita que innerHeight*dpr sume un hueco enorme al scroll.
     }; // Fin de el bloque.
 
     const draw = (now) => { // Envía uniforms y dibuja el triángulo.

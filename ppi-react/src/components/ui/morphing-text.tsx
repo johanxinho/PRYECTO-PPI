@@ -107,9 +107,9 @@ function Texts({ texts }: Pick<MorphingTextProps, "texts">) {
 
 function SvgFilters() {
   return (
-    <svg id="filters" className="morphing-filters" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg id="filters" className="morphing-filters" width="0" height="0" aria-hidden="true">
       <defs>
-        <filter id="threshold">
+        <filter id="threshold" x="0%" y="0%" width="100%" height="100%">
           <feColorMatrix
             in="SourceGraphic"
             type="matrix"
@@ -126,9 +126,11 @@ function SvgFilters() {
 
 export function MorphingText({ texts, className }: MorphingTextProps) {
   return (
-    <div className={cn("morphing-text", className)}>
-      <Texts texts={texts} />
+    <>
+      <div className={cn("morphing-text", className)}>
+        <Texts texts={texts} />
+      </div>
       <SvgFilters />
-    </div>
+    </>
   );
 }

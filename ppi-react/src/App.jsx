@@ -1,4 +1,5 @@
 // @ts-nocheck
+// RECORDATE: portada, acceso y panel (tareas, mensajes, perfil).
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   House,
@@ -67,6 +68,7 @@ import {
 } from "./dataService";
 import "./recordate.css";
 
+/* Rutas y etiquetas del menú del panel autenticado. */
 const navItems = [
   "Inicio",
   "Mis tareas",
@@ -154,6 +156,7 @@ const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
   return <span className={`${sizeClass} ${className}`.trim()}>{initial}</span>;
 };
 
+/* Portada pública: hero, características y FAQ. */
 function Landing({ onStart }) {
   const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
@@ -445,6 +448,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
 }
 
 function App() {
+  /* Sesión, vista actual y datos de la agenda. */
   const [session, setSession] = useState(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -768,6 +772,7 @@ function App() {
       <div className="recordate-ui">{node}</div>
     </div>
   );
+  /* Landing → login/demo → panel. */
   if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} />);
   if (!session || passwordRecovery) {
     return frame(
@@ -1057,6 +1062,7 @@ function App() {
   };
   return frame(
     <main className="app-shell">
+      {/* Menú lateral (en móvil se abre como cajón). */}
       <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
         <div className="sidebar-head">
           <Brand light size="sm" />
@@ -1088,6 +1094,7 @@ function App() {
       </aside>
       <div className="mobile-overlay" onClick={() => setMobileNav(false)} />
       <section className="workspace">
+        {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
           <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Menu size={18} /></button>
           <div>
@@ -1121,6 +1128,7 @@ function App() {
           </div>
         )}
         <div className="content-area">
+          {/* Vista activa: inicio, tareas, calendario, mensajes, perfil. */}
           {loadingData ? (
             <div className="empty-state loading-state" role="status">
               <span className="loading-spinner" />
