@@ -14,6 +14,8 @@ Este manual explica **cómo usar la página publicada**, no cómo programarla.
 
 ## Capturas de la versión publicada
 
+Las imágenes siguientes corresponden a la versión lista para publicar (después de corregir el hueco vacío al final del scroll en celular).
+
 ### Portada
 
 ![Portada de RECORDATE en escritorio](images/portada.jpg)
@@ -24,7 +26,13 @@ Al abrir el enlace ves la portada: logo, menú de anclas, botón **Iniciar sesi�
 
 ![Portada de RECORDATE en celular](images/portada-movil.jpg)
 
-En el teléfono la misma portada se adapta; el menú y los botones siguen disponibles.
+En el teléfono la misma portada se apila en una columna; el menú de anclas se oculta y quedan **Iniciar sesión** y **Comenzar ahora**.
+
+### Final de la portada en celular
+
+![Pie de la portada en celular, sin hueco vacío](images/portada-movil-final.jpg)
+
+Al bajar del todo, la página termina en las preguntas frecuentes y el pie de RECORDATE. No debe quedar un hueco enorme debajo del contenido.
 
 ### Pantalla de acceso
 
@@ -37,6 +45,30 @@ Desde **Iniciar sesión** o **Comenzar ahora** entras al panel de acceso: correo
 ![Panel principal en modo demostración](images/panel-demo.jpg)
 
 En la demostración entras como *Andrea Restrepo* con tareas de ejemplo: menú lateral, resumen del día, progreso y lista de actividades.
+
+### Panel en celular
+
+![Panel de demostración en celular](images/panel-demo-movil.jpg)
+
+En el teléfono el menú principal es la barra inferior (Inicio, Tareas, Calendario, Mensajes, Perfil). El botón de menú abre el resto de secciones.
+
+### Mensajes (Recibidos y Enviados)
+
+![Bandeja de mensajes con pestañas Recibidos y Enviados](images/mensajes.jpg)
+
+La bandeja tiene **Recibidos** y **Enviados**. Puedes abrir una conversación, responder o escribir un **Nuevo mensaje** buscando al compañero por correo. En la demo aparece un mensaje de ejemplo de *Carlos Pérez* (profesor).
+
+### Compartir agendas
+
+![Pantalla para compartir agendas](images/compartir.jpg)
+
+Escribes el correo de un usuario registrado, eliges la tarea y compartes. Las pestañas **Compartidas conmigo** y **Que compartí** muestran el detalle (incluye rol y foto si existen). En la demo hay una guía compartida de ejemplo.
+
+### Perfil, rol y foto
+
+![Perfil con rol y foto](images/perfil.jpg)
+
+En **Perfil** ves nombre, correo, rol (Estudiante, Padre, Madre, Profesor o Trabajador) y puedes cambiar el rol o subir una **foto de perfil**. La foto aparece en el encabezado, en mensajes y en agendas compartidas.
 
 ---
 
@@ -411,6 +443,9 @@ No hay que configurar el aspecto. Si el movimiento molesta, el sistema de **redu
 
 ### En el celular no veo todas las secciones
 - Usa la barra inferior y el botón de menú para Perfil y Configuración.
+
+### Al bajar en el celular queda un hueco vacío enorme
+- Eso ya está corregido en esta versión: el fondo WebGL y el filtro del título no deben alargar el scroll. Recarga la página. Si ves un espacio pequeño al final, es el margen de la barra inferior o del pie, no un hueco extra.
 
 ---
 

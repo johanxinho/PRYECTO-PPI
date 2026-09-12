@@ -57,8 +57,9 @@
 }
 
 * { box-sizing: border-box }
-html { scroll-behavior: smooth; background: var(--navy); color-scheme: dark }
-html, body, #root { min-height: 100% }
+/* Evita el hueco extra de 100vh en iOS/Android: usamos svh y recortamos overflow de canvas/filtros. */
+html { scroll-behavior: smooth; background: var(--navy); color-scheme: dark; height: 100%; overflow-x: clip }
+html, body, #root { min-height: 100%; max-width: 100% }
 body {
   margin: 0;
   min-width: 320px;
@@ -68,7 +69,9 @@ body {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
+#root { min-height: 100svh }
 button, input, select, textarea { font: inherit; color: inherit }
 button, a { -webkit-tap-highlight-color: transparent }
 button { cursor: pointer }
@@ -94,19 +97,33 @@ p { text-wrap: pretty }
   border: 0;
 }
 
-.recordate-root { position: relative; min-height: 100vh; isolation: isolate }
-.recordate-ui { position: relative; z-index: 1 }
+.recordate-root {
+  position: relative;
+  min-height: 100svh;
+  isolation: isolate;
+  overflow-x: clip;
+}
+.recordate-ui { position: relative; z-index: 1; min-height: 100% }
 .webgl-stack {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100dvh;
+  overflow: hidden;
   z-index: 0;
   pointer-events: none;
+  contain: strict;
 }
 .webgl-bg, .webgl-fallback, .webgl-ambient {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
   pointer-events: none;
 }
 .webgl-bg { z-index: 1; display: block }
@@ -300,11 +317,11 @@ p { text-wrap: pretty }
   grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
   align-items: center;
   gap: 40px;
-  min-height: calc(100vh - 88px);
-  padding: 28px 0 72px;
+  min-height: calc(100svh - 88px);
+  padding: 28px 0 56px;
 }
 .hero-copy, .hero-visual { animation: rise var(--motion-medium) var(--ease) both }
-.hero-visual { animation-delay: 90ms; position: relative; min-height: 420px }
+.hero-visual { animation-delay: 90ms; position: relative; min-height: 0 }
 .hero h1, .hero-title {
   max-width: 16ch;
   margin: 14px 0 18px;
@@ -389,6 +406,8 @@ p { text-wrap: pretty }
   line-height: 1;
   filter: url(#threshold) blur(0.6px);
   text-align: left;
+  overflow: hidden;
+  contain: paint;
 }
 .morphing-line {
   position: absolute;
@@ -398,7 +417,13 @@ p { text-wrap: pretty }
   width: 100%;
   white-space: nowrap;
 }
-.morphing-filters { position: fixed; width: 0; height: 0 }
+.morphing-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 .dia-text-reveal { display: inline; }
 
 .problem-band,
@@ -463,17 +488,18 @@ p { text-wrap: pretty }
 .faq-grid p { color: var(--muted); line-height: 1.6 }
 
 .landing-footer {
-  min-height: 96px;
+  min-height: 0;
   display: flex;
   align-items: center;
   gap: 24px;
+  padding: 28px 0 calc(20px + env(safe-area-inset-bottom, 0px));
   color: var(--muted);
   font-size: 12px;
 }
 .landing-footer .brand { margin-right: auto }
 
 .auth-page {
-  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(280px, 1.05fr) minmax(340px, 0.95fr);
   background: transparent;
@@ -588,8 +614,9 @@ p { text-wrap: pretty }
 }
 
 .app-shell {
-  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
+  align-items: flex-start;
   background: transparent;
 }
 .sidebar {
@@ -598,7 +625,7 @@ p { text-wrap: pretty }
   display: flex;
   flex-direction: column;
   width: var(--sidebar);
-  height: 100vh;
+  height: 100svh;
   padding: 22px 14px 16px;
   color: var(--ink-2);
   background: var(--dark);
@@ -735,7 +762,7 @@ p { text-wrap: pretty }
 .content-area {
   width: min(1120px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 28px 0 96px;
+  padding: 28px 0 40px;
   animation: rise var(--motion-medium) var(--ease) both;
 }
 
@@ -1204,12 +1231,16 @@ p { text-wrap: pretty }
     font-weight: 600;
   }
   .bottom-nav button.active { color: #fff }
-  .content-area { width: min(1120px, calc(100% - 28px)); padding-bottom: 120px }
+  .content-area {
+    width: min(1120px, calc(100% - 28px));
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
   .workspace-header { padding: 14px 16px }
   .auth-aside { display: none }
   .auth-page { grid-template-columns: 1fr }
   .mobile-auth-brand { display: block }
-  .hero { min-height: auto; padding-top: 24px }
+  .hero { min-height: 0; padding: 24px 0 40px }
+  .hero-visual { min-height: 0 }
 }
 
 @media (max-width: 560px) {
@@ -1405,4 +1436,11 @@ p { text-wrap: pretty }
 @media (max-width: 860px) {
   .chat-layout { grid-template-columns: 1fr; }
   .chat-threads { max-height: 280px; }
+}
+
+
+@supports not (min-height: 100svh) {
+  #root, .recordate-root, .app-shell, .auth-page { min-height: 100vh }
+  .sidebar { height: 100vh }
+  .hero { min-height: calc(100vh - 88px) }
 }

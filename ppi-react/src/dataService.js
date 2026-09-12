@@ -1,5 +1,17 @@
 // @ts-nocheck
+// Acceso a Supabase: perfiles, tareas, mensajes y adjuntos.
+// Las políticas RLS son la barrera real; aquí solo enviamos lo necesario.
 import { supabase } from "./supabaseClient";
+
+const PROFILE_UPDATABLE = [
+  "full_name",
+  "role",
+  "avatar_url",
+  "reminders_enabled",
+  "show_completed",
+  "browser_notifications_enabled",
+  "alarms_enabled",
+];
 
 const profileColumns =
   "id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
@@ -76,9 +88,17 @@ export async function ensureProfile(user, fullName = "") {
 
 export async function updateProfileSettings(settings) {
   ensureBackend();
-  const payload = { ...settings };
+  const payload = {};
+  for (const key of PROFILE_UPDATABLE) {
+    if (settings && Object.prototype.hasOwnProperty.call(settings, key) && settings[key] !== undefined) {
+      payload[key] = settings[key];
+    }
+  }
   if (payload.role && !ROLE_OPTIONS.some((item) => item.value === payload.role)) {
     throw new Error("Rol no válido.");
+  }
+  if (!Object.keys(payload).length) {
+    throw new Error("No hay cambios para guardar.");
   }
   const { data: authData } = await supabase.auth.getUser();
   if (!authData?.user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
@@ -245,9 +265,15 @@ export async function findUserByEmail(email) {
 
 export async function sendMessage(body, recipientId) {
   ensureBackend();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData?.user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  const text = String(body || "").trim();
+  if (!text) throw new Error("Escribe un mensaje antes de enviarlo.");
+  if (text.length > 2000) throw new Error("El mensaje no puede superar los 2000 caracteres.");
+  if (!recipientId) throw new Error("Elige un destinatario.");
   const { data, error } = await supabase
     .from("messages")
-    .insert({ body: body.trim(), recipient_id: recipientId })
+    .insert({ body: text, recipient_id: recipientId })
     .select("id,sender_id,recipient_id,body,read_at,created_at")
     .single();
   if (error) throw error;
@@ -385,10 +411,11 @@ export function subscribeToNotifications(userId, onChange) {
 }
 
 export function subscribeToMessages(userId, onChange) {
-  if (!supabase) return () => {};
+  if (!supabase || !userId) return () => {};
   const channel = supabase
     .channel(`recordate-messages-${userId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `recipient_id=eq.${userId}` }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${userId}` }, onChange)
     .subscribe();
   return () => supabase.removeChannel(channel);
 }

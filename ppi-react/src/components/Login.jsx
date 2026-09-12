@@ -299,6 +299,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
 
   return (
     <main className="auth-page">
+      {/* Columna visual + formulario (login, registro, OTP o recuperación). */}
       <div className="auth-aside">
         <button className="back-link" type="button" onClick={onBack}>
           <ArrowLeft size={16} /> Volver al inicio
