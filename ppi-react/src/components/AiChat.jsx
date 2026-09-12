@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, Send, X, LoaderCircle, Paperclip, History, Plus } from "lucide-react";
 import { aiChatService } from "../services/aiChatService";
 
+// Chat flotante de Recórdate IA. Solo cuenta real (no demo).
+// Texto + hasta 2 fotos → Edge Function ai-chat (Gemini 3.6 Flash).
+// Historial: ai_conversations / ai_messages; fotos en bucket privado ai-chat.
 const WELCOME = {
   id: "welcome",
   role: "assistant",

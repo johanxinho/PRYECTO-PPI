@@ -84,6 +84,7 @@ En **Perfil** ves nombre, correo, rol (Estudiante, Padre, Madre, Profesor o Trab
 - Compartir actividades con compañeros registrados.
 - Enviar mensajes internos (Recibidos y Enviados).
 - Adjuntar una imagen a una tarea (máximo 5 MB, solo en cuenta real).
+- Usar el **asistente de IA** (robot abajo a la derecha) para preguntar, adjuntar fotos y reabrir chats. Solo con cuenta real.
 - Ajustar perfil (rol y foto), notificaciones del navegador y preferencias.
 
 ---
@@ -369,7 +370,8 @@ Con tu cuenta iniciada verás un botón flotante con el ícono de robot (abajo a
 Notas:
 - No aparece en el modo demostración.
 - No pegas claves ni contraseñas en el chat.
-- Si ves un aviso de límite o de configuración, espera un momento o avisa a quien administra el proyecto.
+- Límites: **40 mensajes por hora** por cuenta, texto hasta **4000** caracteres, **2 fotos** por mensaje (máx. 4 MB cada una).
+- Si ves aviso de límite, espera unos minutos. Si el robot no responde, recarga; si sigue, avisa al administrador.
 
 ## 18. Perfil y configuración
 
@@ -448,6 +450,12 @@ No hay que configurar el aspecto. Si el movimiento molesta, el sistema de **redu
 - Solo en cuenta real, no en la demo.
 - Formato de imagen y **máximo 5 MB**.
 
+### El asistente de IA no responde
+- Debes haber iniciado sesión con cuenta real (no demo).
+- Recarga la página y vuelve a abrir el robot.
+- Si dice que llegaste al límite, espera unos minutos (40 mensajes por hora).
+- Si sigue fallando, hace falta la función `ai-chat` y el secreto `GEMINI_API_KEY`.
+
 ### No suenan recordatorios
 - Activa recordatorios y alarmas en Perfil.
 - Deja la pestaña abierta a la hora del aviso.
@@ -488,6 +496,9 @@ No. Es parte de la identidad visual. La agenda se usa desde el panel, después d
 
 **¿Dónde está publicada?**  
 En GitHub Pages: [https://johanxinho.github.io/PRYECTO-PPI/](https://johanxinho.github.io/PRYECTO-PPI/).
+
+**¿Cómo uso el robot de IA?**
+Con sesión iniciada, toca el botón de abajo a la derecha. Puedes escribir, adjuntar hasta 2 fotos y reabrir chats del historial. No está en la demostración.
 
 ---
 

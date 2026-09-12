@@ -22,12 +22,13 @@ Este documento se basa en el código y las migraciones reales de la rama `main` 
 8. [Despliegue GitHub Pages](#8-despliegue-github-pages)
 9. [Convenciones del equipo](#9-convenciones-del-equipo)
 10. [Cómo aportar / checklist de PR](#10-cómo-aportar--checklist-de-pr)
+11. [Asistente de IA (detalle)](#11-asistente-de-ia-detalle)
 
 ---
 
 ## 1. Visión del proyecto y stack
 
-**RECORDATE** es una SPA (Single Page Application) de recordatorios y organización de actividades académicas. El estudiante (u otro rol) puede registrar tareas con materia, fecha, hora, prioridad y recordatorio; ver calendario; usar modo enfoque; recibir alarmas mientras la app está abierta; compartir agendas; enviar mensajes internos; y gestionar perfil (rol + avatar).
+**RECORDATE** es una SPA (Single Page Application) de recordatorios y organización de actividades académicas. El estudiante (u otro rol) puede registrar tareas con materia, fecha, hora, prioridad y recordatorio; ver calendario; usar modo enfoque; recibir alarmas mientras la app está abierta; compartir agendas; enviar mensajes internos; gestionar perfil (rol + avatar); y usar un **asistente de IA** (Gemini) con historial y fotos.
 
 ### Stack real (según `ppi-react/package.json` y el código)
 
@@ -35,7 +36,8 @@ Este documento se basa en el código y las migraciones reales de la rama `main` 
 | --- | --- | --- |
 | UI | **React 19** + JSX | `ppi-react/src/App.jsx`, componentes |
 | Build / dev | **Vite 8** | `ppi-react/vite.config.js`, scripts `dev` / `build` |
-| Backend BaaS | **Supabase** (Auth, Postgres, Storage, Realtime) | `supabaseClient.js`, `dataService.js`, migraciones SQL |
+| Backend BaaS | **Supabase** (Auth, Postgres, Storage, Realtime, Edge Functions) | `supabaseClient.js`, `dataService.js`, `aiChatService.js`, migraciones SQL |
+| Asistente IA | **Gemini 3.6 Flash** vía Edge Function `ai-chat` | `components/AiChat.jsx`, secreto `GEMINI_API_KEY` |
 | Estilos | CSS propio (`recordate.css`) | Identidad navy / vidrio; no depende de Bootstrap de forma central |
 | Iconos | Lucide React | Importados en `App.jsx` |
 | Motion / tipografía | Motion + componentes UI | `components/ui/morphing-text.tsx`, `dia-text-reveal` |
@@ -77,8 +79,10 @@ PRYECTO-PPI/
 │       ├── demoStore.js                # Modo demo (localStorage)
 │       ├── services/
 │       │   ├── authService.js          # signup / login / logout / perfil (capa auxiliar)
-│       │   └── sharedAgendaService.js  # Wrapper sobre share/list/revoke
+│       │   ├── sharedAgendaService.js  # Wrapper sobre share/list/revoke
+│       │   └── aiChatService.js        # invoke ai-chat + historial + signed URLs
 │       ├── components/
+│       │   ├── AiChat.jsx              # Chat flotante: clip, historial, Gemini
 │       │   ├── Login.jsx               # Login, registro, OTP, recovery, demo
 │       │   ├── WebGLBackground.jsx
 │       │   ├── AsciiEffect.jsx
@@ -114,7 +118,8 @@ PRYECTO-PPI/
 | **RLS** | *Row Level Security*: políticas SQL que deciden qué filas puede leer/escribir cada `auth.uid()`. El frontend **no** es la barrera real; RLS sí. |
 | **RPC** | Función Postgres expuesta vía `supabase.rpc("nombre", { ... })`. Ej.: `find_profile_by_email`, `list_my_messages`, `mark_messages_read`, `list_task_shares`, `share_task_by_email`. |
 | **Security definer** | Función SQL que corre con privilegios del dueño (bypass parcial de RLS controlado). Se usa para buscar perfiles por email o listar mensajes con joins sin abrir toda la tabla `profiles`. |
-| **Storage bucket** | Contenedor de archivos en Supabase Storage. En este proyecto: `avatars` (público) y `task-attachments` (privado, URLs firmadas). |
+| **Storage bucket** | Contenedor de archivos en Supabase Storage: `avatars` (público), `task-attachments` (privado) y `ai-chat` (privado, fotos del asistente). |
+| **Edge Function** | Función Deno en Supabase. `ai-chat` recibe el JWT, llama a Gemini y guarda el hilo. La API key **no** va al navegador. |
 | **appBase** | Prefijo de rutas SPA. En Pages es `/PRYECTO-PPI`; en local es vacío (base `/`). Definido en `ppi-react/src/paths.js` a partir de `import.meta.env.BASE_URL`. |
 | **SPA base path** | Vite `base: process.env.VITE_BASE \|\| "/"`. En CI se fuerza `VITE_BASE=/PRYECTO-PPI/` para que assets y rutas no apunten a la raíz de `github.io`. |
 | **Demo mode** | Sesión falsa `andrea@recordate.local` vía `demoStore.js` / `DEMO_SESSION`. Datos en `localStorage` (`recordate-demo-v2`). No habla con Supabase. |
@@ -394,7 +399,7 @@ Metadatos de imagen: `task_id`, `user_id`, `storage_path`, `file_name`, `content
 
 #### Otras tablas (preparadas / parciales)
 
-- `ai_conversations`, `ai_messages`, `ai_request_usage` + RPC `consume_ai_request` — base para un asistente; la UI principal actual no es un chat IA completo.
+- `ai_conversations`, `ai_messages` (`image_urls` jsonb), `ai_request_usage` — historial y cupo del asistente (`AiChat.jsx` + Edge Function `ai-chat`).
 - `push_subscriptions` — endpoint Web Push del navegador.
 
 ### 7.4 Idea de RLS (quién lee/escribe qué)
@@ -411,6 +416,7 @@ Resumen orientativo (detalle exacto en los `.sql`):
 | `task_attachments` | Dueño; destinatario del share (select) | Solo dueño de la tarea |
 | Storage `task-attachments` | Carpeta de tu uid; o path ligado a share | Insert/delete en tu carpeta |
 | Storage `avatars` | Público (select) | Solo tu carpeta `{uid}/…` |
+| Storage `ai-chat` | Solo tu carpeta `{uid}/…` | Insert/delete en tu carpeta |
 
 **Lección para el equipo:** si “en la UI falla el permiso”, casi siempre es una policy o una RPC faltante en el proyecto Supabase, no un bug de React.
 
@@ -437,6 +443,7 @@ Todas las RPC de producto que usa el frontend están otorgadas a `authenticated`
 | --- | --- | --- |
 | `avatars` | Sí | Foto de perfil; `getPublicUrl` |
 | `task-attachments` | No | Imágenes de tareas; `createSignedUrl` (~5 min) |
+| `ai-chat` | No | Fotos del asistente; `createSignedUrl` (1 h en el cliente) |
 
 Rutas típicas:
 
@@ -545,6 +552,65 @@ git push -u origin HEAD
 
 ---
 
+## 11. Asistente de IA (detalle)
+
+El chat flotante (robot abajo a la derecha) **solo** se monta con sesión real, no en demo.
+
+### Flujo
+
+```text
+AiChat.jsx
+  → aiChatService.sendMessage({ message, conversation_id, images[] })
+  → supabase.functions.invoke("ai-chat")   // JWT del usuario
+  → Edge Function ai-chat
+       1. auth.getUser()
+       2. rate limit en ai_request_usage (40 / hora / usuario)
+       3. crea o reusa ai_conversations
+       4. sube fotos al bucket privado ai-chat/{uid}/{conversationId}/…
+       5. llama Gemini 3.6 Flash (secreto GEMINI_API_KEY)
+       6. inserta ai_messages (user + assistant, image_urls = paths)
+  → UI muestra reply; historial se lista desde ai_conversations
+```
+
+### Contrato de `ai-chat`
+
+Request (POST, `verify_jwt: true`):
+
+```json
+{
+  "message": "texto opcional si hay foto",
+  "conversation_id": "uuid opcional",
+  "images": [{ "mime_type": "image/jpeg", "data": "<base64>" }]
+}
+```
+
+- Máx. 2 imágenes; jpg/png/webp/gif; 4 MB cada una.
+- Mensaje máx. 4000 caracteres. Mensaje vacío permitido si hay foto.
+
+Response: `{ reply, conversation_id, model, image_urls }`. `image_urls` son **paths** del bucket. El cliente firma con `supabase.storage.from("ai-chat").createSignedUrl(path, 3600)`.
+
+### Tablas
+
+| Tabla | Uso | RLS |
+| --- | --- | --- |
+| `ai_conversations` | Un hilo por usuario (`title`, `updated_at`) | solo `user_id = auth.uid()` |
+| `ai_messages` | `role` user/assistant, `content`, `image_urls` jsonb | insert/select propios |
+| `ai_request_usage` | contador de ventana horaria | select propio; escribe la función con service role |
+
+### Secretos
+
+Dashboard → Edge Function Secrets del proyecto `oavqxmsyhmtnnwkyiycr`: `GEMINI_API_KEY`. Nunca en `.env` del front ni en git.
+
+### Cómo probar
+
+1. Cuenta real (no demo).
+2. Abrir el robot, mandar texto, adjuntar foto, reabrir un chat.
+3. `missing_gemini_key` = falta el secreto.
+4. `rate_limit` = 40 mensajes en la hora.
+
+
+---
+
 ## Referencias rápidas
 
 | Recurso | Ruta |
@@ -552,6 +618,7 @@ git push -u origin HEAD
 | App principal | `ppi-react/src/App.jsx` |
 | Auth UI | `ppi-react/src/components/Login.jsx` |
 | API Supabase | `ppi-react/src/dataService.js` |
+| Asistente IA | `ppi-react/src/components/AiChat.jsx`, `ppi-react/src/services/aiChatService.js` |
 | Cliente | `ppi-react/src/supabaseClient.js` |
 | Demo | `ppi-react/src/demoStore.js` |
 | Rutas | `ppi-react/src/paths.js` |
