@@ -361,9 +361,10 @@ Con tu cuenta iniciada verás un botón flotante con el ícono de robot (abajo a
 
 1. Toca el botón para abrir el chat.
 2. Escribe una pregunta o pide ayuda (por ejemplo: “ayúdame a priorizar mis tareas de esta semana”).
-3. El asistente responde en español usando Gemini (gratis, con límite diario).
-4. Usa **Nueva** para empezar otra conversación.
-5. Cierra con la X, tocando fuera del panel o con Escape.
+3. Usa el clip para adjuntar hasta 2 fotos (JPG/PNG/WEBP/GIF, máx. 4 MB). Puedes enviar solo la foto.
+4. El ícono de historial abre tus chats guardados; tócalo para reabrir uno.
+5. El botón + inicia una conversación nueva.
+6. Cierra con la X, tocando fuera del panel o con Escape.
 
 Notas:
 - No aparece en el modo demostración.

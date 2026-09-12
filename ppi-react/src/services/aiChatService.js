@@ -18,7 +18,10 @@ function translateAiError(payload, fallback) {
     return "Debes iniciar sesión para usar el asistente.";
   }
   if (code === "invalid_message") {
-    return "Escribe un mensaje válido (máximo 4000 caracteres).";
+    return "Escribe un mensaje o adjunta una foto (máximo 4000 caracteres).";
+  }
+  if (code === "image_too_large") {
+    return "Alguna foto pesa demasiado (máximo 4 MB).";
   }
   if (typeof payload?.detail === "string" && payload.detail.trim()) {
     return `No pude responder: ${payload.detail}`;
@@ -26,16 +29,39 @@ function translateAiError(payload, fallback) {
   return fallback;
 }
 
+async function signImagePaths(paths = []) {
+  if (!supabase || !paths?.length) return [];
+  const signed = [];
+  for (const path of paths) {
+    if (!path) continue;
+    if (/^https?:\/\//i.test(path) || path.startsWith("data:")) {
+      signed.push(path);
+      continue;
+    }
+    const { data, error } = await supabase.storage
+      .from("ai-chat")
+      .createSignedUrl(path, 60 * 60);
+    if (!error && data?.signedUrl) signed.push(data.signedUrl);
+  }
+  return signed;
+}
+
 export const aiChatService = {
-  async sendMessage(message, conversationId = null) {
+  async sendMessage(message, conversationId = null, images = []) {
     if (!supabase) return missingBackend();
     try {
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          message: String(message || "").trim(),
-          conversation_id: conversationId || undefined,
-        },
-      });
+      const body = {
+        message: String(message || "").trim(),
+        conversation_id: conversationId || undefined,
+      };
+      if (images?.length) {
+        body.images = images.slice(0, 2).map((item) => ({
+          mime_type: item.mime_type,
+          data: item.data,
+        }));
+      }
+
+      const { data, error } = await supabase.functions.invoke("ai-chat", { body });
 
       if (error) {
         let parsed = null;
@@ -48,7 +74,10 @@ export const aiChatService = {
         }
         return {
           success: false,
-          error: translateAiError(parsed || data, error.message || "No fue posible contactar al asistente."),
+          error: translateAiError(
+            parsed || data,
+            error.message || "No fue posible contactar al asistente.",
+          ),
         };
       }
 
@@ -60,11 +89,14 @@ export const aiChatService = {
         return { success: false, error: "El asistente no devolvió una respuesta." };
       }
 
+      const imageUrls = await signImagePaths(data.image_urls || []);
+
       return {
         success: true,
         reply: data.reply,
         conversationId: data.conversation_id || conversationId || null,
         model: data.model || null,
+        imageUrls,
       };
     } catch (error) {
       return {
@@ -74,18 +106,55 @@ export const aiChatService = {
     }
   },
 
+  async listConversations() {
+    if (!supabase) return { success: true, conversations: [] };
+    try {
+      const { data, error } = await supabase
+        .from("ai_conversations")
+        .select("id, title, updated_at, created_at")
+        .order("updated_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return { success: true, conversations: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error?.message || "No se pudo cargar el historial.",
+        conversations: [],
+      };
+    }
+  },
+
   async listMessages(conversationId) {
     if (!supabase || !conversationId) return { success: true, messages: [] };
     try {
       const { data, error } = await supabase
         .from("ai_messages")
-        .select("id, role, content, created_at")
+        .select("id, role, content, created_at, image_urls")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return { success: true, messages: data || [] };
+
+      const messages = [];
+      for (const row of data || []) {
+        const urls = await signImagePaths(
+          Array.isArray(row.image_urls) ? row.image_urls : [],
+        );
+        messages.push({
+          id: row.id,
+          role: row.role,
+          content: row.content,
+          created_at: row.created_at,
+          imageUrls: urls,
+        });
+      }
+      return { success: true, messages };
     } catch (error) {
-      return { success: false, error: error?.message || "No se pudo cargar el historial.", messages: [] };
+      return {
+        success: false,
+        error: error?.message || "No se pudo cargar el historial.",
+        messages: [],
+      };
     }
   },
 };
