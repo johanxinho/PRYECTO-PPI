@@ -67,6 +67,11 @@ create policy "avatars own delete"
   );
 
 -- 3) Buscar perfil con rol y avatar (mensajes / compartir)
+-- Drop functions whose return type changed (CREATE OR REPLACE cannot alter OUT row type)
+drop function if exists public.find_profile_by_email(text);
+drop function if exists public.list_my_messages();
+drop function if exists public.list_task_shares();
+
 create or replace function public.find_profile_by_email(requested_email text)
 returns table (id uuid, full_name text, email text, role text, avatar_url text)
 language sql
