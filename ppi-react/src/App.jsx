@@ -1,6 +1,39 @@
+// @ts-nocheck
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  House,
+  ListTodo,
+  CalendarDays,
+  Bell,
+  Flag,
+  Focus,
+  Share2,
+  MessageCircle,
+  User,
+  Settings,
+  LogOut,
+  Plus,
+  Search,
+  Menu,
+  X,
+  Check,
+  Pencil,
+  Trash2,
+  ArrowRight,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  Paperclip,
+} from "lucide-react";
 import Login from "./components/Login";
+import { Brand } from "./Brand";
+import WebGLBackground from "./components/WebGLBackground";
+import AsciiEffect from "./components/AsciiEffect";
+import { MorphingText } from "./components/ui/morphing-text";
+import { DiaTextReveal } from "./components/ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
+import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
+import { currentPath, pushRoute, assetUrl } from "./paths";
 import {
   createTask,
   deleteTask,
@@ -24,8 +57,7 @@ import {
   deleteTaskAttachment,
   subscribeToNotifications,
 } from "./dataService";
-import "./App.css";
-import "./Professional.css";
+import "./recordate.css";
 
 const navItems = [
   "Inicio",
@@ -37,6 +69,31 @@ const navItems = [
   "Compartir agendas",
   "Mensajes",
 ];
+const navIcons = [House, ListTodo, CalendarDays, Bell, Flag, Focus, Share2, MessageCircle];
+const routeViews = {
+  "/dashboard": "Inicio",
+  "/tareas": "Mis tareas",
+  "/calendario": "Calendario",
+  "/recordatorios": "Recordatorios",
+  "/prioridades": "Prioridades",
+  "/enfoque": "Modo enfoque",
+  "/compartir": "Compartir agendas",
+  "/mensajes": "Mensajes",
+  "/perfil": "Perfil",
+  "/configuracion": "Configuración",
+};
+const viewRoutes = {
+  Inicio: "/dashboard",
+  "Mis tareas": "/tareas",
+  Calendario: "/calendario",
+  Recordatorios: "/recordatorios",
+  Prioridades: "/prioridades",
+  "Modo enfoque": "/enfoque",
+  "Compartir agendas": "/compartir",
+  Mensajes: "/mensajes",
+  Perfil: "/perfil",
+  Configuración: "/configuracion",
+};
 const localDate = (date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -59,36 +116,31 @@ const formatDate = (date) =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
   );
+const formatStamp = (value) =>
+  new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+const greeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Buenos días";
+  if (hour < 18) return "Buenas tardes";
+  return "Buenas noches";
+};
 const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
 const supabaseErrorMessage = (error, fallback) => {
   const details = [error?.code && `Código: ${error.code}`, error?.message, error?.details && `Detalles: ${error.details}`, error?.hint && `Sugerencia: ${error.hint}`].filter(Boolean);
   return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
 };
 
-// Archivo principal de la interfaz de RECORDATE.
-// Aquí se define la landing page, el flujo de autenticación, la gestión de tareas,
-// los recordatorios, el calendario, el panel de mensajes, el perfil y la configuración.
-
-function Brand() {
-  return (
-    <div className="brand">
-      <span className="brand-mark">R</span>
-      <span>RECORDATE</span>
-    </div>
-  );
-}
-// Landing: muestra la vista pública de presentación del producto y redirige
-// al usuario hacia el proceso de inicio de sesión o registro.
 function Landing({ onStart }) {
+  const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
     <div className="landing">
       <header className="landing-header">
-        <Brand />
+        <Brand light />
         <nav className="landing-nav">
           <a href="#caracteristicas">Características</a>
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
-          <a href="#preguntas">Preguntas frecuentes</a>
+          <a href="#preguntas">Preguntas</a>
         </nav>
         <button className="outline-button" onClick={onStart}>
           Iniciar sesión
@@ -97,28 +149,41 @@ function Landing({ onStart }) {
       <section className="hero" id="inicio">
         <div className="hero-copy">
           <span className="eyebrow accent-label">
-            PPI · IE La Candelaria · Grado 11
+            <DiaTextReveal text="PPI · IE La Candelaria · Grado 11" />
           </span>
-          <h1>
-            Organiza tus actividades. <em>Recuerda lo importante.</em>
-          </h1>
+          <h1 className="hero-static">Tu día académico.</h1>
+          <MorphingText
+            className="hero-morph"
+            texts={["Recuerda.", "Organiza.", "Prioriza.", "Avanza."]}
+          />
           <p>
-            RECORDATE te ayuda a organizar tus tareas, trabajos y actividades
-            académicas para que no olvides ninguna fecha importante.
+            RECORDATE es la agenda académica para estudiantes que quieren claridad:
+            tareas, fechas, prioridades y recordatorios en un solo espacio.
           </p>
           <div className="hero-actions">
             <button className="primary-button" onClick={onStart}>
-              Comenzar ahora <span>→</span>
+              Comenzar ahora <ArrowRight size={16} />
             </button>
             <a className="text-button" href="#como-funciona">
-              Conocer más <span>↓</span>
+              Conocer más <ArrowDown size={16} />
             </a>
           </div>
-          <p className="demo-note">
-            Puedes explorar la experiencia con el acceso DEMO.
-          </p>
+          <p className="demo-note">Puedes explorar la experiencia con el acceso de demostración.</p>
         </div>
-        <DashboardPreview />
+        <div className="hero-visual">
+          <div className="ascii-stage">
+            <span className="logo-caption">Electric Gaze</span>
+            <AsciiEffect
+              src={gazeSrc}
+              config={{
+                cellSize: 6,
+                brightness: 18,
+                contrast: 118,
+                density: 28,
+              }}
+            />
+          </div>
+        </div>
       </section>
       <section className="problem-band" id="como-funciona">
         <div>
@@ -126,9 +191,8 @@ function Landing({ onStart }) {
           <h2>Menos olvido. Más control sobre tu tiempo.</h2>
         </div>
         <p>
-          Cuando se acumulan tareas, trabajos y fechas importantes, priorizar se
-          vuelve difícil. RECORDATE convierte esa carga en una agenda clara,
-          pensada para estudiantes de la IE La Candelaria.
+          Cuando se acumulan tareas, trabajos y fechas importantes, priorizar se vuelve difícil.
+          RECORDATE convierte esa carga en una agenda clara, pensada para estudiantes de la IE La Candelaria.
         </p>
       </section>
       <section className="feature-section" id="caracteristicas">
@@ -138,36 +202,12 @@ function Landing({ onStart }) {
         </div>
         <div className="feature-grid">
           {[
-            [
-              "01",
-              "Registra tus actividades",
-              "Crea tareas con materia, fecha, hora, descripción y prioridad.",
-            ],
-            [
-              "02",
-              "Recibe recordatorios",
-              "Configura avisos para llegar a tiempo a cada entrega.",
-            ],
-            [
-              "03",
-              "Concéntrate mejor",
-              "El modo enfoque deja frente a ti una sola actividad.",
-            ],
-            [
-              "04",
-              "Coordina con tu equipo",
-              "Comparte agendas y conversa con tus compañeros.",
-            ],
-            [
-              "05",
-              "Encuentra rápido",
-              "Busca por título o materia en tiempo real.",
-            ],
-            [
-              "06",
-              "Marca tu avance",
-              "Completa actividades y visualiza tu progreso real.",
-            ],
+            ["01", "Registra tus actividades", "Crea tareas con materia, fecha, hora, descripción y prioridad."],
+            ["02", "Recibe recordatorios", "Configura avisos para llegar a tiempo a cada entrega."],
+            ["03", "Concéntrate mejor", "El modo enfoque deja frente a ti una sola actividad."],
+            ["04", "Coordina con tu equipo", "Comparte agendas y conversa con tus compañeros."],
+            ["05", "Encuentra rápido", "Busca por título, materia o descripción en tiempo real."],
+            ["06", "Marca tu avance", "Completa actividades y visualiza tu progreso real."],
           ].map(([number, title, description]) => (
             <article className="feature-item" key={number}>
               <span>{number}</span>
@@ -183,72 +223,39 @@ function Landing({ onStart }) {
           <h2>Claridad para estudiar. Tranquilidad para avanzar.</h2>
         </div>
         <button className="primary-button" onClick={onStart}>
-          Abrir RECORDATE <span>↗</span>
+          Abrir RECORDATE <ArrowRight size={16} />
         </button>
       </section>
-      <footer className="landing-footer" id="preguntas">
-        <Brand />
-        <p>
-          Sistema de recordatorio de actividades académicas · Medellín,
-          Antioquia
-        </p>
+      <section className="landing-faq" id="preguntas">
+        <span className="eyebrow">Preguntas frecuentes</span>
+        <div className="faq-grid">
+          <div>
+            <h3>¿Necesito crear una cuenta?</h3>
+            <p>Sí, para guardar tu agenda en la nube con Supabase. También puedes explorar una demostración local.</p>
+          </div>
+          <div>
+            <h3>¿Funciona en el celular?</h3>
+            <p>Sí. La navegación se adapta a iPhone y Android con un menú inferior y pantallas pensadas para una mano.</p>
+          </div>
+          <div>
+            <h3>¿Puedo compartir tareas?</h3>
+            <p>Puedes compartir actividades con compañeros registrados y revocar el acceso cuando lo necesites.</p>
+          </div>
+          <div>
+            <h3>¿Hay recordatorios?</h3>
+            <p>Configura avisos por actividad. Las alarmas suenan mientras RECORDATE está abierto.</p>
+          </div>
+        </div>
+      </section>
+      <footer className="landing-footer">
+        <Brand light />
+        <p>Sistema de recordatorio de actividades académicas · Medellín, Antioquia</p>
         <span>© 2026 PPI</span>
       </footer>
     </div>
   );
 }
-// DashboardPreview: representa una vista previa visual del panel principal
-// para ilustrar la experiencia de uso de la agenda académica.
-function DashboardPreview() {
-  return (
-    <div className="dashboard-preview">
-      <div className="preview-top">
-        <span className="mini-mark">R</span>
-        <span>Mi agenda</span>
-        <span className="preview-avatar">A</span>
-      </div>
-      <div className="preview-body">
-        <div className="preview-sidebar">
-          <i />
-          <i />
-          <i />
-          <i />
-        </div>
-        <div className="preview-main">
-          <span className="preview-kicker">HOY · MARTES 25</span>
-          <strong>Buenos días, Andrea</strong>
-          <div className="preview-stats">
-            <span>
-              <b>4</b>Pendientes
-            </span>
-            <span>
-              <b>2</b>Para hoy
-            </span>
-          </div>
-          <div className="preview-task">
-            <span className="task-dot green" />
-            <div>
-              <b>Entrega de taller</b>
-              <small>Matemáticas · 4:00 PM</small>
-            </div>
-            <em>Alta</em>
-          </div>
-          <div className="preview-task">
-            <span className="task-dot gold" />
-            <div>
-              <b>Lectura de ciencias</b>
-              <small>Ciencias sociales · Sáb 10:00 AM</small>
-            </div>
-            <em>Media</em>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-// TaskForm: formulario reutilizable para crear o editar una actividad.
-// Recibe una tarea existente o nula, valida campos obligatorios y guarda
-// la información junto con una posible imagen adjunta.
+
 function TaskForm({ task, onSave, onCancel }) {
   const [form, setForm] = useState(
     task || {
@@ -264,19 +271,11 @@ function TaskForm({ task, onSave, onCancel }) {
   const [error, setError] = useState("");
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [saving, setSaving] = useState(false);
-  const update = (field, value) =>
-    setForm((current) => ({ ...current, [field]: value }));
+  const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const submit = (event) => {
     event.preventDefault();
-    if (
-      !form.title.trim() ||
-      !form.subject.trim() ||
-      !form.date ||
-      !form.time
-    ) {
-      setError(
-        "Completa título, materia, fecha y hora para guardar la actividad.",
-      );
+    if (!form.title.trim() || !form.subject.trim() || !form.date || !form.time) {
+      setError("Completa título, materia, fecha y hora para guardar la actividad.");
       return;
     }
     setSaving(true);
@@ -292,43 +291,23 @@ function TaskForm({ task, onSave, onCancel }) {
       <div className="form-grid">
         <label>
           Título
-          <input
-            autoFocus
-            value={form.title}
-            onChange={(event) => update("title", event.target.value)}
-            placeholder="Ej. Entrega de taller"
-          />
+          <input autoFocus value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
         </label>
         <label>
           Materia
-          <input
-            value={form.subject}
-            onChange={(event) => update("subject", event.target.value)}
-            placeholder="Ej. Matemáticas"
-          />
+          <input value={form.subject} onChange={(event) => update("subject", event.target.value)} placeholder="Ej. Matemáticas" />
         </label>
         <label>
           Fecha
-          <input
-            type="date"
-            value={form.date}
-            onChange={(event) => update("date", event.target.value)}
-          />
+          <input type="date" value={form.date} onChange={(event) => update("date", event.target.value)} />
         </label>
         <label>
           Hora
-          <input
-            type="time"
-            value={form.time}
-            onChange={(event) => update("time", event.target.value)}
-          />
+          <input type="time" value={form.time} onChange={(event) => update("time", event.target.value)} />
         </label>
         <label>
           Prioridad
-          <select
-            value={form.priority}
-            onChange={(event) => update("priority", event.target.value)}
-          >
+          <select value={form.priority} onChange={(event) => update("priority", event.target.value)}>
             <option>Alta</option>
             <option>Media</option>
             <option>Baja</option>
@@ -336,22 +315,14 @@ function TaskForm({ task, onSave, onCancel }) {
         </label>
         <label>
           Recordatorio
-          <select
-            value={form.reminder}
-            onChange={(event) => update("reminder", event.target.value)}
-          >
+          <select value={form.reminder} onChange={(event) => update("reminder", event.target.value)}>
             {reminderOptions.map(([label]) => <option key={label}>{label}</option>)}
           </select>
         </label>
       </div>
       <label>
         Descripción
-        <textarea
-          value={form.description}
-          onChange={(event) => update("description", event.target.value)}
-          rows="3"
-          placeholder="Agrega detalles para recordar qué debes hacer..."
-        />
+        <textarea value={form.description} onChange={(event) => update("description", event.target.value)} rows="3" placeholder="Agrega detalles para recordar qué debes hacer..." />
       </label>
       <label>
         Adjuntar imagen
@@ -367,32 +338,21 @@ function TaskForm({ task, onSave, onCancel }) {
           setAttachmentFile(file);
         }} />
       </label>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <p className="form-error" role="alert">{error}</p>}
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={saving}>
           {saving ? "Guardando..." : task ? "Guardar cambios" : "Crear tarea"}
         </button>
-        <button className="text-button" type="button" onClick={onCancel}>
-          Cancelar
-        </button>
+        <button className="text-button" type="button" onClick={onCancel}>Cancelar</button>
       </div>
     </form>
   );
 }
-// PriorityBadge: etiqueta visual para mostrar la prioridad de cada tarea.
+
 function PriorityBadge({ priority }) {
-  return (
-    <span className={`priority priority-${priority.toLowerCase()}`}>
-      {priority}
-    </span>
-  );
+  return <span className={`priority priority-${priority.toLowerCase()}`}>{priority}</span>;
 }
-// TaskCard: tarjeta individual de tarea con acciones de completar, editar,
-// eliminar, abrir modo enfoque y visualizar o borrar adjuntos de imagen.
+
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
   const canManage = task.userId === userId;
   const [attachmentError, setAttachmentError] = useState("");
@@ -410,12 +370,10 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       <button
         className="check-button"
         disabled={!canManage}
-        aria-label={
-          task.completed ? "Marcar como pendiente" : "Marcar como completada"
-        }
+        aria-label={task.completed ? "Marcar como pendiente" : "Marcar como completada"}
         onClick={() => onToggle(task.id)}
       >
-        {task.completed ? "✓" : ""}
+        {task.completed ? <Check size={12} /> : ""}
       </button>
       <div className="task-content">
         <div className="task-heading">
@@ -423,53 +381,42 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
           <PriorityBadge priority={task.priority} />
         </div>
         <p className="task-meta">
-          {task.subject} <span>·</span> {formatDate(task.date)} <span>·</span>{" "}
-          {task.time}
+          {task.subject} <span>·</span> {formatDate(task.date)} <span>·</span> {task.time}
         </p>
-        {task.description && (
-          <p className="task-description">{task.description}</p>
-        )}
+        {task.description && <p className="task-description">{task.description}</p>}
         {task.attachments?.map((attachment) => (
           <span className="task-attachment" key={attachment.id}>
-            <button className="text-button" onClick={() => openAttachment(attachment)}>Ver imagen</button>
-            {canManage && <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>×</button>}
+            <button className="text-button" onClick={() => openAttachment(attachment)}>
+              <Paperclip size={14} /> Ver imagen
+            </button>
+            {canManage && (
+              <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>
+                <X size={14} />
+              </button>
+            )}
           </span>
         ))}
         {attachmentError && <small className="form-error" role="alert">{attachmentError}</small>}
       </div>
       <div className="task-actions">
-        <button
-          className="icon-button"
-          aria-label="Abrir modo enfoque"
-          title="Modo enfoque"
-          onClick={() => onFocus(task)}
-        >
-          ◎
+        <button className="icon-button" aria-label="Abrir modo enfoque" title="Modo enfoque" onClick={() => onFocus(task)}>
+          <Focus size={16} />
         </button>
-        {canManage && <button
-          className="icon-button"
-          aria-label="Editar tarea"
-          title="Editar tarea"
-          onClick={() => onEdit(task)}
-        >
-          ✎
-        </button>}
-        {canManage && <button
-          className="icon-button danger"
-          aria-label="Eliminar tarea"
-          title="Eliminar tarea"
-          onClick={() => onDelete(task.id)}
-        >
-          ×
-        </button>}
+        {canManage && (
+          <button className="icon-button" aria-label="Editar tarea" title="Editar tarea" onClick={() => onEdit(task)}>
+            <Pencil size={16} />
+          </button>
+        )}
+        {canManage && (
+          <button className="icon-button danger" aria-label="Eliminar tarea" title="Eliminar tarea" onClick={() => onDelete(task.id)}>
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </article>
   );
 }
 
-// App: componente principal que coordina el estado global de la aplicación.
-// Aquí se manejan sesiones, carga de datos, recordatorios, navegación,
-// notificaciones y renderizado del contenido según la vista activa.
 function App() {
   const [session, setSession] = useState(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
@@ -493,39 +440,37 @@ function App() {
   const [alarmTask, setAlarmTask] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const alarmedTasks = useRef(new Set());
+  const demo = isDemoSession(session);
   const enablePushNotifications = async () => {
+    if (demo) {
+      setNotice("Las notificaciones push no están disponibles en la demostración local.");
+      return false;
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !import.meta.env.VITE_VAPID_PUBLIC_KEY) {
       setNotice("Las notificaciones avanzadas requieren configurar Web Push.");
       return false;
     }
     const permission = await Notification.requestPermission();
     if (permission !== "granted") return false;
-    const registration = await navigator.serviceWorker.register("/sw.js");
+    const registration = await navigator.serviceWorker.register(assetUrl("/sw.js"));
     const existing = await registration.pushManager.getSubscription();
     const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
     await savePushSubscription(subscription);
     return true;
   };
   useEffect(() => {
-    const privatePaths = [
-      "/dashboard",
-      "/tareas",
-      "/calendario",
-      "/recordatorios",
-      "/prioridades",
-      "/enfoque",
-      "/compartir",
-      "/mensajes",
-      "/perfil",
-      "/configuracion",
-    ];
-    const routeViews = { "/dashboard": "Inicio", "/tareas": "Mis tareas", "/calendario": "Calendario", "/recordatorios": "Recordatorios", "/prioridades": "Prioridades", "/enfoque": "Modo enfoque", "/compartir": "Compartir agendas", "/mensajes": "Mensajes", "/perfil": "Perfil", "/configuracion": "Configuración" };
+    const privatePaths = Object.keys(routeViews);
     const handleRoute = () => {
-      if (privatePaths.includes(window.location.pathname)) {
-        setView(routeViews[window.location.pathname]);
+      const path = currentPath();
+      if (privatePaths.includes(path)) {
+        setView(routeViews[path]);
         setScreen(session ? "app" : "auth");
       }
-      if (window.location.pathname === "/login" && session) setScreen("app");
+      if (path === "/login" && session) setScreen("app");
+      if (path === "/reset-password") {
+        setPasswordRecovery(true);
+        setScreen("auth");
+      }
     };
     handleRoute();
     window.addEventListener("popstate", handleRoute);
@@ -540,6 +485,15 @@ function App() {
     }
     setLoadingData(true);
     try {
+      if (isDemoSession(current)) {
+        const data = demoApi.load();
+        setProfile(data.profile);
+        setTasks(data.tasks);
+        setShared(data.shares);
+        setNotifications(data.notifications);
+        setScreen("app");
+        return;
+      }
       const [currentProfile, currentTasks, currentShares, currentNotifications] = await Promise.all([
         ensureProfile(current.user),
         listTasks(),
@@ -568,24 +522,24 @@ function App() {
       setSession(current);
       loadUserData(current);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, current) => {
-        setSession(current);
-        if (event === "PASSWORD_RECOVERY") {
-          setPasswordRecovery(true);
-          setScreen("auth");
-          return;
-        }
-        loadUserData(current);
-      },
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((event, current) => {
+      setSession(current);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+        setScreen("auth");
+        return;
+      }
+      loadUserData(current);
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (!session) return undefined;
-    const unsubscribe = subscribeToNotifications(session.user.id, (payload) => setNotifications((current) => current.some((item) => item.id === payload.new.id) ? current : [payload.new, ...current]));
+    if (!session || demo) return undefined;
+    const unsubscribe = subscribeToNotifications(session.user.id, (payload) =>
+      setNotifications((current) => current.some((item) => item.id === payload.new.id) ? current : [payload.new, ...current]),
+    );
     return unsubscribe;
-  }, [session]);
+  }, [session, demo]);
   useEffect(() => {
     if (!profile?.reminders_enabled) return undefined;
     const checkReminders = () => {
@@ -617,19 +571,16 @@ function App() {
     const timer = window.setInterval(checkReminders, 15000);
     return () => window.clearInterval(timer);
   }, [profile, tasks]);
-  const userName =
-    profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
+  const userName = profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
   const visibleTasks = useMemo(
     () =>
-      (profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks).filter((task) =>
-        `${task.title} ${task.subject} ${task.description}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-      ).filter((task) =>
-        (!filters.priority || task.priority === filters.priority) &&
-        (!filters.status || (filters.status === "Completada" ? task.completed : !task.completed)) &&
-        (!filters.date || task.date === filters.date),
-      ),
+      (profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks)
+        .filter((task) => `${task.title} ${task.subject} ${task.description}`.toLowerCase().includes(query.toLowerCase()))
+        .filter((task) =>
+          (!filters.priority || task.priority === filters.priority) &&
+          (!filters.status || (filters.status === "Completada" ? task.completed : !task.completed)) &&
+          (!filters.date || task.date === filters.date),
+        ),
     [tasks, query, filters, profile?.show_completed],
   );
   const pending = tasks.filter((task) => !task.completed);
@@ -639,12 +590,15 @@ function App() {
     high: pending.filter((task) => task.priority === "Alta").length,
     done: tasks.filter((task) => task.completed).length,
   };
+  const progress = tasks.length ? Math.round((stats.done / tasks.length) * 100) : 0;
   const saveTask = async (task) => {
     try {
-      const saved = editingTask?.id
-        ? await updateTask(task)
-        : await createTask(task);
-      const attachment = task.attachmentFile
+      const saved = demo
+        ? demoApi.saveTask({ ...task, id: editingTask?.id })
+        : editingTask?.id
+          ? await updateTask(task)
+          : await createTask(task);
+      const attachment = !demo && task.attachmentFile
         ? await uploadTaskAttachment(saved.id, task.attachmentFile)
         : null;
       const savedTask = attachment
@@ -667,7 +621,8 @@ function App() {
   const removeTask = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar esta tarea?")) return;
     try {
-      await deleteTask(id);
+      if (demo) demoApi.deleteTask(id);
+      else await deleteTask(id);
       setTasks((current) => current.filter((task) => task.id !== id));
       setNotice("Actividad eliminada.");
     } catch (error) {
@@ -678,10 +633,10 @@ function App() {
     const task = tasks.find((item) => item.id === id);
     if (!task) return;
     try {
-      const updated = await updateTask({ ...task, completed: !task.completed });
-      setTasks((current) =>
-        current.map((item) => (item.id === id ? updated : item)),
-      );
+      const updated = demo
+        ? demoApi.saveTask({ ...task, completed: !task.completed })
+        : await updateTask({ ...task, completed: !task.completed });
+      setTasks((current) => current.map((item) => (item.id === id ? updated : item)));
       setFocusTask((current) => (current?.id === id ? updated : current));
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible actualizar la actividad."));
@@ -692,6 +647,10 @@ function App() {
     setAlarmTask(null);
   };
   const removeAttachment = async (taskId, attachment) => {
+    if (demo) {
+      setNotice("Los adjuntos no están disponibles en la demostración local.");
+      return;
+    }
     try {
       await deleteTaskAttachment(attachment);
       setTasks((current) => current.map((task) => task.id === taskId ? { ...task, attachments: task.attachments.filter((item) => item.id !== attachment.id) } : task));
@@ -701,18 +660,20 @@ function App() {
     }
   };
   const logout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    if (supabase && !demo) await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
     setTasks([]);
     setShared([]);
     setNotifications([]);
     setScreen("landing");
+    pushRoute("/");
   };
   const markAllRead = async () => {
     setNotificationAction(true);
     try {
-      await markAllNotificationsRead();
+      if (demo) demoApi.markAllRead();
+      else await markAllNotificationsRead();
       setNotifications((current) => current.map((item) => ({ ...item, read_at: new Date().toISOString() })));
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible marcar las notificaciones."));
@@ -723,7 +684,8 @@ function App() {
   const markOneRead = async (notification) => {
     if (notification.read_at) return;
     try {
-      await markNotificationRead(notification.id);
+      if (demo) demoApi.markOneRead(notification.id);
+      else await markNotificationRead(notification.id);
       setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read_at: new Date().toISOString() } : item));
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
@@ -731,17 +693,42 @@ function App() {
   };
   const navigate = (nextView) => {
     setView(nextView);
-    const route = { Inicio: "/dashboard", "Mis tareas": "/tareas", Calendario: "/calendario", Recordatorios: "/recordatorios", Prioridades: "/prioridades", "Modo enfoque": "/enfoque", "Compartir agendas": "/compartir", Mensajes: "/mensajes", Perfil: "/perfil", Configuración: "/configuracion" }[nextView];
-    if (route && window.location.pathname !== route) window.history.pushState({}, "", route);
+    const route = viewRoutes[nextView];
+    if (route && currentPath() !== route) pushRoute(route);
     setMobileNav(false);
     setFocusTask(null);
   };
-  if (screen === "landing")
-    return <Landing onStart={() => setScreen("auth")} />;
-  if (!session || passwordRecovery)
-    return (
+  const openNewTask = () => {
+    setEditingTask(null);
+    setShowForm(true);
+  };
+  const taskHandlers = {
+    userId: session?.user?.id,
+    onToggle: toggleTask,
+    onEdit: (task) => {
+      setEditingTask(task);
+      setShowForm(true);
+    },
+    onDelete: removeTask,
+    onFocus: setFocusTask,
+    onAttachmentDelete: removeAttachment,
+  };
+  const frame = (node) => (
+    <div className="recordate-root">
+      <WebGLBackground />
+      <div className="recordate-ui">{node}</div>
+    </div>
+  );
+  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} />);
+  if (!session || passwordRecovery) {
+    return frame(
       <Login
         recovery={passwordRecovery}
+        onDemo={() => {
+          setSession(DEMO_SESSION);
+          setPasswordRecovery(false);
+          loadUserData(DEMO_SESSION);
+        }}
         onLogin={(nextSession) => {
           setSession(nextSession);
           setPasswordRecovery(false);
@@ -751,37 +738,28 @@ function App() {
         onBack={() => setScreen("landing")}
       />
     );
+  }
   const renderMain = () => {
-    if (focusTask)
+    if (focusTask) {
       return (
         <section className="focus-panel">
-          <div className="focus-orbit">◎</div>
+          <div className="focus-orbit"><Focus size={28} /></div>
           <span className="eyebrow accent-label">Modo enfoque</span>
           <h2>{focusTask.title}</h2>
-          <p className="task-meta">
-            {focusTask.subject} · {formatDate(focusTask.date)} ·{" "}
-            {focusTask.time}
-          </p>
-          <p>
-            {focusTask.description ||
-              "Concéntrate en completar esta actividad."}
-          </p>
+          <p className="task-meta">{focusTask.subject} · {formatDate(focusTask.date)} · {focusTask.time}</p>
+          <p>{focusTask.description || "Concéntrate en completar esta actividad."}</p>
           <div className="focus-status">
             <PriorityBadge priority={focusTask.priority} />
-            <span>
-              {focusTask.completed
-                ? "Actividad completada"
-                : "Pendiente de completar"}
-            </span>
+            <span>{focusTask.completed ? "Actividad completada" : "Pendiente de completar"}</span>
           </div>
-          <button className="primary-button" onClick={() => setFocusTask(null)}>
-            Salir del modo enfoque
-          </button>
+          <button className="primary-button" onClick={() => setFocusTask(null)}>Salir del modo enfoque</button>
         </section>
       );
-    if (view === "Calendario")
+    }
+    if (view === "Calendario") {
       return <Calendar tasks={profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks} onSelect={setFocusTask} />;
-    if (view === "Mis tareas")
+    }
+    if (view === "Mis tareas") {
       return (
         <>
           <section className="section-title">
@@ -789,115 +767,55 @@ function App() {
               <span className="eyebrow">Tu agenda completa</span>
               <h2>Mis tareas</h2>
             </div>
-            <button
-              className="primary-button"
-              onClick={() => {
-                setEditingTask(null);
-                setShowForm(true);
-              }}
-            >
-              + Nueva actividad
-            </button>
+            <button className="primary-button" onClick={openNewTask}><Plus size={16} /> Nueva actividad</button>
           </section>
           <div className="search-wrap" aria-label="Filtros de tareas">
-            <select
-              aria-label="Filtrar por prioridad"
-              value={filters.priority}
-              onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}
-            >
+            <select aria-label="Filtrar por prioridad" value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}>
               <option value="">Todas las prioridades</option>
               <option>Alta</option>
               <option>Media</option>
               <option>Baja</option>
             </select>
-            <select
-              aria-label="Filtrar por estado"
-              value={filters.status}
-              onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
-            >
+            <select aria-label="Filtrar por estado" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
               <option value="">Todos los estados</option>
               <option>Pendiente</option>
               <option>Completada</option>
             </select>
-            <input
-              type="date"
-              aria-label="Filtrar por fecha"
-              value={filters.date}
-              onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))}
-            />
+            <input type="date" aria-label="Filtrar por fecha" value={filters.date} onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))} />
           </div>
-          <TaskList
-            userId={session.user.id}
-            tasks={visibleTasks}
-            onToggle={toggleTask}
-            onEdit={(task) => {
-              setEditingTask(task);
-              setShowForm(true);
-            }}
-            onDelete={removeTask}
-            onFocus={setFocusTask}
-            onAttachmentDelete={removeAttachment}
-            empty="No tienes actividades registradas."
-          />
+          <TaskList {...taskHandlers} tasks={visibleTasks} empty="No tienes actividades registradas." />
         </>
       );
-    if (view === "Recordatorios")
+    }
+    if (view === "Recordatorios") {
+      return <TaskList {...taskHandlers} title="Recordatorios" subtitle="Las próximas fechas que merecen tu atención." tasks={pending} empty="No tienes recordatorios pendientes." />;
+    }
+    if (view === "Prioridades") {
       return (
         <TaskList
-          userId={session.user.id}
-          title="Recordatorios"
-          subtitle="Las próximas fechas que merecen tu atención."
-          tasks={pending}
-          onToggle={toggleTask}
-          onEdit={(task) => {
-            setEditingTask(task);
-            setShowForm(true);
-          }}
-          onDelete={removeTask}
-          onFocus={setFocusTask}
-          onAttachmentDelete={removeAttachment}
-          empty="No tienes recordatorios pendientes."
-        />
-      );
-    if (view === "Prioridades")
-      return (
-        <TaskList
-          userId={session.user.id}
+          {...taskHandlers}
           title="Prioridades"
           subtitle="Ordena tu energía empezando por lo más importante."
-          tasks={[...pending].sort(
-            (a, b) =>
-              ["Alta", "Media", "Baja"].indexOf(a.priority) -
-              ["Alta", "Media", "Baja"].indexOf(b.priority),
-          )}
-          onToggle={toggleTask}
-          onEdit={(task) => {
-            setEditingTask(task);
-            setShowForm(true);
-          }}
-          onDelete={removeTask}
-          onFocus={setFocusTask}
-          onAttachmentDelete={removeAttachment}
+          tasks={[...pending].sort((a, b) => ["Alta", "Media", "Baja"].indexOf(a.priority) - ["Alta", "Media", "Baja"].indexOf(b.priority))}
           empty="No tienes actividades priorizadas."
         />
       );
-    if (view === "Modo enfoque")
+    }
+    if (view === "Modo enfoque") {
       return (
         <TaskList
-          userId={session.user.id}
+          {...taskHandlers}
           title="Modo enfoque"
           subtitle="Elige una actividad para trabajar sin distracciones."
           tasks={pending}
-          onToggle={toggleTask}
           onEdit={() => {}}
           onDelete={() => {}}
-          onFocus={setFocusTask}
-          onAttachmentDelete={removeAttachment}
           empty="No hay actividades disponibles para enfocar."
           focusOnly
         />
       );
-    if (view === "Compartir agendas")
+    }
+    if (view === "Compartir agendas") {
       return (
         <SharePanel
           tasks={tasks}
@@ -907,7 +825,8 @@ function App() {
           shared={shared}
           onRevoke={async (share) => {
             try {
-              await revokeSharedTask(share.id);
+              if (demo) demoApi.revoke(share.id);
+              else await revokeSharedTask(share.id);
               setShared((current) => current.filter((item) => item.id !== share.id));
               setNotice("Acceso compartido revocado.");
             } catch (error) {
@@ -921,6 +840,13 @@ function App() {
               return false;
             }
             try {
+              if (demo) {
+                const createdShare = demoApi.share(task.id, normalizedEmail);
+                setShared((current) => [...current, createdShare]);
+                setShareEmail("");
+                setNotice("Agenda compartida en la demostración local.");
+                return true;
+              }
               const recipient = await findUserByEmail(normalizedEmail);
               if (!recipient) {
                 setNotice("No existe un usuario registrado con ese correo.");
@@ -949,9 +875,11 @@ function App() {
           }}
         />
       );
-    if (view === "Mensajes")
-      return <Chat message={message} setMessage={setMessage} userId={session.user.id} />;
-    if (view === "Perfil" || view === "Configuración")
+    }
+    if (view === "Mensajes") {
+      return <Chat message={message} setMessage={setMessage} userId={session.user.id} demo={demo} />;
+    }
+    if (view === "Perfil" || view === "Configuración") {
       return (
         <Profile
           view={view}
@@ -961,7 +889,7 @@ function App() {
           onEnablePush={enablePushNotifications}
           onSettingsChange={async (settings) => {
             try {
-              const updatedProfile = await updateProfileSettings(settings);
+              const updatedProfile = demo ? demoApi.saveProfile(settings) : await updateProfileSettings(settings);
               setProfile(updatedProfile);
               setNotice("Configuración guardada correctamente.");
             } catch (error) {
@@ -971,138 +899,132 @@ function App() {
           onLogout={logout}
         />
       );
+    }
+    const todayTasks = pending.filter((task) => task.date === today);
     return (
       <>
-        <section className="welcome-row">
+        <section className="dash-hero">
           <div>
-            <p className="lead">Estas son tus actividades pendientes.</p>
-            <div className="search-wrap">
-              <span>⌕</span>
-              <input
-                aria-label="Buscar por título o materia"
-                placeholder="Buscar por título o materia"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </div>
+            <span className="eyebrow">{new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span>
+            <h1>{greeting()}, {userName}.</h1>
+            <p>
+              {stats.today
+                ? `Tienes ${stats.today} ${stats.today === 1 ? "actividad" : "actividades"} para hoy.`
+                : "Hoy no tienes entregas. Revisa lo que viene."}
+            </p>
           </div>
-          <button
-            className="primary-button add-task-button"
-            onClick={() => {
-              setEditingTask(null);
-              setShowForm(true);
-            }}
-          >
-            + Nueva actividad
+          <button className="primary-button add-task-button" onClick={openNewTask}>
+            <Plus size={16} /> Nueva actividad
           </button>
         </section>
         <Stats stats={stats} />
-        <section className="section-title">
+        <div className="panel-card progress-card">
+          <span className="eyebrow">Progreso</span>
+          <strong>{progress}%</strong>
+          <p className="lead">de tu agenda está completa.</p>
+          <div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
+        </div>
+        <div className="dash-grid">
           <div>
-            <span className="eyebrow">Tu agenda</span>
-            <h2>{query ? "Resultados de búsqueda" : "Próximas actividades"}</h2>
+            <section className="section-title">
+              <div>
+                <span className="eyebrow">Tu agenda</span>
+                <h2>{query ? "Resultados de búsqueda" : "Tareas importantes"}</h2>
+              </div>
+              <button className="text-button" onClick={() => navigate("Mis tareas")}>Ver todas <ArrowRight size={14} /></button>
+            </section>
+            <div className="search-wrap">
+              <Search size={16} />
+              <input aria-label="Buscar por título o materia" placeholder="Buscar por título o materia" value={query} onChange={(event) => setQuery(event.target.value)} />
+            </div>
+            <TaskList {...taskHandlers} tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)} empty="No tienes tareas pendientes." compact />
           </div>
-          <button
-            className="text-button"
-            onClick={() => navigate("Mis tareas")}
-          >
-            Ver todas <span>→</span>
+          <aside className="panel-card">
+            <span className="eyebrow">Hoy</span>
+            <h2>Agenda del día</h2>
+            {todayTasks.length ? todayTasks.map((task) => (
+              <button className="agenda-task" key={task.id} onClick={() => setFocusTask(task)}>
+                <span>
+                  <b>{task.title}</b>
+                  <small>{task.subject} · {task.time}</small>
+                </span>
+                <PriorityBadge priority={task.priority} />
+              </button>
+            )) : <p className="empty-copy">Nada programado para hoy.</p>}
+            <button className="text-button calendar-link" onClick={() => navigate("Calendario")}>
+              Abrir calendario <ArrowRight size={14} />
+            </button>
+          </aside>
+        </div>
+        <div className="quick-actions">
+          <button className="quick-action" onClick={openNewTask}>
+            <Plus size={18} />
+            <b>Crear tarea</b>
+            <small>Registra una entrega en segundos.</small>
           </button>
-        </section>
-        <TaskList
-          userId={session.user.id}
-          tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)}
-          onToggle={toggleTask}
-          onEdit={(task) => {
-            setEditingTask(task);
-            setShowForm(true);
-          }}
-          onDelete={removeTask}
-          onFocus={setFocusTask}
-          onAttachmentDelete={removeAttachment}
-          empty="No tienes tareas pendientes."
-          compact
-        />
+          <button className="quick-action" onClick={() => navigate("Modo enfoque")}>
+            <Focus size={18} />
+            <b>Modo enfoque</b>
+            <small>Una sola actividad en pantalla.</small>
+          </button>
+          <button className="quick-action" onClick={() => navigate("Mensajes")}>
+            <MessageCircle size={18} />
+            <b>Escribir</b>
+            <small>Coordina con un compañero.</small>
+          </button>
+        </div>
       </>
     );
   };
-  return (
+  return frame(
     <main className="app-shell">
       <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
         <div className="sidebar-head">
-          <Brand />
-          <button
-            className="close-nav"
-            onClick={() => setMobileNav(false)}
-            aria-label="Cerrar menú"
-          >
-            ×
-          </button>
+          <Brand light size="sm" />
+          <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><X size={18} /></button>
         </div>
         <p className="sidebar-caption">Tu agenda académica</p>
         <nav aria-label="Navegación principal">
-          {navItems.map((item, index) => (
-            <button
-              className={view === item ? "nav-item active" : "nav-item"}
-              key={item}
-              onClick={() => navigate(item)}
-            >
-              <span className="nav-symbol" aria-hidden="true">
-                {["⌂", "✓", "▦", "◷", "↗", "◎", "⇄", "▢"][index]}
-              </span>
-              {item}
-            </button>
-          ))}
+          {navItems.map((item, index) => {
+            const Icon = navIcons[index];
+            return (
+              <button className={view === item ? "nav-item active" : "nav-item"} key={item} onClick={() => navigate(item)}>
+                <span className="nav-symbol" aria-hidden="true"><Icon size={16} /></span>
+                {item}
+              </button>
+            );
+          })}
         </nav>
         <div className="sidebar-bottom">
-          <button
-            className={view === "Perfil" ? "nav-item active" : "nav-item"}
-            onClick={() => navigate("Perfil")}
-          >
-            ◯ <span>Perfil</span>
+          <button className={view === "Perfil" ? "nav-item active" : "nav-item"} onClick={() => navigate("Perfil")}>
+            <span className="nav-symbol"><User size={16} /></span> Perfil
           </button>
-          <button
-            className={
-              view === "Configuración" ? "nav-item active" : "nav-item"
-            }
-            onClick={() => navigate("Configuración")}
-          >
-            ⚙ <span>Configuración</span>
+          <button className={view === "Configuración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Configuración")}>
+            <span className="nav-symbol"><Settings size={16} /></span> Configuración
           </button>
           <button className="nav-item logout" onClick={logout}>
-            ↪ <span>Cerrar sesión</span>
+            <span className="nav-symbol"><LogOut size={16} /></span> Cerrar sesión
           </button>
         </div>
       </aside>
       <div className="mobile-overlay" onClick={() => setMobileNav(false)} />
       <section className="workspace">
         <header className="workspace-header">
-          <button
-            className="menu-toggle"
-            onClick={() => setMobileNav(true)}
-            aria-label="Abrir menú"
-          >
-            ☰
-          </button>
+          <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Menu size={18} /></button>
           <div>
-            <p className="eyebrow">IE La Candelaria · PPI grado 11</p>
-            <h1>{view === "Inicio" ? `Buenos días, ${userName}.` : view}</h1>
+            <p className="eyebrow">IE La Candelaria · PPI grado 11{demo ? " · Demo" : ""}</p>
+            <h1>{view === "Inicio" ? "Hoy" : view}</h1>
           </div>
           <div className="header-user">
-            <button
-              className="notification-button"
-              aria-label="Ver notificaciones"
-              onClick={() => setNotificationsOpen((current) => !current)}
-            >
-              ♢{notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
+            <button className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}>
+              <Bell size={16} />
+              {notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
             </button>
             {notificationsOpen && (
               <div className="notification-panel">
                 <strong>Notificaciones</strong>
                 <button className="text-button" onClick={markAllRead} disabled={notificationAction}>Marcar todas como leídas</button>
-                <p>
-                  {notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}
-                </p>
+                <p>{notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}</p>
                 {notifications.slice(0, 5).map((item) => (
                   <button className="notification-item" key={item.id} onClick={() => markOneRead(item)}>
                     {item.title}<small>{item.body || ""}</small>
@@ -1116,9 +1038,7 @@ function App() {
         {notice && (
           <div className="notice" role="status">
             {notice}
-            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}>
-              ×
-            </button>
+            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}><X size={16} /></button>
           </div>
         )}
         <div className="content-area">
@@ -1130,35 +1050,31 @@ function App() {
           ) : renderMain()}
         </div>
       </section>
+      <nav className="bottom-nav" aria-label="Navegación móvil">
+        {[
+          ["Inicio", House],
+          ["Mis tareas", ListTodo],
+          ["Calendario", CalendarDays],
+          ["Mensajes", MessageCircle],
+          ["Perfil", User],
+        ].map(([item, Icon]) => (
+          <button key={item} className={view === item ? "active" : ""} onClick={() => navigate(item)}>
+            <Icon size={18} />
+            {item === "Mis tareas" ? "Tareas" : item}
+          </button>
+        ))}
+      </nav>
       {showForm && (
         <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="task-modal-title"
-          >
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
             <div className="modal-header">
               <div>
                 <span className="eyebrow accent-label">Agenda académica</span>
-                <h2 id="task-modal-title">
-                  {editingTask ? "Editar actividad" : "Nueva actividad"}
-                </h2>
+                <h2 id="task-modal-title">{editingTask ? "Editar actividad" : "Nueva actividad"}</h2>
               </div>
-              <button
-                className="icon-button"
-                onClick={() => setShowForm(false)}
-                aria-label="Cerrar formulario"
-              >
-                ×
-              </button>
+              <button className="icon-button" onClick={() => setShowForm(false)} aria-label="Cerrar formulario"><X size={16} /></button>
             </div>
-            <TaskForm
-              key={editingTask?.id || "new-task"}
-              task={editingTask}
-              onSave={saveTask}
-              onCancel={() => setShowForm(false)}
-            />
+            <TaskForm key={editingTask?.id || "new-task"} task={editingTask} onSave={saveTask} onCancel={() => setShowForm(false)} />
           </section>
         </div>
       )}
@@ -1169,7 +1085,7 @@ function App() {
             <h2 id="alarm-title">Es hora de realizar esta actividad</h2>
             <h3>{alarmTask.title}</h3>
             <p>{alarmTask.subject} · Prioridad {alarmTask.priority}</p>
-            <div className="form-actions">
+            <div className="form-actions center">
               <button className="primary-button" onClick={completeAlarmTask}>Marcar como completada</button>
               <button className="text-button" onClick={() => setAlarmTask(null)}>Posponer</button>
             </div>
@@ -1179,8 +1095,7 @@ function App() {
     </main>
   );
 }
-// Stats: muestra los indicadores resumidos de tareas pendientes, de hoy,
-// prioridad alta y completadas para que el usuario entienda su avance.
+
 function Stats({ stats }) {
   return (
     <section className="stats-grid">
@@ -1199,8 +1114,7 @@ function Stats({ stats }) {
     </section>
   );
 }
-// TaskList: lista reutilizable de tareas que se muestra en diferentes vistas
-// como Inicio, Mis tareas, Recordatorios, Prioridades y Modo enfoque.
+
 function TaskList({
   title,
   subtitle,
@@ -1229,17 +1143,11 @@ function TaskList({
         <div className="tasks">
           {tasks.map((task) =>
             focusOnly ? (
-              <button
-                className="focus-choice"
-                key={task.id}
-                onClick={() => onFocus(task)}
-              >
-                <span className="focus-choice-icon">◎</span>
+              <button className="focus-choice" key={task.id} onClick={() => onFocus(task)}>
+                <span className="focus-choice-icon"><Focus size={18} /></span>
                 <span>
                   <b>{task.title}</b>
-                  <small>
-                    {task.subject} · {formatDate(task.date)} · {task.time}
-                  </small>
+                  <small>{task.subject} · {formatDate(task.date)} · {task.time}</small>
                 </span>
                 <PriorityBadge priority={task.priority} />
               </button>
@@ -1259,7 +1167,7 @@ function TaskList({
         </div>
       ) : (
         <div className="empty-state">
-          <span>✓</span>
+          <ListTodo size={28} />
           <h3>{empty}</h3>
           <p>Las actividades que agregues aparecerán aquí.</p>
         </div>
@@ -1267,8 +1175,7 @@ function TaskList({
     </section>
   );
 }
-// Calendar: vista semanal/mensual simplificada para revisar actividades por fecha
-// y seleccionar una tarea específica desde el calendario.
+
 function Calendar({ tasks, onSelect }) {
   const [selected, setSelected] = useState(today);
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -1293,75 +1200,49 @@ function Calendar({ tasks, onSelect }) {
           <h2>Calendario académico</h2>
         </div>
         <div className="calendar-controls">
-          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior">←</button>
+          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior"><ChevronLeft size={16} /></button>
           <span className="calendar-month">
             {new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(firstDay)}
           </span>
-          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente">→</button>
+          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente"><ChevronRight size={16} /></button>
         </div>
       </div>
       <div className="calendar-layout">
-        <div className="calendar-days">
-          {Array.from({ length: firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 }).map((_, index) => (
-            <span className="calendar-day calendar-day-empty" key={`empty-${index}`} aria-hidden="true" />
-          ))}
-          {days.map((day) => (
-              <button
-                className={
-                  selected === day ? "calendar-day selected" : "calendar-day"
-                }
-                key={day}
-                onClick={() => setSelected(day)}
-              >
-                <span>
-                  {new Intl.DateTimeFormat("es-CO", {
-                    weekday: "short",
-                  }).format(new Date(`${day}T12:00:00`))}
-                </span>
+        <div>
+          <div className="calendar-weekdays" aria-hidden="true">
+            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => <span key={day}>{day}</span>)}
+          </div>
+          <div className="calendar-days">
+            {Array.from({ length: firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 }).map((_, index) => (
+              <span className="calendar-day calendar-day-empty" key={`empty-${index}`} aria-hidden="true" />
+            ))}
+            {days.map((day) => (
+              <button className={selected === day ? "calendar-day selected" : "calendar-day"} key={day} onClick={() => setSelected(day)}>
+                <span>{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span>
                 <b>{new Date(`${day}T12:00:00`).getDate()}</b>
-                <i
-                  className={
-                    tasks.some((task) => task.date === day && !task.completed)
-                      ? "has-task"
-                      : ""
-                  }
-                />
+                <i className={tasks.some((task) => task.date === day && !task.completed) ? "has-task" : ""} />
               </button>
-          ))}
+            ))}
+          </div>
         </div>
         <div className="day-agenda">
-          <span className="eyebrow">
-            {selected ? formatDate(selected) : "Agenda"}
-          </span>
+          <span className="eyebrow">{selected ? formatDate(selected) : "Agenda"}</span>
           <h3>Actividades del día</h3>
-          {dayTasks.length ? (
-            dayTasks.map((task) => (
-              <button
-                className="agenda-task"
-                key={task.id}
-                onClick={() => onSelect(task)}
-              >
-                <span>
-                  <b>{task.title}</b>
-                  <small>
-                    {task.subject} · {task.time}
-                  </small>
-                </span>
-                <PriorityBadge priority={task.priority} />
-              </button>
-            ))
-          ) : (
-            <p className="empty-copy">
-              No tienes actividades programadas para este día.
-            </p>
-          )}
+          {dayTasks.length ? dayTasks.map((task) => (
+            <button className="agenda-task" key={task.id} onClick={() => onSelect(task)}>
+              <span>
+                <b>{task.title}</b>
+                <small>{task.subject} · {task.time}</small>
+              </span>
+              <PriorityBadge priority={task.priority} />
+            </button>
+          )) : <p className="empty-copy">No tienes actividades programadas para este día.</p>}
         </div>
       </div>
     </section>
   );
 }
-// SharePanel: permite compartir actividades con compañeros registrados y
-// visualizar tanto las tareas compartidas por el usuario como las recibidas.
+
 function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke }) {
   const [sharingTaskId, setSharingTaskId] = useState(null);
   const shareableTasks = tasks.filter((task) => task.userId === currentUserId && !task.completed);
@@ -1379,18 +1260,11 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
     <section className="panel-view">
       <span className="eyebrow accent-label">Coordina con tu equipo</span>
       <h2>Compartir agendas</h2>
-      <p className="panel-intro">
-        Comparte actividades con compañeros registrados y consulta las que han compartido contigo.
-      </p>
+      <p className="panel-intro">Comparte actividades con compañeros registrados y consulta las que han compartido contigo.</p>
       <div className="share-form">
         <label>
           Correo del compañero
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="compañero@ejemplo.com"
-          />
+          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="compañero@ejemplo.com" />
         </label>
         {shareableTasks.length ? (
           <div className="share-list" aria-label="Actividades pendientes para compartir">
@@ -1398,16 +1272,9 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
               <div className="share-row" key={task.id}>
                 <span>
                   <b>{task.title}</b>
-                  <small>
-                    {task.subject} · {formatDate(task.date)}
-                  </small>
+                  <small>{task.subject} · {formatDate(task.date)}</small>
                 </span>
-                <button
-                  className="outline-button"
-                  onClick={() => share(task)}
-                  disabled={sharingTaskId === task.id}
-                  type="button"
-                >
+                <button className="outline-button" onClick={() => share(task)} disabled={sharingTaskId === task.id} type="button">
                   {sharingTaskId === task.id ? "Buscando..." : "Compartir"}
                 </button>
               </div>
@@ -1421,28 +1288,25 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
         )}
       </div>
       <div className="shared-success">
-          <b>Actividades que compartiste</b>
-          {sentShares.length ? sentShares.map((item) => (
-            <span key={item.id}>
-              ✓ {item.task || "Tarea compartida"} · {item.recipient_name || item.recipient_email}
-              <button className="text-button" onClick={() => onRevoke(item)}>
-                Revocar
-              </button>
-            </span>
-          )) : <small>Aún no has compartido actividades.</small>}
+        <b>Actividades que compartiste</b>
+        {sentShares.length ? sentShares.map((item) => (
+          <span key={item.id}>
+            {item.task || "Tarea compartida"} · {item.recipient_name || item.recipient_email}
+            <button className="text-button" onClick={() => onRevoke(item)}>Revocar</button>
+          </span>
+        )) : <small>Aún no has compartido actividades.</small>}
       </div>
       <div className="shared-success received-shares">
         <b>Actividades compartidas contigo</b>
         {receivedShares.length ? receivedShares.map((item) => (
-          <span key={item.id}>↓ {item.task || "Tarea compartida"} · {item.owner_name || item.owner_email}</span>
+          <span key={item.id}>{item.task || "Tarea compartida"} · {item.owner_name || item.owner_email}</span>
         )) : <small>No tienes actividades compartidas por otros usuarios.</small>}
       </div>
     </section>
   );
 }
-// Chat: panel de mensajes internos para comunicar tareas, horarios y acuerdos
-// con otros usuarios usando la base de datos de Supabase.
-function Chat({ message, setMessage, userId }) {
+
+function Chat({ message, setMessage, userId, demo = false }) {
   const [messages, setMessages] = useState([]);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipient, setRecipient] = useState(null);
@@ -1451,27 +1315,39 @@ function Chat({ message, setMessage, userId }) {
   const [sending, setSending] = useState(false);
   useEffect(() => {
     let mounted = true;
-    listMessages().then((data) => {
+    const load = demo ? Promise.resolve(demoApi.listMessages()) : listMessages();
+    load.then((data) => {
       if (mounted) setMessages(data);
     }).catch(() => {
       if (mounted) setChatError("No fue posible cargar tus mensajes.");
     }).finally(() => {
       if (mounted) setLoadingMessages(false);
     });
+    if (demo) return () => { mounted = false; };
     const unsubscribe = subscribeToMessages(userId, (payload) => {
-      if (payload.eventType === "INSERT" && (payload.new.sender_id === userId || payload.new.recipient_id === userId)) setMessages((current) => current.some((item) => item.id === payload.new.id) ? current : [...current, payload.new]);
+      if (payload.eventType === "INSERT" && (payload.new.sender_id === userId || payload.new.recipient_id === userId)) {
+        setMessages((current) => current.some((item) => item.id === payload.new.id) ? current : [...current, payload.new]);
+      }
     });
     return () => {
       mounted = false;
       unsubscribe();
     };
-  }, [userId]);
+  }, [userId, demo]);
   const send = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
     try {
       setChatError("");
       setSending(true);
+      if (demo) {
+        const target = recipient || { id: "demo-peer", email: recipientEmail || "compañero@recordate.local", full_name: (recipientEmail || "Compañero").split("@")[0] };
+        setRecipient(target);
+        const sent = demoApi.sendMessage(message, target.id);
+        setMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
+        setMessage("");
+        return;
+      }
       const target = recipient || await findUserByEmail(recipientEmail);
       if (!target) { setChatError("No encontramos un usuario con ese correo."); return; }
       setRecipient(target);
@@ -1488,9 +1364,7 @@ function Chat({ message, setMessage, userId }) {
     <section className="panel-view chat-view">
       <span className="eyebrow accent-label">Comunicación interna</span>
       <h2>Mensajes</h2>
-      <p className="panel-intro">
-        Coordina horarios y actividades con tus compañeros desde RECORDATE.
-      </p>
+      <p className="panel-intro">Coordina horarios y actividades con tus compañeros desde RECORDATE.</p>
       <div className="chat-window">
         <div className="chat-contact">
           <span className="avatar small-avatar">{recipient?.full_name?.charAt(0).toUpperCase() || "?"}</span>
@@ -1498,29 +1372,26 @@ function Chat({ message, setMessage, userId }) {
             <b>{recipient?.full_name || "Nuevo mensaje"}</b>
             <small>{recipient?.email || "Escribe el correo del destinatario"}</small>
           </span>
-          <i />
         </div>
-        <label className="chat-recipient">Destinatario <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" /></label>
+        <label className="chat-recipient">
+          Destinatario
+          <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" />
+        </label>
         <div className="chat-messages">
           {loadingMessages && <p className="empty-copy" role="status">Cargando mensajes...</p>}
           {!loadingMessages && !recipient && <p className="empty-copy">Busca un compañero para iniciar una conversación.</p>}
-          {!loadingMessages && recipient && !messages.some((item) => item.sender_id === recipient.id || item.recipient_id === recipient.id) && <p className="empty-copy">Aún no hay mensajes con este compañero.</p>}
+          {!loadingMessages && recipient && !messages.some((item) => item.sender_id === recipient.id || item.recipient_id === recipient.id) && (
+            <p className="empty-copy">Aún no hay mensajes con este compañero.</p>
+          )}
           {messages.filter((item) => recipient && (item.sender_id === recipient.id || item.recipient_id === recipient.id)).map((item, index) => (
-            <p
-              className={item.sender_id === userId ? "outgoing" : "incoming"}
-              key={item.id || `${item.body}-${index}`}
-            >
+            <p className={item.sender_id === userId ? "outgoing" : "incoming"} key={item.id || `${item.body}-${index}`}>
               {item.body}
+              {item.created_at && <span className="chat-meta">{formatStamp(item.created_at)}</span>}
             </p>
           ))}
         </div>
         <form className="chat-input" onSubmit={send}>
-          <input
-            aria-label="Escribe un mensaje"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="Escribe un mensaje..."
-          />
+          <input aria-label="Escribe un mensaje" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Escribe un mensaje..." />
           <button className="primary-button" type="submit" disabled={sending || !message.trim()}>
             {sending ? "Enviando..." : "Enviar"}
           </button>
@@ -1530,25 +1401,18 @@ function Chat({ message, setMessage, userId }) {
     </section>
   );
 }
-// Profile: panel de perfil y configuración del usuario con controles para
-// activar alarmas, notificaciones y ajustar la visibilidad de tareas completadas.
+
 function Profile({ view, userName, email, profile, onSettingsChange, onLogout, onEnablePush }) {
   return (
     <section className="panel-view profile-view">
       <span className="eyebrow accent-label">Tu cuenta</span>
       <h2>{view}</h2>
       <div className="profile-card">
-        <span className="profile-avatar">
-          {userName.charAt(0).toUpperCase()}
-        </span>
+        <span className="profile-avatar">{userName.charAt(0).toUpperCase()}</span>
         <div>
           <h3>{userName}</h3>
           <p>{email}</p>
-          <span className="demo-tag">
-            {email?.includes("recordate.local")
-              ? "CUENTA DEMO"
-              : "CUENTA SUPABASE"}
-          </span>
+          <span className="demo-tag">{email?.includes("recordate.local") ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
         </div>
       </div>
       {view === "Configuración" ? (
@@ -1594,10 +1458,9 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout, o
           <b>Proyecto Pedagógico Integrador · Grado 11</b>
         </div>
       )}
-      <button className="outline-button logout-profile" onClick={onLogout}>
-        Cerrar sesión
-      </button>
+      <button className="outline-button logout-profile" onClick={onLogout}>Cerrar sesión</button>
     </section>
   );
 }
+
 export default App;

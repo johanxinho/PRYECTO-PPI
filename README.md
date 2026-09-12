@@ -2,6 +2,27 @@
 
 RECORDATE es un sistema de recordatorio y organización de actividades académicas desarrollado como Proyecto Pedagógico Integrador (PPI) de grado 11 para estudiantes de la IE La Candelaria, Medellín, Antioquia.
 
+## Sitio publicado
+
+La aplicación se publica en GitHub Pages:
+
+**https://johanxinho.github.io/PRYECTO-PPI/**
+
+Cada push a `main` vuelve a construir y desplegar `ppi-react` mediante [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+
+### Cómo dejar GitHub Pages activo
+
+1. En el repositorio, abre **Settings → Pages**.
+2. En **Build and deployment → Source**, elige **GitHub Actions**.
+3. (Opcional, para login y datos reales) en **Settings → Secrets and variables → Actions** crea:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_VAPID_PUBLIC_KEY` (opcional, notificaciones push)
+4. Espera a que el workflow **GitHub Pages** termine en la pestaña **Actions**.
+5. Abre https://johanxinho.github.io/PRYECTO-PPI/
+
+Si las claves de Supabase no están configuradas, la landing funciona y puedes explorar con el acceso de demostración. El registro, las tareas reales y los mensajes sí necesitan esas claves.
+
 ## Descripción del proyecto
 
 Este repositorio contiene la aplicación principal de RECORDATE en [ppi-react](ppi-react/), junto con documentación, prototipos heredados y archivos de soporte para Supabase. La aplicación está orientada a ayudar a estudiantes a organizar tareas, trabajos, fechas importantes y actividades académicas en un único espacio, con funciones para registrar actividades, priorizarlas, consultar el calendario, buscar información y mantener seguimiento del avance.
@@ -48,6 +69,8 @@ La aplicación principal en [ppi-react](ppi-react/) utiliza estas tecnologías r
 - Supabase JavaScript SDK
 - Supabase Auth
 - CSS propio para la interfaz
+- Lucide React (iconos)
+- Motion (tipografía del hero)
 - ESLint
 - Bootstrap aparece como dependencia instalada en [ppi-react/package.json](ppi-react/package.json), pero la interfaz actual no depende de sus clases de forma central.
 
@@ -118,11 +141,4 @@ Desde [ppi-react](ppi-react/), puedes ejecutar:
 ```bash
 npm run lint
 npm run build
-npm run preview
 ```
-
-Estos comandos están definidos en [ppi-react/package.json](ppi-react/package.json) y corresponden al flujo actual de la aplicación principal.
-
-## Nota importante
-
-Este repositorio incluye varios artefactos antiguos y prototipos. La aplicación actual y principal de RECORDATE es la que vive en [ppi-react](ppi-react/). La documentación y la migración real de Supabase deben usarse como referencia principal para comprender el estado actual del sistema.

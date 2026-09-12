@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from "./supabaseClient";
 
 // dataService concentra toda la lógica de lectura y escritura con Supabase.

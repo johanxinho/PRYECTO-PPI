@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createClient } from "@supabase/supabase-js";
 
 // Este archivo centraliza la conexión con Supabase usando variables de entorno.

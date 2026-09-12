@@ -1,14 +1,9 @@
+// @ts-nocheck
 import { useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Brand, LogoMark } from "../Brand";
+import { DiaTextReveal } from "./ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
-
-function Brand() {
-  return (
-    <div className="brand brand-light">
-      <span className="brand-mark">R</span>
-      <span>RECORDATE</span>
-    </div>
-  );
-}
 
 function signupErrorMessage(error) {
   const details = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
@@ -33,7 +28,7 @@ function verificationErrorMessage(error) {
   return "No fue posible verificar el código. Inténtalo de nuevo.";
 }
 
-function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
+function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRecovery, setIsRecovery] = useState(recovery);
   const [email, setEmail] = useState("");
@@ -51,6 +46,10 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
     event.preventDefault();
     if (!email.includes("@")) {
       setMessage("Escribe un correo electrónico válido.");
+      return;
+    }
+    if (!hasSupabaseConfig) {
+      setMessage("La recuperación de contraseña requiere configurar Supabase.");
       return;
     }
     setLoading(true);
@@ -136,9 +135,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
     event.preventDefault();
     setMessage("");
     if (!hasSupabaseConfig) {
-      setMessage(
-        "La autenticación requiere configurar Supabase en las variables de entorno.",
-      );
+      setMessage("La autenticación requiere configurar Supabase. Puedes explorar la demostración mientras tanto.");
       return;
     }
     if (isSignUp && !fullName.trim()) {
@@ -178,9 +175,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
         setMessage("Te enviamos un código de 6 dígitos a tu correo.");
       }
     } catch {
-      setMessage(
-        "No fue posible conectar con el servicio. Inténtalo de nuevo.",
-      );
+      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -189,13 +184,14 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
     <main className="auth-page">
       <div className="auth-aside">
         <button className="back-link" onClick={onBack}>
-          ← Volver al inicio
+          <ArrowLeft size={16} /> Volver al inicio
         </button>
-        <Brand />
+        <Brand light />
+        <LogoMark />
         <div className="auth-quote">
           <span className="eyebrow">Tu espacio académico</span>
           <h1>
-            Lo importante, <em>en el momento correcto.</em>
+            Lo importante, <em><DiaTextReveal text="en el momento correcto." delay={0.2} /></em>
           </h1>
           <p>Una agenda clara para que puedas concentrarte en aprender.</p>
         </div>
@@ -203,7 +199,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
       </div>
       <section className="auth-panel">
         <div className="mobile-auth-brand">
-          <Brand />
+          <Brand size="lg" />
         </div>
         <span className="eyebrow accent-label">
           {needsVerification ? "Confirma tu correo" : isRecovery ? "Recupera tu acceso" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
@@ -233,7 +229,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
               </label>
               {message && <p className="auth-message" role="alert">{message}</p>}
               <button className="primary-button auth-submit" type="submit" disabled={loading}>
-                {loading ? "Verificando..." : "Verificar código"}<span>→</span>
+                {loading ? "Verificando..." : "Verificar código"} <ArrowRight size={16} />
               </button>
             </form>
             <button className="switch-button" type="button" onClick={resendCode} disabled={loading}>
@@ -267,6 +263,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
             Correo electrónico
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -276,6 +273,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
             Contraseña
             <input
               type="password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               minLength="6"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -287,6 +285,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
               Confirmar contraseña
               <input
                 type="password"
+                autoComplete="new-password"
                 minLength="6"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -309,11 +308,16 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
               : isSignUp
                 ? "Crear mi cuenta"
                 : "Iniciar sesión"}
-            <span>→</span>
+            <ArrowRight size={16} />
           </button>
         </form>}
         {!needsVerification && !isRecovery && !isSignUp && (
           <button className="switch-button" type="button" onClick={() => { setIsRecovery(true); setMessage(""); }}>¿Olvidaste tu contraseña?</button>
+        )}
+        {onDemo && !needsVerification && !isRecovery && (
+          <button className="switch-button demo-button" type="button" onClick={onDemo}>
+            Explorar demostración
+          </button>
         )}
         {!needsVerification && (
         <button
@@ -327,10 +331,16 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone }) {
         >
           {isSignUp
             ? "¿Ya tienes cuenta? Inicia sesión"
+            : isRecovery
+              ? "Volver al inicio de sesión"
             : "¿No tienes cuenta? Regístrate"}
         </button>
         )}
-        <p className="auth-note">No guardamos contraseñas en este navegador.</p>
+        <p className="auth-note">
+          {hasSupabaseConfig
+            ? "No guardamos contraseñas en este navegador."
+            : "Supabase no está configurado en este entorno. La demostración guarda datos solo en este dispositivo."}
+        </p>
       </section>
     </main>
   );

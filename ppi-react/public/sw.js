@@ -10,5 +10,6 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow("/tareas"));
+  const target = new URL("tareas", self.registration.scope).href;
+  event.waitUntil(clients.openWindow(target));
 });

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from '../supabaseClient';
 
 // authService contiene las operaciones de autenticación reutilizables para
