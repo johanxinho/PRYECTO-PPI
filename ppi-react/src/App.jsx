@@ -31,6 +31,7 @@ import {
   Reply,
 } from "lucide-react";
 import Login from "./components/Login";
+import AiChat from "./components/AiChat";
 import { Brand } from "./Brand";
 import WebGLBackground from "./components/WebGLBackground";
 import AsciiEffect from "./components/AsciiEffect";
@@ -1165,6 +1166,7 @@ function App() {
           </section>
         </div>
       )}
+      {!demo && hasSupabaseConfig && <AiChat enabled />}
       {alarmTask && (
         <div className="modal-backdrop">
           <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
