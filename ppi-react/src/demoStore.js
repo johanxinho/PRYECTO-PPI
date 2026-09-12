@@ -40,7 +40,8 @@ function seed() { // Datos de ejemplo para que la agenda no arranque vacía
       id: userId, // Mismo id de la sesión demo
       full_name: "Andrea Restrepo", // Nombre visible
       email: DEMO_SESSION.user.email, // Correo demo
-      role: "student", // Rol de estudiante
+      role: "estudiante",
+      avatar_url: null,
       created_at: "2026-03-05T12:00:00.000Z", // Fecha ficticia de alta
       reminders_enabled: true, // Recordatorios encendidos
       show_completed: true, // Mostrar tareas ya hechas
@@ -101,8 +102,62 @@ function seed() { // Datos de ejemplo para que la agenda no arranque vacía
         attachments: [], // Sin imágenes
       },
     ],
-    shares: [], // Aún no hay tareas compartidas
-    messages: [], // Chat vacío al inicio
+    shares: [
+      {
+        id: "demo-share-in",
+        task_id: "demo-shared-1",
+        owner_id: "demo-peer",
+        recipient_id: userId,
+        owner_name: "Carlos Pérez",
+        owner_email: "carlos@recordate.local",
+        owner_avatar_url: null,
+        owner_role: "profesor",
+        recipient_name: "Andrea Restrepo",
+        recipient_email: DEMO_SESSION.user.email,
+        recipient_avatar_url: null,
+        recipient_role: "estudiante",
+        task: "Guía de lectura compartida",
+        task_title: "Guía de lectura compartida",
+        task_description: "Lee las páginas 12 a 20 y toma nota de tres ideas clave.",
+        task_subject: "Lengua castellana",
+        task_date: shift(2),
+        task_time: "09:00",
+        task_priority: "Media",
+        task_completed: false,
+        task_reminder: "1 hora antes",
+        taskDetails: {
+          id: "demo-shared-1",
+          title: "Guía de lectura compartida",
+          description: "Lee las páginas 12 a 20 y toma nota de tres ideas clave.",
+          subject: "Lengua castellana",
+          date: shift(2),
+          time: "09:00",
+          priority: "Media",
+          reminder: "1 hora antes",
+          completed: false,
+          attachments: [],
+        },
+        created_at: new Date().toISOString(),
+      },
+    ],
+    messages: [
+      {
+        id: "demo-msg-in",
+        sender_id: "demo-peer",
+        recipient_id: userId,
+        body: "Hola Andrea, te compartí la guía de lectura. ¿La revisas hoy?",
+        read_at: null,
+        created_at: new Date().toISOString(),
+        sender_name: "Carlos Pérez",
+        sender_email: "carlos@recordate.local",
+        sender_avatar_url: null,
+        sender_role: "profesor",
+        recipient_name: "Andrea Restrepo",
+        recipient_email: DEMO_SESSION.user.email,
+        recipient_avatar_url: null,
+        recipient_role: "estudiante",
+      },
+    ],
     notifications: [ // Un aviso de sistema para explicar el modo demo
       {
         id: "demo-n1", // Id local del aviso
@@ -194,22 +249,50 @@ export const demoApi = { // Mini API local que imita a dataService
   /**
    * share: simula compartir una tarea con otro correo (solo en memoria local).
    */
-  share(taskId, email) { // taskId y correo del destinatario ficticio
-    const state = read(); // Estado actual
-    const task = state.tasks.find((item) => item.id === taskId); // Busca el título para mostrarlo
-    const created = { // Registro de compartición de mentiras
-      id: crypto.randomUUID(), // Id del share
-      task_id: taskId, // Tarea compartida
-      owner_id: DEMO_SESSION.user.id, // Quién comparte
-      recipient_id: "demo-peer", // Destinatario ficticio
-      recipient_email: email, // Correo escrito por el usuario
-      recipient_name: email.split("@")[0], // Parte antes del @ como nombre
-      task: task?.title || "Tarea compartida", // Título o texto por defecto
-      created_at: new Date().toISOString(), // Fecha del share
+  share(taskId, email) {
+    const state = read();
+    const task = state.tasks.find((item) => item.id === taskId);
+    const created = {
+      id: crypto.randomUUID(),
+      task_id: taskId,
+      owner_id: DEMO_SESSION.user.id,
+      recipient_id: "demo-peer",
+      recipient_email: email,
+      recipient_name: email.split("@")[0],
+      recipient_avatar_url: null,
+      recipient_role: "estudiante",
+      owner_name: state.profile.full_name,
+      owner_email: state.profile.email,
+      owner_avatar_url: state.profile.avatar_url,
+      owner_role: state.profile.role,
+      task: task?.title || "Tarea compartida",
+      task_title: task?.title || "Tarea compartida",
+      task_description: task?.description || "",
+      task_subject: task?.subject || "",
+      task_date: task?.date || null,
+      task_time: task?.time || null,
+      task_priority: task?.priority || "Media",
+      task_completed: task?.completed || false,
+      task_reminder: task?.reminder || "",
+      taskDetails: task
+        ? {
+            id: task.id,
+            title: task.title,
+            description: task.description || "",
+            subject: task.subject,
+            date: task.date,
+            time: task.time,
+            priority: task.priority,
+            reminder: task.reminder,
+            completed: task.completed,
+            attachments: task.attachments || [],
+          }
+        : null,
+      created_at: new Date().toISOString(),
     };
-    state.shares = [...state.shares, created]; // Agrega al historial
-    write(state); // Persiste
-    return created; // Devuelve el share creado
+    state.shares = [...state.shares, created];
+    write(state);
+    return created;
   },
   /**
    * revoke: elimina una compartición por su id.
@@ -222,24 +305,47 @@ export const demoApi = { // Mini API local que imita a dataService
   /**
    * sendMessage: agrega un mensaje al chat local.
    */
-  sendMessage(body, recipientId) { // Texto y destinatario
-    const state = read(); // Estado actual
-    const created = { // Mensaje nuevo
-      id: crypto.randomUUID(), // Id local
-      sender_id: DEMO_SESSION.user.id, // Remitente demo
-      recipient_id: recipientId, // Destinatario
-      body, // Texto
-      created_at: new Date().toISOString(), // Hora de envío
+  sendMessage(body, recipientId) {
+    const state = read();
+    const created = {
+      id: crypto.randomUUID(),
+      sender_id: DEMO_SESSION.user.id,
+      recipient_id: recipientId,
+      body,
+      read_at: null,
+      created_at: new Date().toISOString(),
+      sender_name: state.profile.full_name,
+      sender_email: state.profile.email,
+      sender_avatar_url: state.profile.avatar_url,
+      sender_role: state.profile.role,
+      recipient_name: recipientId === "demo-peer" ? "Compañero demo" : "Destinatario",
+      recipient_email: recipientId === "demo-peer" ? "compañero@recordate.local" : "",
+      recipient_avatar_url: null,
+      recipient_role: "estudiante",
     };
-    state.messages = [...state.messages, created]; // Lo agrega al historial
-    write(state); // Persiste
-    return created; // Mensaje creado
+    state.messages = [...state.messages, created];
+    write(state);
+    return created;
   },
-  /**
-   * listMessages: devuelve todos los mensajes guardados.
-   */
-  listMessages() { // Lectura del chat
-    return read().messages; // Solo el arreglo de mensajes
+  listMessages() {
+    return read().messages;
+  },
+  markMessagesRead(messageIds = null) {
+    const state = read();
+    const now = new Date().toISOString();
+    state.messages = state.messages.map((item) => {
+      if (item.recipient_id !== DEMO_SESSION.user.id) return item;
+      if (messageIds?.length && !messageIds.includes(item.id)) return item;
+      return { ...item, read_at: item.read_at || now };
+    });
+    write(state);
+    return state.messages.filter((item) => item.read_at).length;
+  },
+  saveAvatar(dataUrl) {
+    const state = read();
+    state.profile = { ...state.profile, avatar_url: dataUrl };
+    write(state);
+    return state.profile;
   },
   /**
    * markAllRead: marca todas las notificaciones como leídas.

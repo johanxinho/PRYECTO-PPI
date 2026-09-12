@@ -24,6 +24,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Paperclip,
+  Camera,
+  Inbox,
+  Send,
+  Reply,
 } from "lucide-react";
 import Login from "./components/Login";
 import { Brand } from "./Brand";
@@ -56,6 +60,10 @@ import {
   getAttachmentUrl,
   deleteTaskAttachment,
   subscribeToNotifications,
+  uploadAvatar,
+  markMessagesRead,
+  ROLE_OPTIONS,
+  roleLabel,
 } from "./dataService";
 import "./recordate.css";
 
@@ -128,6 +136,22 @@ const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replac
 const supabaseErrorMessage = (error, fallback) => {
   const details = [error?.code && `Código: ${error.code}`, error?.message, error?.details && `Detalles: ${error.details}`, error?.hint && `Sugerencia: ${error.hint}`].filter(Boolean);
   return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
+};
+
+const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
+  const initial = (name || "?").charAt(0).toUpperCase();
+  const sizeClass = size === "lg" ? "profile-avatar" : size === "sm" ? "small-avatar" : "avatar";
+  if (url) {
+    return (
+      <img
+        className={`avatar-image ${sizeClass} ${className}`.trim()}
+        src={url}
+        alt={`Foto de ${name}`}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+  return <span className={`${sizeClass} ${className}`.trim()}>{initial}</span>;
 };
 
 function Landing({ onStart }) {
@@ -378,7 +402,10 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       <div className="task-content">
         <div className="task-heading">
           <h3>{task.title}</h3>
-          <PriorityBadge priority={task.priority} />
+          <div className="task-heading-badges">
+            {!canManage && <span className="shared-badge">Compartida</span>}
+            <PriorityBadge priority={task.priority} />
+          </div>
         </div>
         <p className="task-meta">
           {task.subject} <span>·</span> {formatDate(task.date)} <span>·</span> {task.time}
@@ -503,10 +530,32 @@ function App() {
       setProfile(currentProfile);
       setTasks(currentTasks);
       setShared(
-        currentShares.map((share) => ({
-          ...share,
-          task: share.task_title || currentTasks.find((task) => task.id === share.task_id)?.title || "Tarea compartida",
-        })),
+        currentShares.map((share) => {
+          const localTask = currentTasks.find((task) => task.id === share.task_id);
+          return {
+            ...share,
+            task: share.task_title || share.task || localTask?.title || "Tarea compartida",
+            taskDetails: share.taskDetails
+              ? {
+                  ...share.taskDetails,
+                  attachments: localTask?.attachments || share.taskDetails.attachments || [],
+                }
+              : localTask
+                ? {
+                    id: localTask.id,
+                    title: localTask.title,
+                    description: localTask.description,
+                    subject: localTask.subject,
+                    date: localTask.date,
+                    time: localTask.time,
+                    priority: localTask.priority,
+                    reminder: localTask.reminder,
+                    completed: localTask.completed,
+                    attachments: localTask.attachments || [],
+                  }
+                : null,
+          };
+        }),
       );
       setNotifications(currentNotifications);
       setScreen("app");
@@ -823,6 +872,14 @@ function App() {
           email={shareEmail}
           setEmail={setShareEmail}
           shared={shared}
+          onOpenAttachment={async (attachment) => {
+            try {
+              const url = await getAttachmentUrl(attachment.storage_path);
+              window.open(url, "_blank", "noopener,noreferrer");
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible abrir la imagen compartida."));
+            }
+          }}
           onRevoke={async (share) => {
             try {
               if (demo) demoApi.revoke(share.id);
@@ -886,7 +943,29 @@ function App() {
           userName={userName}
           email={session.user.email}
           profile={profile}
+          demo={demo}
           onEnablePush={enablePushNotifications}
+          onAvatarUpload={async (file) => {
+            try {
+              if (demo) {
+                const dataUrl = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(file);
+                });
+                const updatedProfile = demoApi.saveAvatar(dataUrl);
+                setProfile(updatedProfile);
+                setNotice("Foto de perfil actualizada.");
+                return;
+              }
+              const updatedProfile = await uploadAvatar(file);
+              setProfile(updatedProfile);
+              setNotice("Foto de perfil actualizada.");
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible actualizar la foto de perfil."));
+            }
+          }}
           onSettingsChange={async (settings) => {
             try {
               const updatedProfile = demo ? demoApi.saveProfile(settings) : await updateProfileSettings(settings);
@@ -1032,7 +1111,7 @@ function App() {
                 ))}
               </div>
             )}
-            <span className="avatar">{userName.charAt(0).toUpperCase()}</span>
+            <UserAvatar name={userName} url={profile?.avatar_url} />
           </div>
         </header>
         {notice && (
@@ -1243,8 +1322,9 @@ function Calendar({ tasks, onSelect }) {
   );
 }
 
-function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke }) {
+function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke, onOpenAttachment }) {
   const [sharingTaskId, setSharingTaskId] = useState(null);
+  const [shareTab, setShareTab] = useState("recibidas");
   const shareableTasks = tasks.filter((task) => task.userId === currentUserId && !task.completed);
   const sentShares = shared.filter((item) => item.owner_id === currentUserId);
   const receivedShares = shared.filter((item) => item.recipient_id === currentUserId);
@@ -1260,7 +1340,7 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
     <section className="panel-view">
       <span className="eyebrow accent-label">Coordina con tu equipo</span>
       <h2>Compartir agendas</h2>
-      <p className="panel-intro">Comparte actividades con compañeros registrados y consulta las que han compartido contigo.</p>
+      <p className="panel-intro">Comparte actividades con compañeros registrados y consulta el contenido completo de las que han compartido contigo, incluidas las imágenes.</p>
       <div className="share-form">
         <label>
           Correo del compañero
@@ -1270,7 +1350,7 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
           <div className="share-list" aria-label="Actividades pendientes para compartir">
             {shareableTasks.map((task) => (
               <div className="share-row" key={task.id}>
-                <span>
+                <span className="share-row-person">
                   <b>{task.title}</b>
                   <small>{task.subject} · {formatDate(task.date)}</small>
                 </span>
@@ -1287,46 +1367,112 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
           </div>
         )}
       </div>
-      <div className="shared-success">
-        <b>Actividades que compartiste</b>
-        {sentShares.length ? sentShares.map((item) => (
-          <span key={item.id}>
-            {item.task || "Tarea compartida"} · {item.recipient_name || item.recipient_email}
-            <button className="text-button" onClick={() => onRevoke(item)}>Revocar</button>
-          </span>
-        )) : <small>Aún no has compartido actividades.</small>}
+      <div className="message-tabs share-tabs" role="tablist" aria-label="Agendas compartidas">
+        <button type="button" role="tab" aria-selected={shareTab === "recibidas"} className={shareTab === "recibidas" ? "message-tab active" : "message-tab"} onClick={() => setShareTab("recibidas")}>
+          Compartidas conmigo ({receivedShares.length})
+        </button>
+        <button type="button" role="tab" aria-selected={shareTab === "enviadas"} className={shareTab === "enviadas" ? "message-tab active" : "message-tab"} onClick={() => setShareTab("enviadas")}>
+          Que compartí ({sentShares.length})
+        </button>
       </div>
-      <div className="shared-success received-shares">
-        <b>Actividades compartidas contigo</b>
-        {receivedShares.length ? receivedShares.map((item) => (
-          <span key={item.id}>{item.task || "Tarea compartida"} · {item.owner_name || item.owner_email}</span>
-        )) : <small>No tienes actividades compartidas por otros usuarios.</small>}
-      </div>
+      {shareTab === "enviadas" ? (
+        <div className="shared-success">
+          <b>Actividades que compartiste</b>
+          {sentShares.length ? sentShares.map((item) => (
+            <article className="shared-card" key={item.id}>
+              <div className="shared-card-head">
+                <UserAvatar name={item.recipient_name || item.recipient_email || "?"} url={item.recipient_avatar_url} size="sm" />
+                <span>
+                  <b>{item.task || item.task_title || "Tarea compartida"}</b>
+                  <small>Para {item.recipient_name || item.recipient_email}{item.recipient_role ? ` · ${roleLabel(item.recipient_role)}` : ""}</small>
+                </span>
+                <button className="text-button" onClick={() => onRevoke(item)}>Revocar</button>
+              </div>
+            </article>
+          )) : <small>Aún no has compartido actividades.</small>}
+        </div>
+      ) : (
+        <div className="shared-success received-shares">
+          <b>Actividades compartidas contigo</b>
+          {receivedShares.length ? receivedShares.map((item) => {
+            const details = item.taskDetails || {};
+            return (
+              <article className="shared-card received-card" key={item.id}>
+                <div className="shared-card-head">
+                  <UserAvatar name={item.owner_name || item.owner_email || "?"} url={item.owner_avatar_url} size="sm" />
+                  <span>
+                    <b>{details.title || item.task || item.task_title || "Tarea compartida"}</b>
+                    <small>De {item.owner_name || item.owner_email}{item.owner_role ? ` · ${roleLabel(item.owner_role)}` : ""}</small>
+                  </span>
+                  {details.priority && <PriorityBadge priority={details.priority} />}
+                </div>
+                <p className="task-meta">
+                  {(details.subject || item.task_subject || "Sin materia")}
+                  {details.date || item.task_date ? <> <span>·</span> {formatDate(details.date || item.task_date)}</> : null}
+                  {(details.time || item.task_time) ? <> <span>·</span> {details.time || item.task_time}</> : null}
+                </p>
+                {(details.description || item.task_description) && (
+                  <p className="task-description">{details.description || item.task_description}</p>
+                )}
+                {(details.attachments || []).length > 0 && (
+                  <div className="shared-attachments">
+                    {details.attachments.map((attachment) => (
+                      <button className="text-button" key={attachment.id} type="button" onClick={() => onOpenAttachment?.(attachment)}>
+                        <Paperclip size={14} /> Ver imagen: {attachment.file_name || "adjunto"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          }) : <small>No tienes actividades compartidas por otros usuarios.</small>}
+        </div>
+      )}
     </section>
   );
 }
 
 function Chat({ message, setMessage, userId, demo = false }) {
   const [messages, setMessages] = useState([]);
+  const [tab, setTab] = useState("recibidos");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipient, setRecipient] = useState(null);
+  const [activePeerId, setActivePeerId] = useState(null);
   const [chatError, setChatError] = useState("");
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [sending, setSending] = useState(false);
+
+  const refreshMessages = async () => {
+    const data = demo ? demoApi.listMessages() : await listMessages();
+    setMessages(data);
+    return data;
+  };
+
   useEffect(() => {
     let mounted = true;
-    const load = demo ? Promise.resolve(demoApi.listMessages()) : listMessages();
-    load.then((data) => {
-      if (mounted) setMessages(data);
-    }).catch(() => {
-      if (mounted) setChatError("No fue posible cargar tus mensajes.");
-    }).finally(() => {
-      if (mounted) setLoadingMessages(false);
-    });
+    refreshMessages()
+      .then((data) => {
+        if (!mounted) return;
+        setMessages(data);
+      })
+      .catch(() => {
+        if (mounted) setChatError("No fue posible cargar tus mensajes.");
+      })
+      .finally(() => {
+        if (mounted) setLoadingMessages(false);
+      });
     if (demo) return () => { mounted = false; };
-    const unsubscribe = subscribeToMessages(userId, (payload) => {
+    const unsubscribe = subscribeToMessages(userId, async (payload) => {
       if (payload.eventType === "INSERT" && (payload.new.sender_id === userId || payload.new.recipient_id === userId)) {
-        setMessages((current) => current.some((item) => item.id === payload.new.id) ? current : [...current, payload.new]);
+        try {
+          const data = await listMessages();
+          setMessages(data);
+        } catch {
+          setMessages((current) => current.some((item) => item.id === payload.new.id) ? current : [...current, payload.new]);
+        }
+      }
+      if (payload.eventType === "UPDATE") {
+        setMessages((current) => current.map((item) => (item.id === payload.new.id ? { ...item, ...payload.new } : item)));
       }
     });
     return () => {
@@ -1334,6 +1480,75 @@ function Chat({ message, setMessage, userId, demo = false }) {
       unsubscribe();
     };
   }, [userId, demo]);
+
+  const inbox = messages.filter((item) => item.recipient_id === userId);
+  const sent = messages.filter((item) => item.sender_id === userId);
+
+  const groupByPeer = (list, peerKey) => {
+    const map = new Map();
+    list.forEach((item) => {
+      const peerId = item[peerKey];
+      if (!peerId) return;
+      if (!map.has(peerId)) map.set(peerId, []);
+      map.get(peerId).push(item);
+    });
+    return Array.from(map.entries())
+      .map(([peerId, items]) => {
+        const latest = items[items.length - 1];
+        const unread = items.filter((item) => item.recipient_id === userId && !item.read_at).length;
+        const isIncoming = peerKey === "sender_id";
+        return {
+          peerId,
+          items,
+          latest,
+          unread,
+          name: isIncoming
+            ? latest.sender_name || "Usuario"
+            : latest.recipient_name || "Usuario",
+          email: isIncoming ? latest.sender_email || "" : latest.recipient_email || "",
+          avatar: isIncoming ? latest.sender_avatar_url : latest.recipient_avatar_url,
+          role: isIncoming ? latest.sender_role : latest.recipient_role,
+        };
+      })
+      .sort((a, b) => new Date(b.latest.created_at) - new Date(a.latest.created_at));
+  };
+
+  const inboxThreads = groupByPeer(inbox, "sender_id");
+  const sentThreads = groupByPeer(sent, "recipient_id");
+  const threads = tab === "recibidos" ? inboxThreads : sentThreads;
+  const activeThread = threads.find((thread) => thread.peerId === activePeerId) || null;
+  const conversation = activePeerId
+    ? messages.filter((item) =>
+        (item.sender_id === userId && item.recipient_id === activePeerId) ||
+        (item.sender_id === activePeerId && item.recipient_id === userId),
+      )
+    : [];
+
+  const openThread = async (thread) => {
+    setActivePeerId(thread.peerId);
+    setRecipient({
+      id: thread.peerId,
+      full_name: thread.name,
+      email: thread.email,
+      avatar_url: thread.avatar,
+      role: thread.role,
+    });
+    setRecipientEmail(thread.email || "");
+    const unreadIds = thread.items.filter((item) => item.recipient_id === userId && !item.read_at).map((item) => item.id);
+    if (!unreadIds.length) return;
+    try {
+      if (demo) demoApi.markMessagesRead(unreadIds);
+      else await markMessagesRead(unreadIds);
+      setMessages((current) =>
+        current.map((item) =>
+          unreadIds.includes(item.id) ? { ...item, read_at: item.read_at || new Date().toISOString() } : item,
+        ),
+      );
+    } catch {
+      /* lectura opcional */
+    }
+  };
+
   const send = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
@@ -1341,82 +1556,224 @@ function Chat({ message, setMessage, userId, demo = false }) {
       setChatError("");
       setSending(true);
       if (demo) {
-        const target = recipient || { id: "demo-peer", email: recipientEmail || "compañero@recordate.local", full_name: (recipientEmail || "Compañero").split("@")[0] };
+        const target = recipient || {
+          id: activePeerId || "demo-peer",
+          email: recipientEmail || "compañero@recordate.local",
+          full_name: (recipientEmail || "Compañero").split("@")[0],
+        };
         setRecipient(target);
-        const sent = demoApi.sendMessage(message, target.id);
-        setMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
+        setActivePeerId(target.id);
+        const sentMsg = demoApi.sendMessage(message, target.id);
+        setMessages((current) => current.some((item) => item.id === sentMsg.id) ? current : [...current, sentMsg]);
         setMessage("");
+        setTab("enviados");
         return;
       }
-      const target = recipient || await findUserByEmail(recipientEmail);
-      if (!target) { setChatError("No encontramos un usuario con ese correo."); return; }
+      const target = recipient || (activePeerId ? { id: activePeerId, email: recipientEmail } : await findUserByEmail(recipientEmail));
+      if (!target?.id) {
+        const found = await findUserByEmail(recipientEmail);
+        if (!found) {
+          setChatError("No encontramos un usuario con ese correo.");
+          return;
+        }
+        setRecipient(found);
+        setActivePeerId(found.id);
+        const sentMsg = await sendMessage(message, found.id);
+        setMessages((current) => current.some((item) => item.id === sentMsg.id) ? current : [...current, { ...sentMsg, recipient_name: found.full_name, recipient_email: found.email, recipient_avatar_url: found.avatar_url, recipient_role: found.role }]);
+        setMessage("");
+        setTab("enviados");
+        return;
+      }
       setRecipient(target);
-      const sent = await sendMessage(message, target.id);
-      setMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
+      setActivePeerId(target.id);
+      const sentMsg = await sendMessage(message, target.id);
+      setMessages((current) =>
+        current.some((item) => item.id === sentMsg.id)
+          ? current
+          : [
+              ...current,
+              {
+                ...sentMsg,
+                recipient_name: target.full_name,
+                recipient_email: target.email,
+                recipient_avatar_url: target.avatar_url,
+                recipient_role: target.role,
+              },
+            ],
+      );
       setMessage("");
+      setTab("enviados");
     } catch (error) {
       setChatError(supabaseErrorMessage(error, "No fue posible enviar el mensaje."));
     } finally {
       setSending(false);
     }
   };
+
+  const startNew = () => {
+    setActivePeerId(null);
+    setRecipient(null);
+    setRecipientEmail("");
+  };
+
   return (
     <section className="panel-view chat-view">
       <span className="eyebrow accent-label">Comunicación interna</span>
       <h2>Mensajes</h2>
-      <p className="panel-intro">Coordina horarios y actividades con tus compañeros desde RECORDATE.</p>
-      <div className="chat-window">
-        <div className="chat-contact">
-          <span className="avatar small-avatar">{recipient?.full_name?.charAt(0).toUpperCase() || "?"}</span>
-          <span>
-            <b>{recipient?.full_name || "Nuevo mensaje"}</b>
-            <small>{recipient?.email || "Escribe el correo del destinatario"}</small>
-          </span>
-        </div>
-        <label className="chat-recipient">
-          Destinatario
-          <input type="email" value={recipientEmail} onChange={(event) => { setRecipientEmail(event.target.value); setRecipient(null); }} placeholder="compañero@ejemplo.com" />
-        </label>
-        <div className="chat-messages">
+      <p className="panel-intro">Revisa tu bandeja de entrada, consulta lo que enviaste y responde a tus compañeros desde RECORDATE.</p>
+      <div className="message-tabs" role="tablist" aria-label="Bandejas de mensajes">
+        <button type="button" role="tab" aria-selected={tab === "recibidos"} className={tab === "recibidos" ? "message-tab active" : "message-tab"} onClick={() => { setTab("recibidos"); setActivePeerId(null); }}>
+          <Inbox size={16} /> Recibidos ({inbox.length})
+        </button>
+        <button type="button" role="tab" aria-selected={tab === "enviados"} className={tab === "enviados" ? "message-tab active" : "message-tab"} onClick={() => { setTab("enviados"); setActivePeerId(null); }}>
+          <Send size={16} /> Enviados ({sent.length})
+        </button>
+      </div>
+      <div className="chat-layout">
+        <aside className="chat-threads">
+          <button className="outline-button new-message-button" type="button" onClick={startNew}>Nuevo mensaje</button>
           {loadingMessages && <p className="empty-copy" role="status">Cargando mensajes...</p>}
-          {!loadingMessages && !recipient && <p className="empty-copy">Busca un compañero para iniciar una conversación.</p>}
-          {!loadingMessages && recipient && !messages.some((item) => item.sender_id === recipient.id || item.recipient_id === recipient.id) && (
-            <p className="empty-copy">Aún no hay mensajes con este compañero.</p>
+          {!loadingMessages && !threads.length && (
+            <p className="empty-copy">{tab === "recibidos" ? "No tienes mensajes recibidos." : "Aún no has enviado mensajes."}</p>
           )}
-          {messages.filter((item) => recipient && (item.sender_id === recipient.id || item.recipient_id === recipient.id)).map((item, index) => (
-            <p className={item.sender_id === userId ? "outgoing" : "incoming"} key={item.id || `${item.body}-${index}`}>
-              {item.body}
-              {item.created_at && <span className="chat-meta">{formatStamp(item.created_at)}</span>}
-            </p>
+          {threads.map((thread) => (
+            <button
+              key={thread.peerId}
+              type="button"
+              className={activePeerId === thread.peerId ? "thread-item active" : "thread-item"}
+              onClick={() => openThread(thread)}
+            >
+              <UserAvatar name={thread.name} url={thread.avatar} size="sm" />
+              <span className="thread-copy">
+                <b>{thread.name}</b>
+                <small>{thread.latest.body}</small>
+                <small className="thread-meta">
+                  {formatStamp(thread.latest.created_at)}
+                  {thread.role ? ` · ${roleLabel(thread.role)}` : ""}
+                </small>
+              </span>
+              {thread.unread > 0 && <span className="unread-pill">{thread.unread}</span>}
+            </button>
           ))}
+        </aside>
+        <div className="chat-window">
+          <div className="chat-contact">
+            <UserAvatar name={recipient?.full_name || "?"} url={recipient?.avatar_url} size="sm" />
+            <span>
+              <b>{recipient?.full_name || (activeThread?.name) || "Nuevo mensaje"}</b>
+              <small>
+                {recipient?.email || "Escribe el correo del destinatario"}
+                {recipient?.role ? ` · ${roleLabel(recipient.role)}` : ""}
+              </small>
+            </span>
+            {activePeerId && tab === "recibidos" && (
+              <span className="reply-hint"><Reply size={14} /> Responder</span>
+            )}
+          </div>
+          {!recipient && (
+            <label className="chat-recipient">
+              Destinatario
+              <input
+                type="email"
+                value={recipientEmail}
+                onChange={(event) => {
+                  setRecipientEmail(event.target.value);
+                  setRecipient(null);
+                  setActivePeerId(null);
+                }}
+                placeholder="compañero@ejemplo.com"
+              />
+            </label>
+          )}
+          <div className="chat-messages">
+            {loadingMessages && <p className="empty-copy" role="status">Cargando conversación...</p>}
+            {!loadingMessages && !activePeerId && !recipient && (
+              <p className="empty-copy">Elige una conversación o escribe un correo para iniciar un mensaje nuevo.</p>
+            )}
+            {!loadingMessages && (activePeerId || recipient) && !conversation.length && (
+              <p className="empty-copy">Aún no hay mensajes con este compañero.</p>
+            )}
+            {conversation.map((item, index) => (
+              <p className={item.sender_id === userId ? "outgoing" : "incoming"} key={item.id || `${item.body}-${index}`}>
+                {item.body}
+                <span className="chat-meta">
+                  {item.created_at ? formatStamp(item.created_at) : ""}
+                  {item.sender_id !== userId && item.read_at ? " · Leído" : ""}
+                  {item.sender_id === userId && item.read_at ? " · Leído por el destinatario" : ""}
+                </span>
+              </p>
+            ))}
+          </div>
+          <form className="chat-input" onSubmit={send}>
+            <input aria-label="Escribe un mensaje" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Escribe un mensaje..." />
+            <button className="primary-button" type="submit" disabled={sending || !message.trim()}>
+              {sending ? "Enviando..." : "Enviar"}
+            </button>
+          </form>
+          {chatError && <p className="form-error" role="alert">{chatError}</p>}
         </div>
-        <form className="chat-input" onSubmit={send}>
-          <input aria-label="Escribe un mensaje" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Escribe un mensaje..." />
-          <button className="primary-button" type="submit" disabled={sending || !message.trim()}>
-            {sending ? "Enviando..." : "Enviar"}
-          </button>
-        </form>
-        {chatError && <p className="form-error" role="alert">{chatError}</p>}
       </div>
     </section>
   );
 }
 
-function Profile({ view, userName, email, profile, onSettingsChange, onLogout, onEnablePush }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload }) {
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileRef = useRef(null);
+  const onPickAvatar = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      await onAvatarUpload?.(file);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
   return (
     <section className="panel-view profile-view">
       <span className="eyebrow accent-label">Tu cuenta</span>
       <h2>{view}</h2>
       <div className="profile-card">
-        <span className="profile-avatar">{userName.charAt(0).toUpperCase()}</span>
+        <div className="profile-avatar-wrap">
+          <UserAvatar name={userName} url={profile?.avatar_url} size="lg" />
+          <button
+            type="button"
+            className="avatar-upload-button"
+            aria-label="Cambiar foto de perfil"
+            disabled={uploadingAvatar}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Camera size={14} />
+            {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickAvatar} />
+        </div>
         <div>
           <h3>{userName}</h3>
           <p>{email}</p>
-          <span className="demo-tag">{email?.includes("recordate.local") ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
+          <span className="demo-tag">{email?.includes("recordate.local") || demo ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
+          <p className="profile-role-line">{roleLabel(profile?.role)}</p>
         </div>
       </div>
       {view === "Configuración" ? (
         <div className="settings-list">
+          <label className="settings-role">
+            <span>
+              <b>Rol en RECORDATE</b>
+              <small>Indica si eres estudiante, padre, madre, profesor o trabajador.</small>
+            </span>
+            <select
+              value={ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : "estudiante"}
+              onChange={(event) => onSettingsChange({ role: event.target.value })}
+              aria-label="Seleccionar rol"
+            >
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
           <label>
             <span>
               <b>Recordatorios automáticos</b>
@@ -1451,11 +1808,23 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout, o
           <span>Institución</span>
           <b>IE La Candelaria · Medellín</b>
           <span>Rol</span>
-          <b>{profile?.role || "student"}</b>
+          <b>{roleLabel(profile?.role)}</b>
           <span>Fecha de registro</span>
           <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b>
           <span>Proyecto</span>
           <b>Proyecto Pedagógico Integrador · Grado 11</b>
+          <div className="profile-role-editor">
+            <span>Cambiar rol</span>
+            <select
+              value={ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : "estudiante"}
+              onChange={(event) => onSettingsChange({ role: event.target.value })}
+              aria-label="Cambiar rol del perfil"
+            >
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
       <button className="outline-button logout-profile" onClick={onLogout}>Cerrar sesión</button>

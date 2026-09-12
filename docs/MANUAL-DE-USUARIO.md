@@ -50,9 +50,9 @@ En la demostración entras como *Andrea Restrepo* con tareas de ejemplo: menú l
 - Activar recordatorios y alarmas mientras la página está abierta.
 - Trabajar en **modo enfoque** (una sola tarea en pantalla).
 - Compartir actividades con compañeros registrados.
-- Enviar mensajes internos.
+- Enviar mensajes internos (Recibidos y Enviados).
 - Adjuntar una imagen a una tarea (máximo 5 MB, solo en cuenta real).
-- Ajustar perfil, notificaciones del navegador y preferencias.
+- Ajustar perfil (rol y foto), notificaciones del navegador y preferencias.
 
 ---
 
@@ -302,8 +302,9 @@ Para que un compañero **con cuenta en RECORDATE** vea una de tus tareas:
 1. Entra a **Compartir agendas**.
 2. Escribe el correo con el que se registró (debe ser un correo válido).
 3. Elige la actividad (debe estar pendiente).
-4. Guarda. El otro la verá en su lista (sin poder editarla ni borrarla).
-5. Cuando ya no haga falta, **revoca** el acceso desde la misma sección.
+4. Guarda. El otro la verá en su lista y en la pestaña **Compartidas conmigo** (sin poder editarla ni borrarla).
+5. El destinatario puede ver título, materia, fecha, descripción e **imágenes adjuntas**.
+6. Cuando ya no haga falta, **revoca** el acceso desde la pestaña **Que compartí**.
 
 En la demostración el compartido es local y de prueba; en cuenta real usa el correo exacto del compañero.
 
@@ -312,11 +313,12 @@ En la demostración el compartido es local y de prueba; en cuenta real usa el co
 ## 17. Mensajes
 
 1. Abre **Mensajes**.
-2. Busca al usuario por correo (válido).
-3. Escribe y envía.
-4. Lee la conversación en el mismo panel.
+2. Usa las pestañas **Recibidos** y **Enviados**.
+3. En Recibidos abre una conversación para marcarla como leída y **responder**.
+4. En Enviados revisa lo que ya mandaste.
+5. Con **Nuevo mensaje** busca al usuario por correo, escribe y envía.
 
-Solo hay chat entre cuentas registradas. La demo simula un compañero local; no llega a otra persona.
+Solo hay chat entre cuentas registradas. La demo incluye un mensaje de ejemplo y simula un compañero local.
 
 ---
 
@@ -324,7 +326,9 @@ Solo hay chat entre cuentas registradas. La demo simula un compañero local; no 
 
 Ahí puedes:
 
-- Ver nombre, correo y rol (Estudiante, Docente o Administración).
+- Ver nombre, correo y **rol** con etiqueta en español: Estudiante, Padre, Madre, Profesor o Trabajador.
+- **Cambiar el rol** desde Perfil o Configuración.
+- Subir o cambiar tu **foto de perfil** (se muestra en el encabezado, mensajes y agendas compartidas).
 - Activar o desactivar **recordatorios**.
 - Activar o desactivar **alarmas**.
 - Activar o desactivar **notificaciones del navegador**.
@@ -332,6 +336,14 @@ Ahí puedes:
 - **Cerrar sesión**.
 
 Cerrar sesión te devuelve a la portada. En la demo también sale del usuario de ejemplo.
+
+### Migración Supabase (administración)
+
+Si actualizas la base de datos, ejecuta en el SQL Editor el archivo:
+
+`supabase/migrations/20260912_roles_avatar_messages_shared.sql`
+
+Eso crea/actualiza roles, columna `avatar_url`, bucket público `avatars`, funciones de mensajes y el detalle de agendas compartidas.
 
 ---
 
