@@ -577,6 +577,16 @@ p { text-wrap: pretty }
   font-size: 13px;
 }
 
+.auth-message-error {
+  color: #ffd6dc;
+  background: rgba(255, 107, 122, 0.16);
+}
+
+.auth-message-success {
+  color: #d6ffe8;
+  background: rgba(72, 199, 142, 0.16);
+}
+
 .app-shell {
   min-height: 100vh;
   display: flex;

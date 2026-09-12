@@ -6,33 +6,120 @@ import { DiaTextReveal } from "./ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
 import { appBase } from "../paths";
 
+/** Validación simple de correo para formularios de acceso. */
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+/** Une mensaje y código de error de Supabase en minúsculas para comparar. */
+function errorDetails(error) {
+  return `${error?.message || ""} ${error?.code || ""} ${error?.status || ""}`.toLowerCase();
+}
+
+/** True si el mensaje es un error (para estilo y role=alert). */
+function isErrorMessage(text) {
+  return /no (fue|fue posible|encontramos|existe)|error|incorrect|inválid|imposible|falla|falló|requiere|coincide|mínimo|escribe|alcanzó|desactiv|expir|revisa spam/i.test(
+    text || ""
+  );
+}
+
+/**
+ * Mensajes claros en español para el registro.
+ * Evita jerga técnica (SQL, triggers) orientada a administradores.
+ */
 function signupErrorMessage(error) {
-  const details = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
-  if (details.includes("already registered") || details.includes("already been registered")) return "Ese correo ya está registrado. Inicia sesión o usa otro correo.";
-  if (details.includes("signups not allowed") || details.includes("email signups are disabled")) return "El registro por correo está desactivado en Supabase. Activa Email en Authentication → Providers → Email.";
-  if (details.includes("invalid email")) return "El correo electrónico no es válido.";
-  if (details.includes("password")) return "La contraseña no cumple los requisitos de Supabase.";
-  if (details.includes("database error saving new user") || details.includes("saving new user")) return "Supabase no pudo crear el perfil. Ejecuta nuevamente la migración SQL completa y verifica que exista la tabla profiles.";
-  if (details.includes("rate limit") || details.includes("too many requests")) return "Se alcanzó el límite temporal de registros. Espera unos minutos e inténtalo de nuevo.";
-  if (details.includes("profiles") || details.includes("database") || details.includes("trigger")) return "La cuenta no pudo guardarse en la base de datos. Verifica que ejecutaste la migración SQL.";
+  const details = errorDetails(error);
+  if (details.includes("already registered") || details.includes("already been registered") || details.includes("user_already_exists")) {
+    return "Ese correo ya está registrado. Inicia sesión o usa otro correo.";
+  }
+  if (details.includes("signups not allowed") || details.includes("email signups are disabled")) {
+    return "El registro por correo no está disponible en este momento. Prueba más tarde o usa la demostración.";
+  }
+  if (details.includes("invalid email") || details.includes("email_address_invalid")) {
+    return "El correo electrónico no es válido.";
+  }
+  if (details.includes("password should be") || details.includes("weak_password") || (details.includes("password") && details.includes("least"))) {
+    return "La contraseña es demasiado corta o no cumple los requisitos. Usa al menos 6 caracteres.";
+  }
+  if (details.includes("database error saving new user") || details.includes("saving new user") || details.includes("profiles") || details.includes("trigger")) {
+    return "No pudimos crear tu perfil. Inténtalo de nuevo en unos minutos. Si continúa, avisa al docente o al administrador.";
+  }
+  if (details.includes("rate limit") || details.includes("too many requests") || details.includes("over_email_send_rate_limit")) {
+    return "Se alcanzó el límite temporal de registros. Espera unos minutos e inténtalo de nuevo.";
+  }
+  if (details.includes("network") || details.includes("fetch")) {
+    return "No fue posible conectar con el servicio. Revisa tu internet e inténtalo de nuevo.";
+  }
   return "No fue posible crear la cuenta. Revisa los datos e inténtalo de nuevo.";
 }
 
-function verificationErrorMessage(error) {
-  const details = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
-  if (details.includes("expired") || details.includes("invalid")) {
-    return "El código de verificación es incorrecto o expiró.";
+/** Errores del inicio de sesión traducidos a español. */
+function loginErrorMessage(error) {
+  const details = errorDetails(error);
+  if (details.includes("email not confirmed") || details.includes("email_not_confirmed")) {
+    return "Debes confirmar tu correo antes de entrar. Revisa tu bandeja o regístrate de nuevo para pedir otro código.";
   }
-  if (details.includes("rate limit") || details.includes("too many")) {
+  if (details.includes("invalid login credentials") || details.includes("invalid_credentials")) {
+    return "El correo o la contraseña son incorrectos.";
+  }
+  if (details.includes("user not found")) {
+    return "No encontramos una cuenta con ese correo. Regístrate o revisa que esté bien escrito.";
+  }
+  if (details.includes("too many") || details.includes("rate limit")) {
+    return "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.";
+  }
+  if (details.includes("network") || details.includes("fetch")) {
+    return "No fue posible conectar con el servicio. Revisa tu internet e inténtalo de nuevo.";
+  }
+  return "No fue posible iniciar sesión. Revisa tus datos e inténtalo de nuevo.";
+}
+
+/** Errores del OTP de verificación (código de 6 dígitos). */
+function verificationErrorMessage(error) {
+  const details = errorDetails(error);
+  if (details.includes("expired") || details.includes("otp_expired")) {
+    return "El código de verificación expiró. Usa «Reenviar código» para pedir uno nuevo.";
+  }
+  if (details.includes("invalid") || details.includes("otp_disabled") || details.includes("token")) {
+    return "El código de verificación es incorrecto. Revísalo o pide uno nuevo.";
+  }
+  if (details.includes("rate limit") || details.includes("too many") || details.includes("over_email_send_rate_limit")) {
     return "Se alcanzó el límite de intentos. Espera unos minutos e inténtalo de nuevo.";
   }
   return "No fue posible verificar el código. Inténtalo de nuevo.";
 }
 
-function isValidEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+/** Errores al pedir o actualizar la contraseña. */
+function recoveryErrorMessage(error) {
+  const details = errorDetails(error);
+  if (details.includes("rate limit") || details.includes("over_email_send_rate_limit") || details.includes("too many")) {
+    return "Se enviaron demasiados correos. Espera unos minutos e inténtalo de nuevo.";
+  }
+  if (details.includes("user not found") || details.includes("unable to validate email")) {
+    return "Si el correo está registrado, te enviaremos un enlace. Revisa también la carpeta de spam.";
+  }
+  if (details.includes("same_password") || details.includes("should be different")) {
+    return "La nueva contraseña debe ser distinta a la anterior.";
+  }
+  if (details.includes("password")) {
+    return "La contraseña no cumple los requisitos. Usa al menos 6 caracteres.";
+  }
+  if (details.includes("session") || details.includes("auth session missing")) {
+    return "El enlace de recuperación expiró o ya se usó. Solicita uno nuevo desde «¿Olvidaste tu contraseña?».";
+  }
+  return "No fue posible completar la recuperación. Inténtalo de nuevo.";
 }
 
+/** URL absoluta de la app (incluye /PRYECTO-PPI en GitHub Pages). */
+function appUrl(path) {
+  const clean = path.startsWith("/") ? path : `/${path}`;
+  return `${window.location.origin}${appBase}${clean}`;
+}
+
+/**
+ * Pantalla de autenticación: login, registro, verificación OTP y recuperación.
+ * Recibe callbacks del padre (App) para entrar, volver o abrir el modo demo.
+ */
 function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRecovery, setIsRecovery] = useState(recovery);
@@ -47,6 +134,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
   const [loading, setLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
   const requestRecovery = async (event) => {
     event.preventDefault();
     if (!isValidEmail(email)) {
@@ -59,14 +147,22 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${appBase}/reset-password` });
-      setMessage(error ? "No fue posible enviar el enlace de recuperación." : "Te enviamos un enlace para recuperar tu contraseña.");
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: appUrl("/reset-password"),
+      });
+      // Mensaje neutro: no revelamos si el correo existe.
+      setMessage(
+        error
+          ? recoveryErrorMessage(error)
+          : "Si el correo está registrado, te enviamos un enlace para recuperar tu contraseña. Revisa también spam."
+      );
     } catch {
       setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
   };
+
   const updatePassword = async (event) => {
     event.preventDefault();
     if (newPassword.length < 6) {
@@ -80,9 +176,10 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) setMessage("No fue posible actualizar la contraseña.");
-      else {
-        setMessage("Contraseña actualizada correctamente.");
+      if (error) {
+        setMessage(recoveryErrorMessage(error));
+      } else {
+        setMessage("Contraseña actualizada correctamente. Ya puedes usar la agenda.");
         setIsRecovery(false);
         onRecoveryDone?.();
       }
@@ -92,6 +189,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
       setLoading(false);
     }
   };
+
   const verifyCode = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -121,6 +219,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
       setLoading(false);
     }
   };
+
   const resendCode = async () => {
     setMessage("");
     setLoading(true);
@@ -129,13 +228,14 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
         type: "signup",
         email: verificationEmail,
       });
-      setMessage(error ? verificationErrorMessage(error) : "Te enviamos un nuevo código de verificación.");
+      setMessage(error ? verificationErrorMessage(error) : "Te enviamos un nuevo código de verificación. Revisa tu correo y spam.");
     } catch {
       setMessage("No fue posible reenviar el código. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
   };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -165,19 +265,26 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
         ? await supabase.auth.signUp({
             email: email.trim(),
             password,
-            options: { data: { full_name: fullName.trim() } },
+            options: {
+              data: { full_name: fullName.trim() },
+              emailRedirectTo: appUrl("/"),
+            },
           })
         : await supabase.auth.signInWithPassword({
             email: email.trim(),
             password,
           });
-      if (result.error) setMessage(isSignUp ? signupErrorMessage(result.error) : "El correo o la contraseña son incorrectos.");
-      else if (result.data.session) onLogin(result.data.session);
-      else {
+      if (result.error) {
+        setMessage(isSignUp ? signupErrorMessage(result.error) : loginErrorMessage(result.error));
+      } else if (result.data.session) {
+        onLogin(result.data.session);
+      } else if (isSignUp) {
         setVerificationEmail(email.trim());
         setVerificationCode("");
         setNeedsVerification(true);
-        setMessage("Te enviamos un código de 6 dígitos a tu correo.");
+        setMessage("Te enviamos un código de 6 dígitos a tu correo. Revisa también la carpeta de spam.");
+      } else {
+        setMessage("No se pudo abrir la sesión. Inténtalo de nuevo.");
       }
     } catch {
       setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
@@ -185,10 +292,15 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
       setLoading(false);
     }
   };
+
+  const messageClass = message
+    ? `auth-message${isErrorMessage(message) ? " auth-message-error" : " auth-message-success"}`
+    : "";
+
   return (
     <main className="auth-page">
       <div className="auth-aside">
-        <button className="back-link" onClick={onBack}>
+        <button className="back-link" type="button" onClick={onBack}>
           <ArrowLeft size={16} /> Volver al inicio
         </button>
         <Brand light />
@@ -202,21 +314,34 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
         </div>
         <span className="auth-footer">RECORDATE · PPI IE La Candelaria</span>
       </div>
-      <section className="auth-panel">
+      <section className="auth-panel" aria-busy={loading}>
         <div className="mobile-auth-brand">
           <Brand size="lg" />
         </div>
         <span className="eyebrow accent-label">
           {needsVerification ? "Confirma tu correo" : isRecovery ? "Recupera tu acceso" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
         </span>
-        <h2>{needsVerification ? "Verifica tu cuenta." : isRecovery ? recovery ? "Crea una nueva contraseña." : "Recupera tu contraseña." : isSignUp ? "Crea tu cuenta." : "Entra a tu agenda."}</h2>
+        <h2>
+          {needsVerification
+            ? "Verifica tu cuenta."
+            : isRecovery
+              ? recovery
+                ? "Crea una nueva contraseña."
+                : "Recupera tu contraseña."
+              : isSignUp
+                ? "Crea tu cuenta."
+                : "Entra a tu agenda."}
+        </h2>
         <p className="auth-subtitle">
           {needsVerification
             ? `Escribe el código que enviamos a ${verificationEmail}.`
-            : isRecovery ? recovery ? "Elige una contraseña nueva para volver a entrar." : "Te enviaremos un enlace seguro a tu correo."
-            : isSignUp
-              ? "Organiza tus actividades académicas desde el primer día."
-              : "Tus tareas y recordatorios te están esperando."}
+            : isRecovery
+              ? recovery
+                ? "Elige una contraseña nueva para volver a entrar."
+                : "Te enviaremos un enlace seguro a tu correo."
+              : isSignUp
+                ? "Organiza tus actividades académicas desde el primer día."
+                : "Tus tareas y recordatorios te están esperando."}
         </p>
         {needsVerification ? (
           <>
@@ -232,7 +357,11 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
                   required
                 />
               </label>
-              {message && <p className="auth-message" role="alert">{message}</p>}
+              {message && (
+                <p className={messageClass} role={isErrorMessage(message) ? "alert" : "status"}>
+                  {message}
+                </p>
+              )}
               <button className="primary-button auth-submit" type="submit" disabled={loading}>
                 {loading ? "Verificando..." : "Verificar código"} <ArrowRight size={16} />
               </button>
@@ -240,84 +369,140 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
             <button className="switch-button" type="button" onClick={resendCode} disabled={loading}>
               Reenviar código
             </button>
-            <button className="switch-button" type="button" onClick={() => { setNeedsVerification(false); setMessage(""); }}>
+            <button
+              className="switch-button"
+              type="button"
+              onClick={() => {
+                setNeedsVerification(false);
+                setMessage("");
+              }}
+            >
               Volver al registro
             </button>
           </>
-        ) : isRecovery && recovery ? <form onSubmit={updatePassword} noValidate>
-          <label> Nueva contraseña <input type="password" minLength="6" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
-          <label> Confirmar nueva contraseña <input type="password" minLength="6" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} required /></label>
-          {message && <p className="auth-message" role="alert">{message}</p>}
-          <button className="primary-button auth-submit" type="submit" disabled={loading}>{loading ? "Actualizando..." : "Actualizar contraseña"}</button>
-        </form> : isRecovery ? <form onSubmit={requestRecovery} noValidate>
-          <label>Correo electrónico <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
-          {message && <p className="auth-message" role="alert">{message}</p>}
-          <button className="primary-button auth-submit" type="submit" disabled={loading}>{loading ? "Enviando..." : "Enviar enlace"}</button>
-        </form> : <form onSubmit={handleSubmit} noValidate>
-          {isSignUp && (
+        ) : isRecovery && recovery ? (
+          <form onSubmit={updatePassword} noValidate>
             <label>
-              Nombre
-              <input
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                required
-              />
-            </label>
-          )}
-          <label>
-            Correo electrónico
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Contraseña
-            <input
-              type="password"
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              minLength="6"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </label>
-          {isSignUp && (
-            <label>
-              Confirmar contraseña
+              Nueva contraseña
               <input
                 type="password"
-                autoComplete="new-password"
                 minLength="6"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
                 required
               />
             </label>
-          )}
-          {message && (
-            <p className="auth-message" role="alert">
-              {message}
-            </p>
-          )}
-          <button
-            className="primary-button auth-submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Conectando..."
-              : isSignUp
-                ? "Crear mi cuenta"
-                : "Iniciar sesión"}
-            <ArrowRight size={16} />
-          </button>
-        </form>}
+            <label>
+              Confirmar nueva contraseña
+              <input
+                type="password"
+                minLength="6"
+                autoComplete="new-password"
+                value={confirmNewPassword}
+                onChange={(event) => setConfirmNewPassword(event.target.value)}
+                required
+              />
+            </label>
+            {message && (
+              <p className={messageClass} role={isErrorMessage(message) ? "alert" : "status"}>
+                {message}
+              </p>
+            )}
+            <button className="primary-button auth-submit" type="submit" disabled={loading}>
+              {loading ? "Actualizando..." : "Actualizar contraseña"}
+            </button>
+          </form>
+        ) : isRecovery ? (
+          <form onSubmit={requestRecovery} noValidate>
+            <label>
+              Correo electrónico
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </label>
+            {message && (
+              <p className={messageClass} role={isErrorMessage(message) ? "alert" : "status"}>
+                {message}
+              </p>
+            )}
+            <button className="primary-button auth-submit" type="submit" disabled={loading}>
+              {loading ? "Enviando..." : "Enviar enlace"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} noValidate>
+            {isSignUp && (
+              <label>
+                Nombre
+                <input
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  required
+                />
+              </label>
+            )}
+            <label>
+              Correo electrónico
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Contraseña
+              <input
+                type="password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                minLength="6"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </label>
+            {isSignUp && (
+              <label>
+                Confirmar contraseña
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  minLength="6"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  required
+                />
+              </label>
+            )}
+            {message && (
+              <p className={messageClass} role={isErrorMessage(message) ? "alert" : "status"}>
+                {message}
+              </p>
+            )}
+            <button className="primary-button auth-submit" type="submit" disabled={loading}>
+              {loading ? "Conectando..." : isSignUp ? "Crear mi cuenta" : "Iniciar sesión"}
+              <ArrowRight size={16} />
+            </button>
+          </form>
+        )}
         {!needsVerification && !isRecovery && !isSignUp && (
-          <button className="switch-button" type="button" onClick={() => { setIsRecovery(true); setMessage(""); }}>¿Olvidaste tu contraseña?</button>
+          <button
+            className="switch-button"
+            type="button"
+            onClick={() => {
+              setIsRecovery(true);
+              setMessage("");
+            }}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
         )}
         {onDemo && !needsVerification && !isRecovery && (
           <button className="switch-button demo-button" type="button" onClick={onDemo}>
@@ -325,25 +510,29 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
           </button>
         )}
         {!needsVerification && (
-        <button
-          className="switch-button"
-          type="button"
-          onClick={() => {
-            if (isRecovery) { setIsRecovery(false); setMessage(""); return; }
-            setIsSignUp((current) => !current);
-            setMessage("");
-          }}
-        >
-          {isSignUp
-            ? "¿Ya tienes cuenta? Inicia sesión"
-            : isRecovery
-              ? "Volver al inicio de sesión"
-            : "¿No tienes cuenta? Regístrate"}
-        </button>
+          <button
+            className="switch-button"
+            type="button"
+            onClick={() => {
+              if (isRecovery) {
+                setIsRecovery(false);
+                setMessage("");
+                return;
+              }
+              setIsSignUp((current) => !current);
+              setMessage("");
+            }}
+          >
+            {isSignUp
+              ? "¿Ya tienes cuenta? Inicia sesión"
+              : isRecovery
+                ? "Volver al inicio de sesión"
+                : "¿No tienes cuenta? Regístrate"}
+          </button>
         )}
         <p className="auth-note">
           {hasSupabaseConfig
-            ? "No guardamos contraseñas en este navegador."
+            ? "No guardamos contraseñas en este navegador. El acceso lo gestiona Supabase de forma segura."
             : "Supabase no está configurado en este entorno. La demostración guarda datos solo en este dispositivo."}
         </p>
       </section>
