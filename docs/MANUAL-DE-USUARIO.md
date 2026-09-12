@@ -12,10 +12,38 @@ Este manual explica **cómo usar la página publicada**, no cómo programarla.
 
 ---
 
+## Capturas de la versión publicada
+
+### Portada
+
+![Portada de RECORDATE en escritorio](images/portada.jpg)
+
+Al abrir el enlace ves la portada: logo, menú de anclas, botón **Iniciar sesión**, el título *Tu día académico* con palabras que cambian (Recuerda, Organiza, Prioriza, Avanza) y la animación *Electric Gaze* a la derecha.
+
+### Portada en celular
+
+![Portada de RECORDATE en celular](images/portada-movil.jpg)
+
+En el teléfono la misma portada se adapta; el menú y los botones siguen disponibles.
+
+### Pantalla de acceso
+
+![Pantalla de inicio de sesión](images/login.jpg)
+
+Desde **Iniciar sesión** o **Comenzar ahora** entras al panel de acceso: correo, contraseña, recuperación, registro y la opción **Explorar demostración**.
+
+### Panel (modo demostración)
+
+![Panel principal en modo demostración](images/panel-demo.jpg)
+
+En la demostración entras como *Andrea Restrepo* con tareas de ejemplo: menú lateral, resumen del día, progreso y lista de actividades.
+
+---
+
 ## 1. ¿Qué puedes hacer?
 
 - Ver la portada del proyecto y conocer RECORDATE antes de entrar.
-- Crear una cuenta real (se guarda en la nube) o explorar una **demostración local**.
+- Crear una cuenta real (se guarda en la nube con Supabase) o explorar una **demostración local**.
 - Registrar, editar, completar y eliminar tareas académicas.
 - Buscar y filtrar por título, materia, prioridad, estado o fecha.
 - Revisar la agenda en calendario.
@@ -23,7 +51,7 @@ Este manual explica **cómo usar la página publicada**, no cómo programarla.
 - Trabajar en **modo enfoque** (una sola tarea en pantalla).
 - Compartir actividades con compañeros registrados.
 - Enviar mensajes internos.
-- Adjuntar una imagen a una tarea (máximo 5 MB).
+- Adjuntar una imagen a una tarea (máximo 5 MB, solo en cuenta real).
 - Ajustar perfil, notificaciones del navegador y preferencias.
 
 ---
@@ -88,10 +116,20 @@ Sirve para guardar tus tareas en Supabase y recuperarlas en otro dispositivo.
 4. Escribe un correo válido.
 5. Crea una contraseña de **mínimo 6 caracteres** y confírmala.
 6. Pulsa **Crear mi cuenta**.
-7. Si pide verificación, revisa el correo y escribe el **código de 6 dígitos**.
+7. Si pide verificación, revisa el correo (y la carpeta de spam) y escribe el **código de 6 dígitos**.
 8. Si no llega, usa **Reenviar código**. El código caduca; pide uno nuevo si hace falta.
 
 Al verificar, entras al panel. En otro dispositivo inicia sesión con el mismo correo.
+
+### Mensajes que puedes ver al registrarte
+
+| Situación | Qué significa |
+| --- | --- |
+| Correo ya registrado | Usa **Inicia sesión** o otro correo. |
+| Correo inválido | Revisa que tenga forma `nombre@dominio.com`. |
+| Contraseña corta | Usa al menos 6 caracteres. |
+| Límite de intentos | Espera unos minutos y vuelve a intentar. |
+| No conecta | Revisa tu internet e inténtalo de nuevo. |
 
 ---
 
@@ -102,6 +140,8 @@ Al verificar, entras al panel. En otro dispositivo inicia sesión con el mismo c
 3. Pulsa **Iniciar sesión**.
 
 Si los datos son correctos se abre el panel (Inicio). La sesión se mantiene al recargar, hasta que cierres sesión.
+
+Si aún no confirmaste el correo, RECORDATE te pedirá verificarlo antes de entrar.
 
 ---
 
@@ -125,9 +165,11 @@ Solo aplica a cuentas reales, no a la demo.
 
 1. En el acceso pulsa **¿Olvidaste tu contraseña?**.
 2. Escribe tu correo y pulsa **Enviar enlace**.
-3. Abre el correo y sigue el enlace.
+3. Abre el correo (revisa spam) y sigue el enlace. En GitHub Pages el enlace vuelve a `/PRYECTO-PPI/reset-password`.
 4. Escribe una contraseña nueva (mínimo 6 caracteres) y confírmala.
 5. Pulsa **Actualizar contraseña** y vuelve a entrar.
+
+Por seguridad, el mensaje de envío no confirma si el correo existe o no: si está registrado, recibirás el enlace.
 
 ---
 
@@ -156,7 +198,7 @@ Arriba a la derecha: campana de notificaciones internas, acceso a perfil y **cer
 
 ## 10. Crear una tarea
 
-1. Entra a **Mis tareas** (o usa el botón de nueva actividad desde Inicio).
+1. Entra a **Mis tareas** (o usa **+ Nueva actividad** desde Inicio).
 2. Pulsa el botón para crear.
 3. Completa:
    - **Título** (obligatorio)
@@ -164,12 +206,14 @@ Arriba a la derecha: campana de notificaciones internas, acceso a perfil y **cer
    - **Fecha** (obligatorio)
    - **Hora** (obligatorio)
    - **Prioridad:** Alta, Media o Baja
-   - **Recordatorio:** al momento, 5 / 10 / 30 minutos, 1 / 3 / 12 / 24 horas o 1 día antes
+   - **Recordatorio:** al momento, minutos u horas antes, o 1 día antes
    - **Descripción** (opcional)
    - **Adjuntar imagen** (opcional, solo cuentas reales, máximo 5 MB)
 4. Pulsa **Crear tarea**.
 
 Si falta título, materia, fecha u hora, RECORDATE no guarda y muestra el aviso.
+
+Puedes cerrar el formulario con **Escape** o haciendo clic fuera del cuadro.
 
 ### Consejos
 - Título concreto: *Taller 3 de trigonometría*, no *tarea*.
@@ -204,7 +248,7 @@ En **Mis tareas**:
 - Estado (pendiente o completada)
 - Fecha concreta
 
-Combina búsqueda y filtros. Quita los filtros para volver a la lista completa.
+Combina búsqueda y filtros. Usa **Limpiar filtros** para volver a la lista completa. Si no hay resultados, verás un estado vacío con la opción de crear una actividad.
 
 En **Perfil** puedes ocultar las tareas ya completadas si no quieres verlas.
 
@@ -227,6 +271,7 @@ Al crear o editar una tarea eliges cuándo avisar.
 **Dentro de RECORDATE (página abierta)**
 - La sección **Recordatorios** lista lo que tiene aviso.
 - Si las **alarmas** están activas en Perfil, suena y se muestra el aviso a la hora calculada.
+- Puedes cerrar la alarma con **Escape**.
 
 **Notificaciones del navegador**
 1. En Perfil o Configuración activa las notificaciones del navegador.
@@ -245,9 +290,8 @@ Para trabajar sin el resto de la lista:
 
 1. Elige una tarea y pulsa el icono de enfoque, o entra a **Modo enfoque** y selecciona.
 2. Ves título, materia, hora y descripción al frente.
-3. Cuando termines, vuelve al panel con el control de salida.
-
-No pausa el resto de RECORDATE: solo concentra la vista.
+3. Puedes marcarla como completada (si eres el dueño) o salir del modo enfoque.
+4. **Escape** también cierra el modo enfoque.
 
 ---
 
@@ -256,7 +300,7 @@ No pausa el resto de RECORDATE: solo concentra la vista.
 Para que un compañero **con cuenta en RECORDATE** vea una de tus tareas:
 
 1. Entra a **Compartir agendas**.
-2. Escribe el correo con el que se registró.
+2. Escribe el correo con el que se registró (debe ser un correo válido).
 3. Elige la actividad (debe estar pendiente).
 4. Guarda. El otro la verá en su lista (sin poder editarla ni borrarla).
 5. Cuando ya no haga falta, **revoca** el acceso desde la misma sección.
@@ -268,7 +312,7 @@ En la demostración el compartido es local y de prueba; en cuenta real usa el co
 ## 17. Mensajes
 
 1. Abre **Mensajes**.
-2. Busca al usuario por correo.
+2. Busca al usuario por correo (válido).
 3. Escribe y envía.
 4. Lee la conversación en el mismo panel.
 
@@ -280,7 +324,7 @@ Solo hay chat entre cuentas registradas. La demo simula un compañero local; no 
 
 Ahí puedes:
 
-- Ver nombre y correo (y si la cuenta es real o demo).
+- Ver nombre, correo y rol (Estudiante, Docente o Administración).
 - Activar o desactivar **recordatorios**.
 - Activar o desactivar **alarmas**.
 - Activar o desactivar **notificaciones del navegador**.
@@ -325,17 +369,19 @@ No hay que configurar el aspecto. Si el movimiento molesta, el sistema de **redu
 ### No puedo iniciar sesión
 - Correo y contraseña exactos.
 - Si acabas de registrarte, verifica el código de 6 dígitos.
+- Si el mensaje dice que debes confirmar el correo, revisa tu bandeja y spam.
 - Usa **¿Olvidaste tu contraseña?** en cuentas reales.
 
 ### No llega el código o el correo de recuperación
 - Revisa spam.
 - Pulsa **Reenviar código**.
 - Confirma que el correo esté bien escrito.
+- Si pediste demasiados correos seguidos, espera unos minutos.
 
 ### No puedo crear o ver tareas
 - Debes haber iniciado sesión (cuenta o demo).
 - Completa título, materia, fecha y hora.
-- Si usas cuenta real y sigue fallando, avisa al docente o al administrador: puede faltar la migración de Supabase.
+- Si usas cuenta real y sigue fallando, avisa al docente o al administrador.
 
 ### La imagen no se adjunta
 - Solo en cuenta real, no en la demo.
