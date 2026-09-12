@@ -24,12 +24,18 @@ jobs:
           cache: npm
           cache-dependency-path: ppi-react/package-lock.json
       - run: npm ci
+      - name: Optional GitHub secrets override
+        env:
+          URL: ${{ secrets.VITE_SUPABASE_URL }}
+          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VAPID: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+        run: |
+          [ -n "$URL" ] && echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"
+          [ -n "$KEY" ] && echo "VITE_SUPABASE_ANON_KEY=$KEY" >> "$GITHUB_ENV"
+          [ -n "$VAPID" ] && echo "VITE_VAPID_PUBLIC_KEY=$VAPID" >> "$GITHUB_ENV"
       - run: npm run build
         env:
           VITE_BASE: /PRYECTO-PPI/
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ppi-react/dist
