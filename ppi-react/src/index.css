@@ -1,2 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
-:root{font-family:'DM Sans',sans-serif;color:#15263f;background:#f5f7fb;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;--green:#315efb;--green-dark:#13264b;--green-soft:#e9eeff;--gold:#ffb85c;--ink:#15263f;--muted:#66758e;--line:#e4eaf3;--paper:#fff;--navy:#0e1b35;--sky:#eaf3ff;--success:#18a879;--danger:#dc5d6b}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px;background:#f5f7fb}button,input,select,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin:0}h1,h2,h3,.brand{font-family:'Plus Jakarta Sans',sans-serif}:focus-visible{outline:3px solid #ffb85c;outline-offset:3px}
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #e8eefc;
+  background: #070b16;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --green: #6ea0ff;
+  --green-dark: #0b1224;
+  --green-soft: #162447;
+  --gold: #ffc56d;
+  --ink: #e8eefc;
+  --muted: #93a0be;
+  --line: #243255;
+  --paper: #0d1428;
+  --navy: #070b16;
+  --sky: #13203c;
+  --success: #3dd6a0;
+  --danger: #ff6b7d;
+  --alarm: #ffc56d;
+  --alarm-hot: #ff8a4a;
+  --glass: rgba(13, 20, 40, 0.72);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 280ms;
+}
+
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, #1a2c5e55, transparent 55%),
+    radial-gradient(800px 500px at -10% 20%, #3a2a1255, transparent 50%),
+    #070b16;
+  color: var(--ink);
+}
+button, input, select, textarea { font: inherit }
+button, a { -webkit-tap-highlight-color: transparent }
+button { cursor: pointer }
+a { color: inherit }
+h1, h2, h3, p { margin: 0 }
+h1, h2, h3, .brand { font-family: 'Plus Jakarta Sans', sans-serif }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
