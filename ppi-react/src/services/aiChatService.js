@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { supabase } from "../supabaseClient";
 
+// Cliente del asistente: invoke("ai-chat") + listado de hilos.
+// images[].data es base64. image_urls del server son paths; se firman aquí.
 const missingBackend = () => ({
   success: false,
   error: "Supabase no está configurado en este entorno.",

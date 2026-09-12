@@ -4,7 +4,7 @@
 
 `PRYECTO-PPI` contiene el trabajo del Proyecto Pedagógico Integrador de grado 11 para **RECORDATE**, un sistema de recordatorio de actividades académicas dirigido a estudiantes de la IE La Candelaria, Medellín, Antioquia.
 
-La aplicación principal permite registrar actividades, asignar materia, fecha, hora, prioridad y recordatorio; consultar el calendario, buscar tareas, trabajar en modo enfoque y preparar flujos de comunicación y agenda compartida.
+La aplicación principal permite registrar actividades, asignar materia, fecha, hora, prioridad y recordatorio; consultar el calendario, buscar tareas, trabajar en modo enfoque, mensajería, agenda compartida y un asistente de IA (Gemini) con historial y fotos.
 
 Este repositorio conserva también prototipos y ejercicios anteriores. Por eso hay más de una aplicación Vite y varios archivos HTML independientes.
 
@@ -26,9 +26,11 @@ PRYECTO-PPI/
 │   │   ├── paths.js                   # Rutas SPA conscientes del BASE_URL de Pages
 │   │   ├── supabaseClient.js          # Cliente Supabase condicionado por variables env
 │   │   ├── dataService.js             # Perfiles, tareas, mensajes, shares y adjuntos
+│   │   ├── services/aiChatService.js  # Edge Function ai-chat + historial
 │   │   ├── demoStore.js               # Agenda local de demostración
 │   │   ├── shaders/halftoneFrag.js    # Fragment shader WebGL del fondo
 │   │   └── components/
+│   │       ├── AiChat.jsx             # Chat flotante Gemini (clip + historial)
 │   │       ├── Login.jsx              # Inicio de sesión, registro, OTP y recuperación
 │   │       ├── AsciiEffect.jsx        # Animación ASCII del retrato Electric Gaze
 │   │       ├── WebGLBackground.jsx    # Fondo Halftone a pantalla completa
@@ -62,7 +64,8 @@ La aplicación principal usa:
 - WebGL1 (fondo Halftone) y Canvas2D (ASCII Electric Gaze) en la portada.
 - Motion (Framer) para DiaTextReveal; filtro SVG para MorphingText.
 - Lucide React para iconos.
-- Migración SQL de Supabase para perfiles, tareas, agendas compartidas y mensajes.
+- Migración SQL de Supabase para perfiles, tareas, agendas, mensajes y chat IA.
+- Edge Function `ai-chat` (Gemini 3.6 Flash); secreto `GEMINI_API_KEY`.
 - GitHub Pages (`gh-pages`) como hosting, no Vercel.
 - ESLint para validación estática.
 
