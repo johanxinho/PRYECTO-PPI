@@ -1,16 +1,29 @@
-/**
- * Registro (legado): formulario visual sin conectar.
- * El alta de cuentas está en Login.jsx. No se monta desde App.jsx.
- */
-function Registro() {
-  return (
-    <div className="container" role="note">
-      <h2>Registro</h2>
-      <p className="empty-copy">
-        Este formulario de ejemplo ya no se usa. Crea tu cuenta desde la pantalla de acceso de RECORDATE.
-      </p>
-    </div>
-  );
+function Registro(){
+
+return(
+
+<div className="container">
+
+<h2>Registro</h2>
+
+<input 
+className="form-control mb-2"
+placeholder="Nombre"
+/>
+
+<input 
+className="form-control mb-2"
+placeholder="Correo"
+/>
+
+<button className="btn btn-success">
+Registrar
+</button>
+
+</div>
+
+)
+
 }
 
 export default Registro;

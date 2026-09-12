@@ -1,30 +1,44 @@
 // @ts-nocheck
-import { supabase } from '../supabaseClient'; // Cliente de autenticación y base de datos
+import { supabase } from '../supabaseClient';
 
-// authService concentra Auth reutilizable. Si Supabase no está configurado,
-// cada método falla con un mensaje claro en vez de romper con null.
+// authService contiene las operaciones de autenticación reutilizables para
+// registro, inicio de sesión, cierre de sesión y consulta de sesión.
 const missingBackend = () => ({ success: false, error: 'Supabase no está configurado en este entorno.' });
 
 export const authService = {
+  // signup: crea una cuenta en Supabase Auth y envía el nombre completo
+  // como metadata extra para que el trigger configure el perfil asociada.
   async signup(email, password, fullName) {
     if (!supabase) return missingBackend();
     try {
+      // Registrar usuario en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
+
       if (authError) throw authError;
+
       return { success: true, user: authData.user };
     } catch (error) {
       return { success: false, error: error.message };
     }
   },
 
+  // login: valida credenciales y devuelve la sesión activa si el usuario existe.
   async login(email, password) {
     if (!supabase) return missingBackend();
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) throw error;
       return { success: true, session: data.session };
     } catch (error) {
@@ -32,6 +46,7 @@ export const authService = {
     }
   },
 
+  // logout: cierra la sesión actual del navegador y elimina la autenticación activa.
   async logout() {
     if (!supabase) return missingBackend();
     try {
@@ -43,8 +58,9 @@ export const authService = {
     }
   },
 
+  // getSession: obtiene la sesión actual para verificar si el usuario ya está autenticado.
   async getSession() {
-    if (!supabase) return null;
+    if (!supabase) return missingBackend();
     try {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
@@ -55,10 +71,16 @@ export const authService = {
     }
   },
 
+  // getUserProfile: consulta el perfil público del usuario desde la tabla profiles.
   async getUserProfile(userId) {
-    if (!supabase) return null;
+    if (!supabase) return missingBackend();
     try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -67,6 +89,7 @@ export const authService = {
     }
   },
 
+  // onAuthStateChange: conecta un listener para reaccionar cuando cambia el estado de autenticación.
   onAuthStateChange(callback) {
     if (!supabase) return { data: { subscription: { unsubscribe() {} } } };
     return supabase.auth.onAuthStateChange(callback);
