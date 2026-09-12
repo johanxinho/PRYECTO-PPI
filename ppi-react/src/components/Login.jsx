@@ -4,6 +4,10 @@ import { ArrowLeft, ArrowRight } from "lucide-react"; // Iconos de flecha para v
 import { Brand, LogoMark } from "../Brand"; // Marca RECORDATE (texto + isotipo).
 import { DiaTextReveal } from "./ui/dia-text-reveal"; // Título con barrido de color.
 import { hasSupabaseConfig, supabase } from "../supabaseClient"; // Cliente y bandera de configuración.
+import { appBase } from "../paths"; // Prefijo /PRYECTO-PPI en GitHub Pages.
+
+/** Validación simple de correo para formularios de acceso. */
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
 /**
  * Traduce errores de registro de Supabase a mensajes claros en español.
@@ -61,17 +65,18 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) { 
    */
   const requestRecovery = async (event) => {  // Abre requestRecovery.
     event.preventDefault(); // Evita recargar la página al enviar el form.
-    if (!email.includes("@")) { // Validación mínima de correo.
+    if (!isValidEmail(email)) { // Validación de correo.
       setMessage("Escribe un correo electrónico válido."); // Feedback inmediato.
       return; // No llama a la red.
-    } // Fin de requestRecovery.
+    } // Fin de validación.
     if (!hasSupabaseConfig) { // Sin URL/key de Supabase no hay Auth.
       setMessage("La recuperación de contraseña requiere configurar Supabase."); // Explica el requisito.
       return; // Sale sin fetch.
     } // Fin de Login.
     setLoading(true); // Bloquea el botón “Enviando...”.
     try { // Captura fallos de red.
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` }); // Envía el enlace al correo, con redirect a esta app.
+      const recoveryUrl = `${window.location.origin}${appBase}/reset-password`; // Incluye /PRYECTO-PPI en Pages.
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: recoveryUrl }); // Envía el enlace al correo, con redirect a esta app.
       setMessage(error ? "No fue posible enviar el enlace de recuperación." : "Te enviamos un enlace para recuperar tu contraseña."); // Éxito o error de Auth.
     } catch { // Fetch falló (offline, CORS, etc.).
       setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo."); // Mensaje de conexión.
@@ -179,7 +184,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) { 
       setMessage("Escribe tu nombre para crear la cuenta."); // Validación UX.
       return; // Sale.
     } // Fin de el bloque.
-    if (!email.includes("@")) { // Correo mínimo.
+    if (!isValidEmail(email)) { // Correo válido.
       setMessage("Escribe un correo electrónico válido."); // Feedback.
       return; // Sale.
     } // Fin de el bloque.
@@ -221,7 +226,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) { 
   return ( // UI a dos columnas: cita + panel de formularios.
     <main className="auth-page">{/* Contenedor principal de autenticación. */}
       <div className="auth-aside">{/* Columna izquierda: marca y frase. */}
-        <button className="back-link" onClick={onBack}>{/* Vuelve al landing. */}
+        <button className="back-link" type="button" onClick={onBack}>{/* Vuelve al landing. */}
           <ArrowLeft size={16} /> Volver al inicio{/* Icono + texto de retorno. */}
         </button>{/* Cierra el <button>. */}
         <Brand light />{/* Logotipo en versión clara (fondo oscuro). */}
@@ -235,7 +240,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) { 
         </div>{/* Cierra el <div>. */}
         <span className="auth-footer">RECORDATE · PPI IE La Candelaria</span>{/* Crédito del proyecto escolar. */}
       </div>{/* Cierra el <div>. */}
-      <section className="auth-panel">{/* Columna derecha: formularios. */}
+      <section className="auth-panel" aria-busy={loading}>{/* Columna derecha: formularios. */}
         <div className="mobile-auth-brand">{/* Marca visible solo en móvil. */}
           <Brand size="lg" />{/* Logo grande para pantallas chicas. */}
         </div>{/* Cierra el <div>. */}
