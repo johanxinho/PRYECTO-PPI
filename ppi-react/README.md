@@ -38,4 +38,5 @@ Compartir agendas y mensajes ya usan las tablas, políticas y la función segura
 ## Documentación
 
 - Cómo usar la página: [`../docs/MANUAL-DE-USUARIO.md`](../docs/MANUAL-DE-USUARIO.md)
+- Explicación para el equipo: [`../docs/EXPLICACION-EQUIPO-RECORDATE.md`](../docs/EXPLICACION-EQUIPO-RECORDATE.md)
 - Guía técnica: [`../docs/PROJECT-DOCUMENTATION.md`](../docs/PROJECT-DOCUMENTATION.md)
