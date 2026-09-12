@@ -93,7 +93,9 @@ const viewRoutes = { // mapea cada vista a su ruta de URL
   Mensajes: "/mensajes", // ruta de mensajes
   Perfil: "/perfil", // ruta de perfil
   Configuración: "/configuracion", // ruta de configuración
-}; // cierra el mapa vista → ruta // * Convierte una fecha a YYYY-MM-DD usando la zona local.
+}; // cierra el mapa vista → ruta
+
+/** Convierte una fecha a YYYY-MM-DD usando la zona local. */
 const localDate = (date = new Date()) => { // formatea una fecha al formato ISO local
   const year = date.getFullYear(); // obtiene el año
   const month = String(date.getMonth() + 1).padStart(2, "0"); // mes con dos dígitos (enero = 01)
@@ -130,6 +132,15 @@ const supabaseErrorMessage = (error, fallback) => { // une código, mensaje y de
   return details.length ? `${fallback} ${details.join(" | ")}` : fallback; // si hay detalles los agrega; si no, usa el fallback
 }; // cierra supabaseErrorMessage
 
+/** True si el aviso describe un error (para pintar el notice en rojo). */
+const isErrorNotice = (text) => /no (fue|fue posible|encontramos|existe)|error|incorrect|inválid|imposible|falla|falló|requiere/i.test(text || "");
+
+/** Valida un correo con un patrón simple (suficiente para UX). */
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+
+/** Traduce el rol de perfil a español para la ficha de cuenta. */
+const roleLabel = (role) => ({ student: "Estudiante", teacher: "Docente", admin: "Administración" }[role] || role || "Estudiante");
+
 /**
  * Landing: página pública de RECORDATE.
  * Se muestra cuando el usuario aún no ha iniciado sesión.
@@ -140,7 +151,7 @@ function Landing({ onStart }) { // recibe el callback que abre el login
     <div className="landing"> {/* contenedor de toda la página de bienvenida */}
       <header className="landing-header"> {/* cabecera con logo, menú y botón */}
         <Brand light /> {/* logo claro de RECORDATE */}
-        <nav className="landing-nav"> {/* menú de anclas de la landing */}
+        <nav className="landing-nav" aria-label="Secciones de la página"> {/* menú de anclas de la landing */}
           <a href="#caracteristicas">Características</a> {/* salta a características */}
           <a href="#como-funciona">Cómo funciona</a> {/* salta a cómo funciona */}
           <a href="#beneficios">Beneficios</a> {/* salta a beneficios */}
@@ -362,7 +373,8 @@ function TaskForm({ task, onSave, onCancel }) { // recibe la tarea (si edita) y 
  * Se usa en tarjetas, calendario y modo enfoque.
  */
 function PriorityBadge({ priority }) { // recibe el texto de prioridad
-  return <span className={`priority priority-${priority.toLowerCase()}`}>{priority}</span>; // pinta la clase CSS según la prioridad
+  const label = priority || "Media"; // evita crash si falta el valor
+  return <span className={`priority priority-${label.toLowerCase()}`}>{label}</span>; // pinta la clase CSS según la prioridad
 } // cierra PriorityBadge
 
 /**
@@ -591,6 +603,23 @@ function App() { // se monta una sola vez al iniciar la aplicación
     const timer = window.setInterval(checkReminders, 15000); // y cada 15 segundos
     return () => window.clearInterval(timer); // limpia el intervalo
   }, [profile, tasks]); // se actualiza si cambian perfil o tareas
+  useEffect(() => { // Escape cierra menú, notificaciones, modal y alarma
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      if (showForm) { setShowForm(false); setEditingTask(null); return; }
+      if (alarmTask) { setAlarmTask(null); return; }
+      if (notificationsOpen) { setNotificationsOpen(false); return; }
+      if (mobileNav) { setMobileNav(false); return; }
+      if (focusTask) { setFocusTask(null); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showForm, alarmTask, notificationsOpen, mobileNav, focusTask]);
+  useEffect(() => { // el aviso se oculta solo después de unos segundos
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(""), isErrorNotice(notice) ? 8000 : 5000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   const userName = profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante"; // nombre visible o parte del correo
   const visibleTasks = useMemo( // memoiza la lista filtrada
     () => // función que calcula las tareas visibles
@@ -772,7 +801,14 @@ function App() { // se monta una sola vez al iniciar la aplicación
             <PriorityBadge priority={focusTask.priority} /> {/* insignia */}
             <span>{focusTask.completed ? "Actividad completada" : "Pendiente de completar"}</span> {/* texto de estado */}
           </div> {/* cierra el estado */}
-          <button className="primary-button" onClick={() => setFocusTask(null)}>Salir del modo enfoque</button> {/* vuelve a la vista anterior */}
+          <div className="form-actions center">
+            {focusTask.userId === session?.user?.id && (
+              <button className="primary-button" type="button" onClick={() => toggleTask(focusTask.id)}>
+                {focusTask.completed ? "Marcar como pendiente" : "Marcar como completada"}
+              </button>
+            )}
+            <button className="text-button" type="button" onClick={() => setFocusTask(null)}>Salir del modo enfoque</button>
+          </div>
         </section> // cierra el panel de enfoque
       ); // cierra el return de enfoque
     } // cierra el if de focusTask
@@ -803,12 +839,32 @@ function App() { // se monta una sola vez al iniciar la aplicación
             </select> {/* cierra select de estado */}
             <input type="date" aria-label="Filtrar por fecha" value={filters.date} onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))} /> {/* filtro por día */}
           </div> {/* cierra la barra de filtros */}
-          <TaskList {...taskHandlers} tasks={visibleTasks} empty="No tienes actividades registradas." /> {/* lista filtrada */}
+          {(filters.priority || filters.status || filters.date) && (
+            <div className="filter-actions">
+              <button
+                className="text-button"
+                type="button"
+                onClick={() => setFilters({ priority: "", status: "", date: "" })}
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+          <TaskList
+            {...taskHandlers}
+            tasks={visibleTasks}
+            empty={
+              filters.priority || filters.status || filters.date
+                ? "Ninguna actividad coincide con los filtros."
+                : "No tienes actividades registradas."
+            }
+            onCreate={openNewTask}
+          /> {/* lista filtrada */}
         </> // cierra el fragmento
       ); // cierra el return de Mis tareas
     } // cierra Mis tareas
     if (view === "Recordatorios") { // vista de pendientes
-      return <TaskList {...taskHandlers} title="Recordatorios" subtitle="Las próximas fechas que merecen tu atención." tasks={pending} empty="No tienes recordatorios pendientes." />; // lista de pendientes
+      return <TaskList {...taskHandlers} title="Recordatorios" subtitle="Las próximas fechas que merecen tu atención." tasks={pending} empty="No tienes recordatorios pendientes." onCreate={openNewTask} />; // lista de pendientes
     } // cierra Recordatorios
     if (view === "Prioridades") { // vista ordenada por prioridad
       return ( // lista ordenada Alta → Baja
@@ -855,7 +911,7 @@ function App() { // se monta una sola vez al iniciar la aplicación
           }} // cierra onRevoke
           onShare={async (task) => { // comparte una tarea con un correo
             const normalizedEmail = shareEmail.trim().toLowerCase(); // normaliza el correo
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { // valida formato
+            if (!isValidEmail(normalizedEmail)) { // valida formato
               setNotice("Escribe un correo válido para compartir."); // avisa
               return false; // no continúa
             } // cierra la validación
@@ -942,7 +998,7 @@ function App() { // se monta una sola vez al iniciar la aplicación
           <span className="eyebrow">Progreso</span> {/* etiqueta */}
           <strong>{progress}%</strong> {/* porcentaje */}
           <p className="lead">de tu agenda está completa.</p> {/* leyenda */}
-          <div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${progress}%` }} /></div> {/* barra visual */}
+          <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Progreso de la agenda"><div className="progress-fill" style={{ width: `${progress}%` }} /></div> {/* barra visual */}
         </div> {/* cierra la tarjeta de progreso */}
         <div className="dash-grid"> {/* dos columnas: lista y agenda de hoy */}
           <div> {/* columna izquierda */}
@@ -1027,7 +1083,7 @@ function App() { // se monta una sola vez al iniciar la aplicación
           </button> {/* cierra el botón de logout */}
         </div> {/* cierra el pie del sidebar */}
       </aside> {/* cierra el menú lateral */}
-      <div className="mobile-overlay" onClick={() => setMobileNav(false)} /> {/* fondo oscuro que cierra el menú */}
+      <div className="mobile-overlay" role="presentation" aria-hidden={!mobileNav} onClick={() => setMobileNav(false)} /> {/* fondo oscuro que cierra el menú */}
       <section className="workspace"> {/* área principal */}
         <header className="workspace-header"> {/* cabecera con menú, título y usuario */}
           <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Menu size={18} /></button> {/* abre el menú en móvil */}
@@ -1036,7 +1092,7 @@ function App() { // se monta una sola vez al iniciar la aplicación
             <h1>{view === "Inicio" ? "Hoy" : view}</h1> {/* “Hoy” en el dashboard; si no, el nombre de la vista */}
           </div> {/* cierra el título */}
           <div className="header-user"> {/* campana y avatar */}
-            <button className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}> {/* abre/cierra el panel */}
+            <button className="notification-button" type="button" aria-label="Ver notificaciones" aria-expanded={notificationsOpen} aria-haspopup="true" onClick={() => setNotificationsOpen((current) => !current)}> {/* abre/cierra el panel */}
               <Bell size={16} /> {/* icono de campana */}
               {notifications.some((item) => !item.read_at) && <span className="notification-dot" />} {/* punto si hay no leídas */}
             </button> {/* cierra el botón de campana */}
@@ -1056,9 +1112,9 @@ function App() { // se monta una sola vez al iniciar la aplicación
           </div> {/* cierra header-user */}
         </header> {/* cierra la cabecera */}
         {notice && ( // aviso temporal
-          <div className="notice" role="status"> {/* barra de mensaje */}
-            {notice} // texto del aviso
-            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}><X size={16} /></button> {/* lo oculta */}
+          <div className={`notice ${isErrorNotice(notice) ? "notice-error" : ""}`} role={isErrorNotice(notice) ? "alert" : "status"}> {/* barra de mensaje */}
+            {notice} {/* texto del aviso */}
+            <button type="button" aria-label="Cerrar mensaje" onClick={() => setNotice("")}><X size={16} /></button> {/* lo oculta */}
           </div> // cierra el aviso
         )} // cierra el condicional del aviso
         <div className="content-area"> {/* contenido de la vista */}
@@ -1085,22 +1141,22 @@ function App() { // se monta una sola vez al iniciar la aplicación
         ))} // cierra el map de la barra
       </nav> {/* cierra la barra inferior */}
       {showForm && ( // modal de crear/editar
-        <div className="modal-backdrop"> {/* fondo oscuro */}
-          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title"> {/* diálogo */}
+        <div className="modal-backdrop" onClick={() => { setShowForm(false); setEditingTask(null); }}> {/* fondo oscuro; clic afuera cierra */}
+          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" onClick={(event) => event.stopPropagation()}> {/* diálogo */}
             <div className="modal-header"> {/* cabecera del modal */}
               <div> {/* textos */}
                 <span className="eyebrow accent-label">Agenda académica</span> {/* etiqueta */}
                 <h2 id="task-modal-title">{editingTask ? "Editar actividad" : "Nueva actividad"}</h2> {/* título según el modo */}
               </div> {/* cierra textos */}
-              <button className="icon-button" onClick={() => setShowForm(false)} aria-label="Cerrar formulario"><X size={16} /></button> {/* cierra sin guardar */}
+              <button className="icon-button" type="button" onClick={() => { setShowForm(false); setEditingTask(null); }} aria-label="Cerrar formulario"><X size={16} /></button> {/* cierra sin guardar */}
             </div> {/* cierra la cabecera */}
-            <TaskForm key={editingTask?.id || "new-task"} task={editingTask} onSave={saveTask} onCancel={() => setShowForm(false)} /> {/* formulario */}
+            <TaskForm key={editingTask?.id || "new-task"} task={editingTask} onSave={saveTask} onCancel={() => { setShowForm(false); setEditingTask(null); }} /> {/* formulario */}
           </section> {/* cierra el diálogo */}
         </div> // cierra el backdrop
       )} // cierra el modal del formulario
       {alarmTask && ( // modal de alarma
-        <div className="modal-backdrop"> {/* fondo oscuro */}
-          <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title"> {/* diálogo de alarma */}
+        <div className="modal-backdrop" onClick={() => setAlarmTask(null)}> {/* fondo oscuro; clic afuera pospone */}
+          <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title" onClick={(event) => event.stopPropagation()}> {/* diálogo de alarma */}
             <span className="eyebrow accent-label">Alarma de RECORDATE</span> {/* etiqueta */}
             <h2 id="alarm-title">Es hora de realizar esta actividad</h2> {/* aviso */}
             <h3>{alarmTask.title}</h3> {/* título de la tarea */}
@@ -1156,6 +1212,7 @@ function TaskList({ // recibe título, tareas y handlers
   compact = false, // versión compacta del dashboard
   focusOnly = false, // muestra botones de enfoque
   onAttachmentDelete, // borrar adjunto
+  onCreate, // CTA opcional para crear actividad desde el vacío
 }) { // cierra los parámetros
   return ( // sección de lista
     <section className={`task-list-section ${compact ? "compact-list" : ""}`}> {/* clase extra si es compacta */}
@@ -1195,9 +1252,14 @@ function TaskList({ // recibe título, tareas y handlers
         </div> // cierra el contenedor
       ) : ( // si no hay tareas
         <div className="empty-state"> {/* estado vacío */}
-          <ListTodo size={28} /> {/* icono */}
+          <ListTodo size={28} aria-hidden="true" /> {/* icono */}
           <h3>{empty}</h3> {/* mensaje personalizado */}
           <p>Las actividades que agregues aparecerán aquí.</p> {/* pista */}
+          {onCreate && !focusOnly && (
+            <button className="primary-button" type="button" onClick={onCreate}>
+              <Plus size={16} /> Nueva actividad
+            </button>
+          )}
         </div> // cierra el vacío
       )} // cierra el ternario de lista/vacío
     </section> // cierra la sección
@@ -1249,10 +1311,17 @@ function Calendar({ tasks, onSelect }) { // recibe tareas y el callback de enfoq
               <span className="calendar-day calendar-day-empty" key={`empty-${index}`} aria-hidden="true" /> // celda vacía
             ))} // cierra los huecos
             {days.map((day) => ( // un botón por día
-              <button className={selected === day ? "calendar-day selected" : "calendar-day"} key={day} onClick={() => setSelected(day)}> {/* marca el día activo */}
-                <span>{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span> {/* nombre corto del día */}
+              <button
+                className={selected === day ? "calendar-day selected" : "calendar-day"}
+                key={day}
+                type="button"
+                aria-pressed={selected === day}
+                aria-label={new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${day}T12:00:00`))}
+                onClick={() => setSelected(day)}
+              > {/* marca el día activo */}
+                <span aria-hidden="true">{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span> {/* nombre corto del día */}
                 <b>{new Date(`${day}T12:00:00`).getDate()}</b> {/* número del día */}
-                <i className={tasks.some((task) => task.date === day && !task.completed) ? "has-task" : ""} /> {/* punto si hay pendientes */}
+                <i className={tasks.some((task) => task.date === day && !task.completed) ? "has-task" : ""} aria-hidden="true" /> {/* punto si hay pendientes */}
               </button> // cierra el botón del día
             ))} // cierra el map de días
           </div> {/* cierra las celdas */}
@@ -1377,6 +1446,10 @@ function Chat({ message, setMessage, userId, demo = false }) { // texto controla
   const send = async (event) => { // envía el mensaje del input
     event.preventDefault(); // no recarga
     if (!message.trim()) return; // ignora vacíos
+    if (!recipient && !isValidEmail(recipientEmail)) { // exige correo válido al iniciar conversación
+      setChatError("Escribe un correo válido del compañero para enviar el mensaje."); // feedback
+      return; // no continúa
+    } // cierra validación de correo
     try { // intenta enviar
       setChatError(""); // limpia error
       setSending(true); // deshabilita el botón
@@ -1495,7 +1568,7 @@ function Profile({ view, userName, email, profile, onSettingsChange, onLogout, o
           <span>Institución</span> {/* etiqueta */}
           <b>IE La Candelaria · Medellín</b> {/* valor */}
           <span>Rol</span> {/* etiqueta */}
-          <b>{profile?.role || "student"}</b> {/* rol o student por defecto */}
+          <b>{roleLabel(profile?.role)}</b> {/* rol en español */}
           <span>Fecha de registro</span> {/* etiqueta */}
           <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b> {/* fecha larga o fallback */}
           <span>Proyecto</span> {/* etiqueta */}

@@ -882,6 +882,25 @@ p { text-wrap: pretty }
 /* Botón cerrar del notice */
 .notice button { border: 0; background: transparent; color: inherit }
 
+/* Aviso de error (coral) frente al notice de éxito verde */
+.notice.notice-error {
+  color: #ffd6de;
+  background: rgba(226, 24, 122, 0.18);
+  border-color: rgba(226, 24, 122, 0.4);
+}
+
+/* Acciones bajo filtros de Mis tareas */
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 12px;
+}
+
+/* CTA dentro del empty state */
+.empty-state .primary-button {
+  margin-top: 10px;
+}
+
 /* Cabecera del dashboard: saludo a la izquierda, acción a la derecha */
 .dash-hero {
   display: flex; /* Flexbox: hijos en fila */
