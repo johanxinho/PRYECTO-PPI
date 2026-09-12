@@ -1,41 +1,42 @@
-name: GitHub Pages
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-permissions:
-  contents: write
-concurrency:
-  group: pages
-  cancel-in-progress: true
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ppi-react
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: ppi-react/package-lock.json
-      - run: npm ci
-      - name: Optional GitHub secrets override
-        env:
-          URL: ${{ secrets.VITE_SUPABASE_URL }}
-          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VAPID: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
-        run: |
-          if [ -n "$URL" ]; then echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"; fi
-          if [ -n "$KEY" ]; then echo "VITE_SUPABASE_ANON_KEY=$KEY" >> "$GITHUB_ENV"; fi
-          if [ -n "$VAPID" ]; then echo "VITE_VAPID_PUBLIC_KEY=$VAPID" >> "$GITHUB_ENV"; fi
-      - run: npm run build
-        env:
-          VITE_BASE: /PRYECTO-PPI/
-      - uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ppi-react/dist
-          force_orphan: true
+# Publica RECORDATE en GitHub Pages cada vez que hay un push a main.
+name: GitHub Pages # Nombre que se ve en la pestaña Actions del repositorio.
+on: # Eventos que disparan este workflow.
+  push: # Se ejecuta al subir commits.
+    branches: [main] # Solo la rama principal (el código fuente).
+  workflow_dispatch: # Permite lanzarlo a mano desde el botón "Run workflow".
+permissions: # Permisos del GITHUB_TOKEN en este job.
+  contents: write # Necesario para empujar la rama gh-pages con el sitio generado.
+concurrency: # Evita dos deploys a la vez.
+  group: pages # Agrupa ejecuciones de Pages.
+  cancel-in-progress: true # Cancela un deploy viejo si entra uno nuevo.
+jobs: # Lista de trabajos.
+  build: # Único job: instala, construye y publica dist/.
+    runs-on: ubuntu-latest # Máquina virtual Linux de GitHub.
+    defaults: # Valores por defecto de los pasos "run".
+      run: # Aplica a todos los comandos de shell.
+        working-directory: ppi-react # La app Vite vive en esta carpeta, no en la raíz.
+    steps: # Secuencia de pasos.
+      - uses: actions/checkout@v4 # Clona el repositorio en la máquina del job.
+      - uses: actions/setup-node@v4 # Instala Node.js para npm ci / npm run build.
+        with: # Opciones del setup de Node.
+          node-version: 22 # Misma familia de Node que usa el proyecto.
+          cache: npm # Reutiliza la caché de paquetes entre ejecuciones.
+          cache-dependency-path: ppi-react/package-lock.json # Lockfile de la app, no el de la raíz.
+      - run: npm ci # Instala dependencias exactas del lockfile.
+      - name: Optional GitHub secrets override # Si hay secretos de Actions, pisan el .env.production.
+        env: # Inyecta secretos (vacíos si no existen).
+          URL: ${{ secrets.VITE_SUPABASE_URL }} # URL del proyecto Supabase (opcional).
+          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }} # Clave pública/anon (opcional).
+          VAPID: ${{ secrets.VITE_VAPID_PUBLIC_KEY }} # Clave VAPID de Web Push (opcional).
+        run: | # Escribe en GITHUB_ENV solo las variables que sí tienen valor.
+          if [ -n "$URL" ]; then echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"; fi # Override de URL si hay secreto.
+          if [ -n "$KEY" ]; then echo "VITE_SUPABASE_ANON_KEY=$KEY" >> "$GITHUB_ENV"; fi # Override de clave si hay secreto.
+          if [ -n "$VAPID" ]; then echo "VITE_VAPID_PUBLIC_KEY=$VAPID" >> "$GITHUB_ENV"; fi # Override de VAPID si hay secreto.
+      - run: npm run build # Genera la carpeta dist/ con el JS/CSS de producción.
+        env: # Variables visibles para Vite durante el build.
+          VITE_BASE: /PRYECTO-PPI/ # Prefijo de rutas de GitHub Pages (nombre del repo).
+      - uses: peaceiris/actions-gh-pages@v4 # Publica dist/ en la rama gh-pages.
+        with: # Opciones del action de Pages.
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Token del workflow para hacer push.
+          publish_dir: ppi-react/dist # Carpeta ya construida que se vuelve el sitio.
+          force_orphan: true # Commit huérfano: la rama gh-pages solo guarda el sitio, no el historial de fuente.

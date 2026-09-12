@@ -1,2 +1,56 @@
+/* Estilos globales: fuentes, variables de color y reset básico. */
+
+/* Carga DM Sans (texto) y Plus Jakarta Sans (títulos) desde Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
-:root{font-family:'DM Sans',sans-serif;color:#15263f;background:#f5f7fb;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;--green:#315efb;--green-dark:#13264b;--green-soft:#e9eeff;--gold:#ffb85c;--ink:#15263f;--muted:#66758e;--line:#e4eaf3;--paper:#fff;--navy:#0e1b35;--sky:#eaf3ff;--success:#18a879;--danger:#dc5d6b}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px;background:#f5f7fb}button,input,select,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin:0}h1,h2,h3,.brand{font-family:'Plus Jakarta Sans',sans-serif}:focus-visible{outline:3px solid #ffb85c;outline-offset:3px}
+
+/* Variables globales y tipografía por defecto del documento */
+:root {
+  font-family: 'DM Sans', sans-serif; /* Fuente del cuerpo */
+  color: #15263f; /* Color de texto por defecto (tinta) */
+  background: #f5f7fb; /* Fondo de la página */
+  font-synthesis: none; /* Evita que el navegador invente negritas/cursivas */
+  text-rendering: optimizeLegibility; /* Mejora el render de las letras */
+  -webkit-font-smoothing: antialiased; /* Suavizado en Safari/Chrome */
+  --green: #315efb; /* Color de marca (azul; el nombre histórico es --green) */
+  --green-dark: #13264b; /* Azul navy oscuro (sidebar y títulos fuertes) */
+  --green-soft: #e9eeff; /* Fondo suave de acentos */
+  --gold: #ffb85c; /* Acento dorado (prioridad y botones especiales) */
+  --ink: #15263f; /* Tinta principal */
+  --muted: #66758e; /* Textos secundarios */
+  --line: #e4eaf3; /* Color de bordes y divisores */
+  --paper: #fff; /* Fondo tipo papel (blanco) */
+  --navy: #0e1b35; /* Navy para la capa contemporánea */
+  --sky: #eaf3ff; /* Cielo / fondo muy claro */
+  --success: #18a879; /* Verde de éxito */
+  --danger: #dc5d6b; /* Rojo de error o borrar */
+}
+
+/* El box-sizing border-box hace que el padding no sume al ancho */
+* { box-sizing: border-box; }
+
+/* Scroll suave al saltar a anclas (#inicio, etc.) */
+html { scroll-behavior: smooth; }
+
+/* Quita el margen por defecto del body y fija un ancho mínimo */
+body { margin: 0; min-width: 320px; background: #f5f7fb; }
+
+/* Controles heredan la fuente de la página (no la de sistema) */
+button, input, select, textarea { font: inherit; }
+
+/* Quita el destello azul al tocar en móviles WebKit */
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* La mano indica que el botón es clicable */
+button { cursor: pointer; }
+
+/* Los enlaces heredan el color del padre (no el azul del navegador) */
+a { color: inherit; }
+
+/* Reset de márgenes de títulos y párrafos (los pone cada componente) */
+h1, h2, h3, p { margin: 0; }
+
+/* Títulos y marca usan Plus Jakarta Sans */
+h1, h2, h3, .brand { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* Anillo dorado solo cuando se navega con teclado (accesibilidad) */
+:focus-visible { outline: 3px solid #ffb85c; outline-offset: 3px; }

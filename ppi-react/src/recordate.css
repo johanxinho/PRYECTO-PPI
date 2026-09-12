@@ -1,131 +1,155 @@
+/* Paleta y tokens de diseño de RECORDATE: colores, radios, espacios, tipografías, sombras y tiempos de animación */
 :root {
-  --navy: #0b1026;
-  --indigo: #3d46e8;
-  --lilac: #b18cff;
-  --blush: #ffd6e7;
-  --magenta: #e2187a;
-  --orange: #ef5a21;
-  --gold: #f0bc12;
-  --violet: #6d3ce8;
-  --blue: #2a6dff;
-  --teal: #14c4c0;
-  --bg: #0b1026;
-  --surface: rgba(255, 255, 255, 0.06);
-  --surface-2: rgba(255, 255, 255, 0.1);
-  --surface-strong: rgba(11, 16, 38, 0.58);
-  --ink: #f7f1ff;
-  --ink-2: #e8dcf8;
-  --muted: rgba(255, 214, 231, 0.66);
-  --line: rgba(177, 140, 255, 0.22);
-  --line-strong: rgba(177, 140, 255, 0.4);
-  --dark: rgba(8, 11, 28, 0.7);
-  --dark-2: rgba(8, 11, 28, 0.82);
-  --dark-3: rgba(11, 16, 38, 0.92);
-  --dark-line: rgba(177, 140, 255, 0.16);
-  --cream: #ffd6e7;
-  --success: #3dd6a3;
-  --danger: #ff6b7a;
-  --accent: var(--lilac);
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 72px;
-  --font-display: "Fraunces", "Times New Roman", serif;
-  --font-ui: "Outfit", "Segoe UI", sans-serif;
-  --shadow-soft: 0 18px 50px rgba(5, 8, 24, 0.28);
-  --shadow-lift: 0 24px 60px rgba(5, 8, 24, 0.36);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-quick: 160ms;
-  --motion-fast: 260ms;
-  --motion-medium: 400ms;
-  --sidebar: 232px;
-  --header: 92px;
-  --green: var(--lilac);
-  --green-dark: var(--navy);
-  --green-soft: rgba(177, 140, 255, 0.18);
-  --navy-token: var(--navy);
-  --paper: transparent;
+  --navy: #0b1026; /* Azul marino de fondo de toda la app */
+  --indigo: #3d46e8; /* Índigo de botones primarios y acentos */
+  --lilac: #b18cff; /* Lila de acentos, bordes y marca */
+  --blush: #ffd6e7; /* Rosa claro para textos destacados */
+  --magenta: #e2187a; /* Magenta de prioridad alta */
+  --orange: #ef5a21; /* Naranja de acentos de tarjetas */
+  --gold: #f0bc12; /* Dorado de indicadores y navegación activa */
+  --violet: #6d3ce8; /* Violeta de apoyo en la paleta */
+  --blue: #2a6dff; /* Azul brillante de apoyo */
+  --teal: #14c4c0; /* Verde-azulado de prioridad baja y stats */
+  --bg: #0b1026; /* Color de fondo general (igual al navy) */
+  --surface: rgba(255, 255, 255, 0.06); /* Superficie de vidrio suave */
+  --surface-2: rgba(255, 255, 255, 0.1); /* Superficie un poco más visible */
+  --surface-strong: rgba(11, 16, 38, 0.58); /* Fondo semitransparente de las tarjetas glass */
+  --ink: #f7f1ff; /* Texto principal claro */
+  --ink-2: #e8dcf8; /* Texto secundario un poco más suave */
+  --muted: rgba(255, 214, 231, 0.66); /* Texto apagado / de apoyo */
+  --line: rgba(177, 140, 255, 0.22); /* Borde sutil lila */
+  --line-strong: rgba(177, 140, 255, 0.4); /* Borde lila más marcado */
+  --dark: rgba(8, 11, 28, 0.7); /* Fondo oscuro del sidebar */
+  --dark-2: rgba(8, 11, 28, 0.82); /* Variante más opaca del fondo oscuro */
+  --dark-3: rgba(11, 16, 38, 0.92); /* Variante casi sólida del navy */
+  --dark-line: rgba(177, 140, 255, 0.16); /* Línea divisoria del sidebar */
+  --cream: #ffd6e7; /* Alias crema del blush */
+  --success: #3dd6a3; /* Verde de éxito / tarea completa */
+  --danger: #ff6b7a; /* Rojo de error y acciones peligrosas */
+  --accent: var(--lilac); /* Acento principal reutilizable */
+  --radius-xs: 6px; /* Radio mínimo de esquinas */
+  --radius-sm: 10px; /* Radio pequeño */
+  --radius-md: 16px; /* Radio medio de tarjetas */
+  --radius-lg: 24px; /* Radio grande de paneles */
+  --radius-xl: 32px; /* Radio extra grande (hero, modales) */
+  --space-1: 4px; /* Espacio 1: 4 px */
+  --space-2: 8px; /* Espacio 2: 8 px */
+  --space-3: 12px; /* Espacio 3: 12 px */
+  --space-4: 16px; /* Espacio 4: 16 px */
+  --space-5: 24px; /* Espacio 5: 24 px */
+  --space-6: 32px; /* Espacio 6: 32 px */
+  --space-7: 48px; /* Espacio 7: 48 px */
+  --space-8: 72px; /* Espacio 8: 72 px */
+  --font-display: "Fraunces", "Times New Roman", serif; /* Tipografía de títulos */
+  --font-ui: "Outfit", "Segoe UI", sans-serif; /* Tipografía de interfaz */
+  --shadow-soft: 0 18px 50px rgba(5, 8, 24, 0.28); /* Sombra suave de tarjetas */
+  --shadow-lift: 0 24px 60px rgba(5, 8, 24, 0.36); /* Sombra elevada de overlays */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* Curva de animación suave */
+  --motion-quick: 160ms; /* Duración muy corta */
+  --motion-fast: 260ms; /* Duración corta */
+  --motion-medium: 400ms; /* Duración media de entradas */
+  --sidebar: 232px; /* Ancho fijo del menú lateral */
+  --header: 92px; /* Altura del encabezado del workspace */
+  --green: var(--lilac); /* Alias de acento (compatibilidad) */
+  --green-dark: var(--navy); /* Alias oscuro (compatibilidad) */
+  --green-soft: rgba(177, 140, 255, 0.18); /* Acento lila suave */
+  --navy-token: var(--navy); /* Alias del navy */
+  --paper: transparent; /* Fondo “papel” transparente sobre el WebGL */
 }
 
+/* Incluye padding y borde dentro del ancho/alto de todos los elementos */
 * { box-sizing: border-box }
+/* HTML: scroll suave, fondo navy y esquema de color oscuro del navegador */
 html { scroll-behavior: smooth; background: var(--navy); color-scheme: dark }
+/* La app ocupa al menos toda la altura de la ventana */
 html, body, #root { min-height: 100% }
+/* Cuerpo: tipografía, color de texto y fondo base de RECORDATE */
 body {
-  margin: 0;
-  min-width: 320px;
-  color: var(--ink);
-  background: var(--navy);
-  font-family: var(--font-ui);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  margin: 0; /* Quita el margen por defecto del navegador */
+  min-width: 320px; /* Ancho mínimo para móviles pequeños */
+  color: var(--ink); /* Texto claro sobre fondo oscuro */
+  background: var(--navy); /* Fondo marino sólido */
+  font-family: var(--font-ui); /* Fuente de la interfaz */
+  font-synthesis: none; /* Evita que el navegador sintetice pesos/estilos */
+  text-rendering: optimizeLegibility; /* Mejora el renderizado del texto */
+  -webkit-font-smoothing: antialiased; /* Suavizado de fuentes en WebKit */
 }
+/* Formularios heredan fuente y color del cuerpo */
 button, input, select, textarea { font: inherit; color: inherit }
+/* Quita el destello azul al tocar enlaces y botones en móviles */
 button, a { -webkit-tap-highlight-color: transparent }
+/* El cursor indica que el botón es clicable */
 button { cursor: pointer }
+/* Botón deshabilitado: no se puede pulsar y se ve atenuado */
 button:disabled { cursor: not-allowed; opacity: 0.6 }
+/* Enlaces sin subrayado y del mismo color que el texto */
 a { color: inherit; text-decoration: none }
+/* Títulos y párrafos sin margen por defecto */
 h1, h2, h3, p { margin: 0 }
+/* Títulos: fuente display, peso medio y tracking negativo */
 h1, h2, h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+  font-family: var(--font-display); /* Serif de títulos */
+  font-weight: 600; /* Semi-negrita */
+  letter-spacing: -0.035em; /* Letras un poco más juntas */
+  text-wrap: balance; /* Equilibra saltos de línea del título */
 }
+/* Párrafos con saltos de línea más naturales */
 p { text-wrap: pretty }
+/* Anillo de foco visible al navegar con teclado */
 :focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px }
+/* Texto solo para lectores de pantalla: oculto visualmente */
 .sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
+  position: absolute; /* Sale del flujo visual */
+  width: 1px; /* Casi invisible */
+  height: 1px; /* Alto */
+  padding: 0; /* Relleno interno */
+  margin: -1px; /* Lo empuja fuera de vista */
+  overflow: hidden; /* Qué hacer si se desborda */
+  clip: rect(0, 0, 0, 0); /* Recorta el contenido */
+  border: 0; /* Borde */
 }
 
+/* Raíz de la app: apila el fondo WebGL detrás de la interfaz */
 .recordate-root { position: relative; min-height: 100vh; isolation: isolate }
+/* Capa de UI por encima del fondo 3D */
 .recordate-ui { position: relative; z-index: 1 }
+/* Lienzo WebGL fijo a pantalla completa, sin capturar clics */
 .webgl-stack {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  position: fixed; /* Queda pegado al viewport */
+  inset: 0; /* Cubre toda la pantalla */
+  z-index: 0; /* Detrás de la interfaz */
+  pointer-events: none; /* Los clics atraviesan el fondo */
 }
+/* Capas internas del fondo (canvas, fallback y viñeta) */
 .webgl-bg, .webgl-fallback, .webgl-ambient {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  position: absolute; /* Relativo al stack */
+  inset: 0; /* Llenan el contenedor */
+  width: 100%; /* Ancho */
+  height: 100%; /* Alto */
+  pointer-events: none; /* No bloquean la interacción */
 }
+/* Canvas WebGL visible por encima del fallback */
 .webgl-bg { z-index: 1; display: block }
+/* Fondo CSS de respaldo si WebGL no carga: gradientes radiales sobre navy */
 .webgl-fallback {
-  z-index: 0;
-  background:
-    radial-gradient(1200px 720px at 18% 12%, rgba(61, 70, 232, 0.55), transparent 58%),
-    radial-gradient(900px 640px at 86% 82%, rgba(177, 140, 255, 0.38), transparent 52%),
-    radial-gradient(700px 520px at 70% 8%, rgba(255, 214, 231, 0.22), transparent 48%),
-    #0b1026;
+  z-index: 0; /* Debajo del canvas */
+  background: /* Fondo */
+    radial-gradient(1200px 720px at 18% 12%, rgba(61, 70, 232, 0.55), transparent 58%), /* Glow índigo arriba-izquierda */
+    radial-gradient(900px 640px at 86% 82%, rgba(177, 140, 255, 0.38), transparent 52%), /* Glow lila abajo-derecha */
+    radial-gradient(700px 520px at 70% 8%, rgba(255, 214, 231, 0.22), transparent 48%), /* Glow blush arriba-derecha */
+    #0b1026; /* Base navy */
 }
+/* Con WebGL activo se oculta el fallback */
 .has-webgl .webgl-fallback { opacity: 0 }
+/* Viñeta ambiental encima del canvas para dar profundidad */
 .webgl-ambient {
-  z-index: 2;
-  background:
-    radial-gradient(120% 80% at 50% 120%, rgba(11, 16, 38, 0.45), transparent 55%),
-    linear-gradient(180deg, rgba(11, 16, 38, 0.12), transparent 18%, transparent 78%, rgba(11, 16, 38, 0.35));
+  z-index: 2; /* Encima del canvas */
+  background: /* Fondo */
+    radial-gradient(120% 80% at 50% 120%, rgba(11, 16, 38, 0.45), transparent 55%), /* Oscurece la base */
+    linear-gradient(180deg, rgba(11, 16, 38, 0.12), transparent 18%, transparent 78%, rgba(11, 16, 38, 0.35)); /* Viñeta superior e inferior */
 }
 
+/* Tarjetas de vidrio compartidas: paneles, stats, tareas, chat, perfil, FAQ, etc. */
 .glass-card,
 .panel-card,
 .stat-card,
@@ -142,122 +166,146 @@ p { text-wrap: pretty }
 .auth-panel-card,
 .feature-item,
 .faq-grid > div {
-  background: var(--surface-strong);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--line);
+  background: var(--surface-strong); /* Fondo semitransparente navy */
+  backdrop-filter: blur(14px); /* Desenfoque de vidrio */
+  -webkit-backdrop-filter: blur(14px); /* Desenfoque en Safari */
+  border: 1px solid var(--line); /* Borde lila sutil */
 }
 
+/* Logo + nombre de marca en encabezados */
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  color: var(--ink);
+  display: flex; /* Icono y texto en fila */
+  align-items: center; /* Alineación vertical */
+  gap: 10px; /* Espacio entre marca e isotipo */
+  min-width: 0; /* Permite encogerse en flex */
+  color: var(--ink); /* Color del wordmark */
 }
+/* Palabra RECORDATE en versales pequeñas */
 .brand-word {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
+  font-family: var(--font-display); /* Serif de marca */
+  font-size: 13px; /* Tamaño de fuente */
+  font-weight: 600; /* Grosor de la letra */
+  letter-spacing: 0.22em; /* Tracking amplio de marca */
 }
+/* Marca compacta (sidebar) */
 .brand-sm .brand-word { font-size: 11px; letter-spacing: 0.2em }
+/* Marca grande (landing / auth) */
 .brand-lg .brand-word { font-size: 18px; letter-spacing: 0.18em }
+/* Cuadro blanco del isotipo */
 .brand-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  overflow: hidden;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 0 0 1px rgba(177, 140, 255, 0.28);
-  flex: 0 0 auto;
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra el logo */
+  width: 42px; /* Ancho */
+  height: 42px; /* Alto */
+  overflow: hidden; /* Recorta el PNG */
+  border-radius: 13px; /* Esquinas redondeadas */
+  background: rgba(255, 255, 255, 0.94); /* Fondo casi blanco */
+  box-shadow: 0 0 0 1px rgba(177, 140, 255, 0.28); /* Anillo lila */
+  flex: 0 0 auto; /* No se deforma */
 }
+/* Isotipo pequeño */
 .brand-sm .brand-mark { width: 32px; height: 32px; border-radius: 9px }
+/* Isotipo grande */
 .brand-lg .brand-mark { width: 52px; height: 52px; border-radius: 16px }
+/* Imagen del logo: llena el recuadro sin recortarse mal */
 .brand-logo-img, .logo-hero-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  display: block; /* Caja de bloque */
+  width: 100%; /* Ancho */
+  height: 100%; /* Alto */
+  object-fit: contain; /* Conserva proporción */
 }
+/* Wordmark en tono blush sobre fondos oscuros */
 .brand-light .brand-word { color: var(--blush) }
 
+/* Base común de botones: pill, flex y transiciones de hover */
 .primary-button,
 .outline-button,
 .text-button,
 .ghost-button {
-  border: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  transition:
-    transform var(--motion-quick) var(--ease),
-    background var(--motion-quick) var(--ease),
-    color var(--motion-quick) var(--ease),
-    border-color var(--motion-quick) var(--ease),
-    box-shadow var(--motion-quick) var(--ease);
+  border: 0; /* Sin borde por defecto (el outline lo añade después) */
+  display: inline-flex; /* Icono y texto en línea */
+  align-items: center; /* Centra verticalmente */
+  justify-content: center; /* Centra en el eje principal */
+  gap: 8px; /* Espacio entre icono y etiqueta */
+  font-weight: 600; /* Texto seminegrita */
+  letter-spacing: 0.01em; /* Tracking leve */
+  transition: /* Animación de cambios */
+    transform var(--motion-quick) var(--ease), /* Escala al pulsar */
+    background var(--motion-quick) var(--ease), /* Cambio de fondo */
+    color var(--motion-quick) var(--ease), /* Cambio de color */
+    border-color var(--motion-quick) var(--ease), /* Cambio de borde */
+    box-shadow var(--motion-quick) var(--ease); /* Cambio de sombra */
 }
+/* Feedback táctil: el botón se encoge un poco al hacer clic */
 .primary-button:active:not(:disabled),
 .outline-button:active:not(:disabled) { transform: scale(0.96) }
+/* Botón primario: píldora índigo con sombra */
 .primary-button {
-  border-radius: 999px;
-  padding: 13px 22px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--indigo), #6a4cff);
-  box-shadow: 0 10px 30px rgba(61, 70, 232, 0.32);
+  border-radius: 999px; /* Forma de píldora */
+  padding: 13px 22px; /* Área de toque cómoda */
+  color: #fff; /* Texto blanco */
+  background: linear-gradient(135deg, var(--indigo), #6a4cff); /* Degradado índigo → violeta */
+  box-shadow: 0 10px 30px rgba(61, 70, 232, 0.32); /* Glow índigo */
 }
+/* Hover del primario: un poco más brillante */
 .primary-button:hover:not(:disabled) { filter: brightness(1.08) }
+/* Botón secundario con borde (outline) */
 .outline-button {
-  border-radius: 999px;
-  padding: 12px 20px;
-  border: 1px solid var(--line-strong);
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px; /* Píldora */
+  padding: 12px 20px; /* Relleno interno */
+  border: 1px solid var(--line-strong); /* Borde lila visible */
+  color: var(--ink); /* Texto claro */
+  background: rgba(255, 255, 255, 0.04); /* Fondo casi transparente */
 }
+/* Hover del outline: superficie un poco más clara */
 .outline-button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08) }
+/* Botones de texto / fantasma: sin fondo, estilo enlace */
 .text-button, .switch-button, .ghost-button {
-  border: 0;
-  padding: 8px 2px;
-  color: var(--muted);
-  background: transparent;
-  font-weight: 600;
-  font-size: 13px;
+  border: 0; /* Borde */
+  padding: 8px 2px; /* Relleno interno */
+  color: var(--muted); /* Color apagado */
+  background: transparent; /* Fondo */
+  font-weight: 600; /* Grosor de la letra */
+  font-size: 13px; /* Tamaño de fuente */
 }
+/* Hover de texto: pasa a color de tinta */
 .text-button:hover, .switch-button:hover { color: var(--ink) }
+/* Botón cuadrado solo-icono (campana, menú, cerrar) */
 .icon-button {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  color: var(--ink-2);
-  background: var(--surface);
+  width: 40px; /* Ancho */
+  height: 40px; /* Alto */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 12px; /* Esquinas redondeadas */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra el SVG */
+  color: var(--ink-2); /* Color de texto */
+  background: var(--surface); /* Fondo */
 }
+/* Variante destructiva (eliminar) */
 .icon-button.danger { color: var(--danger) }
+/* Hover: resalta el borde lila */
 .icon-button:hover { border-color: var(--lilac) }
 
+/* Etiqueta pequeña en mayúsculas (kicker de secciones) */
 .eyebrow {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  display: block; /* Caja de bloque */
+  color: var(--muted); /* Color de texto */
+  font-size: 11px; /* Tamaño de fuente */
+  font-weight: 600; /* Grosor de la letra */
+  letter-spacing: 0.18em; /* Tracking de rótulo */
+  text-transform: uppercase; /* Mayúsculas / capitalización */
 }
+/* Variante de etiqueta en color acento */
 .accent-label { color: var(--lilac) }
 
+/* Página de aterrizaje (landing) */
 .landing {
-  position: relative;
-  overflow: clip;
-  color: var(--ink);
-  background: transparent;
+  position: relative; /* Posición relativa (ancla para absolutos) */
+  overflow: clip; /* Recorta efectos que se salgan */
+  color: var(--ink); /* Color de texto */
+  background: transparent; /* Deja ver el WebGL */
 }
+/* Columnas centradas de la landing: header, hero, bandas y footer */
 .landing-header,
 .hero,
 .problem-band,
@@ -265,279 +313,337 @@ p { text-wrap: pretty }
 .benefit-band,
 .landing-footer,
 .landing-faq {
-  width: min(1180px, calc(100% - 40px));
-  margin: auto;
+  width: min(1180px, calc(100% - 40px)); /* Máximo 1180 px con márgenes laterales */
+  margin: auto; /* Centrado horizontal */
 }
+/* Barra superior de la landing: logo a la izquierda, nav a la derecha */
 .landing-header {
-  height: 88px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  height: 88px; /* Alto */
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  justify-content: space-between; /* Extremos opuestos */
+  gap: 20px; /* Separación entre hijos */
 }
+/* Enlaces de ancla de la landing (Producto, FAQ…) */
 .landing-nav {
-  display: flex;
-  gap: 28px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
+  display: flex; /* Flexbox: hijos en fila */
+  gap: 28px; /* Separación entre hijos */
+  color: var(--muted); /* Color de texto */
+  font-size: 13px; /* Tamaño de fuente */
+  font-weight: 500; /* Grosor de la letra */
 }
+/* Cada enlace es ancla para el subrayado animado */
 .landing-nav a { position: relative }
+/* Línea lila que aparece debajo al pasar el mouse */
 .landing-nav a::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: -6px;
-  height: 1px;
-  background: var(--lilac);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--motion-fast) var(--ease);
+  content: ""; /* Pseudo-elemento vacío */
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  left: 0; right: 0; bottom: -6px; /* Debajo del texto */
+  height: 1px; /* Alto */
+  background: var(--lilac); /* Fondo */
+  transform: scaleX(0); /* Oculta la línea (escala 0) */
+  transform-origin: left; /* Crece desde la izquierda */
+  transition: transform var(--motion-fast) var(--ease); /* Animación de cambios */
 }
+/* Hover: la línea se estira al 100% */
 .landing-nav a:hover::after { transform: scaleX(1) }
 
+/* Hero de la landing: copy a la izquierda, visual ASCII a la derecha */
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
-  align-items: center;
-  gap: 40px;
-  min-height: calc(100vh - 88px);
-  padding: 28px 0 72px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr); /* Texto un poco más ancho */
+  align-items: center; /* Centra verticalmente */
+  gap: 40px; /* Separación entre hijos */
+  min-height: calc(100vh - 88px); /* Llena el resto de la ventana */
+  padding: 28px 0 72px; /* Relleno interno */
 }
+/* Entrada animada del copy y del visual */
 .hero-copy, .hero-visual { animation: rise var(--motion-medium) var(--ease) both }
+/* El visual entra un poco más tarde y reserva altura */
 .hero-visual { animation-delay: 90ms; position: relative; min-height: 420px }
+/* Título gigante del hero */
 .hero h1, .hero-title {
-  max-width: 16ch;
-  margin: 14px 0 18px;
-  font-size: clamp(40px, 6.4vw, 78px);
-  line-height: 0.96;
+  max-width: 16ch; /* Limita el ancho en caracteres */
+  margin: 14px 0 18px; /* Margen externo */
+  font-size: clamp(40px, 6.4vw, 78px); /* Escala entre 40 y 78 px */
+  line-height: 0.96; /* Interlineado muy compacto */
 }
+/* Palabra en itálica blush dentro del título */
 .hero h1 em, .hero-static em {
-  font-style: italic;
-  font-weight: 500;
-  color: var(--blush);
+  font-style: italic; /* Estilo (itálica, etc.) */
+  font-weight: 500; /* Grosor de la letra */
+  color: var(--blush); /* Color de texto */
 }
+/* Párrafo de apoyo del hero (no el demo-note) */
 .hero-copy > p:not(.demo-note) {
-  max-width: 42ch;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.65;
+  max-width: 42ch; /* Ancho máximo */
+  color: var(--muted); /* Color de texto */
+  font-size: 17px; /* Tamaño de fuente */
+  line-height: 1.65; /* Interlineado */
 }
+/* Fila de CTAs del hero */
 .hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  margin-top: 32px;
+  display: flex; /* Flexbox: hijos en fila */
+  flex-wrap: wrap; /* Se apilan en pantallas angostas */
+  align-items: center; /* Centra verticalmente */
+  gap: 18px; /* Separación entre hijos */
+  margin-top: 32px; /* Margen superior */
 }
+/* Nota pequeña bajo los botones del hero */
 .demo-note { margin-top: 28px; color: var(--muted); font-size: 13px }
 
+/* Escenario ASCII/WebGL del hero (tarjeta recortada) */
 .ascii-stage {
-  position: relative;
-  width: min(540px, 100%);
-  aspect-ratio: 984 / 798;
-  margin-left: auto;
-  overflow: hidden;
-  border-radius: 32px;
-  background: rgba(4, 6, 16, 0.72);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-soft);
+  position: relative; /* Posición relativa (ancla para absolutos) */
+  width: min(540px, 100%); /* No pasa de 540 px */
+  aspect-ratio: 984 / 798; /* Proporción del canvas */
+  margin-left: auto; /* Se pega a la derecha */
+  overflow: hidden; /* Qué hacer si se desborda */
+  border-radius: 32px; /* Esquinas redondeadas */
+  background: rgba(4, 6, 16, 0.72); /* Fondo casi negro */
+  border: 1px solid var(--line); /* Borde */
+  box-shadow: var(--shadow-soft); /* Sombra */
 }
+/* Canvas ASCII a tamaño completo */
 .ascii-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 32px;
+  display: block; /* Caja de bloque */
+  width: 100%; /* Ancho */
+  height: 100%; /* Alto */
+  border-radius: 32px; /* Esquinas redondeadas */
 }
+/* Placa blanca con el logo superpuesta al canvas */
 .logo-plate {
-  position: absolute;
-  right: 6%;
-  bottom: 8%;
-  width: 108px;
-  height: 108px;
-  padding: 10px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--shadow-lift);
-  z-index: 2;
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  right: 6%; /* Desplazamiento desde la derecha */
+  bottom: 8%; /* Desplazamiento desde abajo */
+  width: 108px; /* Ancho */
+  height: 108px; /* Alto */
+  padding: 10px; /* Relleno interno */
+  border-radius: 28px; /* Esquinas redondeadas */
+  background: rgba(255, 255, 255, 0.94); /* Fondo */
+  box-shadow: var(--shadow-lift); /* Sombra */
+  z-index: 2; /* Encima del canvas */
 }
+/* Imagen dentro de la placa */
 .logo-plate img { width: 100%; height: 100%; object-fit: contain }
+/* Pie de foto del visual, esquina inferior derecha */
 .logo-caption {
-  position: absolute;
-  right: 7%;
-  bottom: 7%;
-  left: auto;
-  top: auto;
-  z-index: 2;
-  max-width: 16ch;
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: right;
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  right: 7%; /* Desplazamiento desde la derecha */
+  bottom: 7%; /* Desplazamiento desde abajo */
+  left: auto; /* Desplazamiento desde la izquierda */
+  top: auto; /* Desplazamiento desde arriba */
+  z-index: 2; /* Orden de apilamiento */
+  max-width: 16ch; /* Ancho máximo */
+  color: var(--muted); /* Color de texto */
+  font-size: 11px; /* Tamaño de fuente */
+  letter-spacing: 0.12em; /* Espaciado entre letras */
+  text-transform: uppercase; /* Mayúsculas / capitalización */
+  text-align: right; /* Alineación del texto */
 }
 
+/* Texto que se transforma (morph) en el título del hero */
 .morphing-text {
-  position: relative;
-  height: 1.2em;
-  width: 100%;
-  max-width: 12ch;
-  margin: 6px 0 20px;
-  font-family: var(--font-display);
-  font-size: clamp(40px, 6.4vw, 78px);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  filter: url(#threshold) blur(0.6px);
-  text-align: left;
+  position: relative; /* Posición relativa (ancla para absolutos) */
+  height: 1.2em; /* Reserva una línea de altura */
+  width: 100%; /* Ancho */
+  max-width: 12ch; /* Ancho máximo */
+  margin: 6px 0 20px; /* Margen externo */
+  font-family: var(--font-display); /* Familia tipográfica */
+  font-size: clamp(40px, 6.4vw, 78px); /* Tamaño de fuente */
+  font-weight: 600; /* Grosor de la letra */
+  letter-spacing: -0.04em; /* Espaciado entre letras */
+  line-height: 1; /* Interlineado */
+  filter: url(#threshold) blur(0.6px); /* Filtro SVG de umbral + blur para el morph */
+  text-align: left; /* Alineación del texto */
 }
+/* Cada palabra del morph se superpone en la misma posición */
 .morphing-line {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  display: block;
-  width: 100%;
-  white-space: nowrap;
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  inset-inline: 0; /* Izquierda y derecha */
+  top: 0; /* Desplazamiento desde arriba */
+  display: block; /* Caja de bloque */
+  width: 100%; /* Ancho */
+  white-space: nowrap; /* No parte la palabra */
 }
+/* SVG de filtros oculto (no ocupa espacio) */
 .morphing-filters { position: fixed; width: 0; height: 0 }
+/* Revelado de texto del diagrama: inline para fluir con el párrafo */
 .dia-text-reveal { display: inline; }
 
+/* Bandas de problema y beneficio: dos columnas (texto + apoyo) */
 .problem-band,
 .benefit-band {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 64px;
-  align-items: end;
-  padding: 88px 0;
+  display: grid; /* CSS Grid */
+  grid-template-columns: 1.1fr 0.9fr; /* Texto un poco más ancho */
+  gap: 64px; /* Separación entre hijos */
+  align-items: end; /* Alinea al pie */
+  padding: 88px 0; /* Relleno interno */
 }
+/* La banda de problema se separa con líneas arriba y abajo */
 .problem-band { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+/* Títulos de sección de la landing */
 .problem-band h2,
 .benefit-band h2,
 .section-heading h2 {
-  margin-top: 12px;
-  font-size: clamp(28px, 4vw, 46px);
-  line-height: 1.08;
-  max-width: 16ch;
+  margin-top: 12px; /* Margen superior */
+  font-size: clamp(28px, 4vw, 46px); /* Tamaño de fuente */
+  line-height: 1.08; /* Interlineado */
+  max-width: 16ch; /* Ancho máximo */
 }
+/* Cuerpo de la banda de problema */
 .problem-band p { color: var(--muted); font-size: 17px; line-height: 1.7 }
+/* Sección de características (grid de 3) */
 .feature-section { padding: 96px 0 110px }
+/* Encabezado de sección con margen inferior */
 .section-heading { margin-bottom: 48px }
+/* Tres columnas de features en desktop */
 .feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: repeat(3, 1fr); /* Columnas de la grilla */
+  gap: 12px; /* Separación entre hijos */
 }
+/* Tarjeta de cada característica */
 .feature-item {
-  min-height: 200px;
-  padding: 24px;
-  border-radius: 22px;
+  min-height: 200px; /* Alto mínimo */
+  padding: 24px; /* Relleno interno */
+  border-radius: 22px; /* Esquinas redondeadas */
 }
+/* Número / índice de la feature */
 .feature-item > span {
-  font-variant-numeric: tabular-nums;
-  color: var(--lilac);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums; /* Cifras alineadas */
+  color: var(--lilac); /* Color de texto */
+  font-size: 12px; /* Tamaño de fuente */
+  font-weight: 700; /* Grosor de la letra */
+  letter-spacing: 0.12em; /* Espaciado entre letras */
 }
+/* Título de la feature */
 .feature-item h3 { margin: 22px 0 8px; font-size: 22px }
+/* Descripción corta de la feature */
 .feature-item p { max-width: 28ch; color: var(--muted); font-size: 14px; line-height: 1.6 }
 
+/* Banda de beneficios: tarjeta índigo translúcida */
 .benefit-band {
-  width: min(1180px, calc(100% - 40px));
-  padding: 36px 40px;
-  border-radius: 32px;
-  color: var(--ink);
-  background: rgba(61, 70, 232, 0.18);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(16px);
+  width: min(1180px, calc(100% - 40px)); /* Ancho */
+  padding: 36px 40px; /* Relleno interno */
+  border-radius: 32px; /* Esquinas redondeadas */
+  color: var(--ink); /* Color de texto */
+  background: rgba(61, 70, 232, 0.18); /* Tinte índigo */
+  border: 1px solid var(--line); /* Borde */
+  backdrop-filter: blur(16px); /* Vidrio */
 }
+/* Eyebrow blush dentro de la banda de beneficio */
 .benefit-band .eyebrow { color: var(--blush) }
+/* Bloque FAQ de la landing */
 .landing-faq { padding: 72px 0 24px }
+/* Preguntas frecuentes en dos columnas */
 .faq-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px 18px;
-  margin-top: 28px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: 1fr 1fr; /* Columnas de la grilla */
+  gap: 16px 18px; /* Separación entre hijos */
+  margin-top: 28px; /* Margen superior */
 }
+/* Cada pregunta es una tarjeta glass */
 .faq-grid > div { padding: 20px; border-radius: 20px }
+/* Título de la pregunta */
 .faq-grid h3 { font-size: 20px; margin-bottom: 8px }
+/* Respuesta del FAQ */
 .faq-grid p { color: var(--muted); line-height: 1.6 }
 
+/* Pie de la landing: marca a la izquierda, créditos a la derecha */
 .landing-footer {
-  min-height: 96px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  color: var(--muted);
-  font-size: 12px;
+  min-height: 96px; /* Alto mínimo */
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  gap: 24px; /* Separación entre hijos */
+  color: var(--muted); /* Color de texto */
+  font-size: 12px; /* Tamaño de fuente */
 }
+/* Empuja el resto del footer a la derecha */
 .landing-footer .brand { margin-right: auto }
 
+/* Página de login/registro: visual a la izquierda, formulario a la derecha */
 .auth-page {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(280px, 1.05fr) minmax(340px, 0.95fr);
-  background: transparent;
+  min-height: 100vh; /* Alto mínimo */
+  display: grid; /* CSS Grid */
+  grid-template-columns: minmax(280px, 1.05fr) minmax(340px, 0.95fr); /* Columnas de la grilla */
+  background: transparent; /* Deja ver el WebGL */
 }
+/* Columna izquierda de auth: quote + logo */
 .auth-aside {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 36px 48px 32px;
-  color: var(--ink);
-  background: transparent;
+  position: relative; /* Posición relativa (ancla para absolutos) */
+  overflow: hidden; /* Qué hacer si se desborda */
+  display: flex; /* Flexbox: hijos en fila */
+  flex-direction: column; /* Dirección de flex (columna o fila) */
+  padding: 36px 48px 32px; /* Relleno interno */
+  color: var(--ink); /* Color de texto */
+  background: transparent; /* Fondo */
 }
+/* Logo grande blanco en el aside de auth */
 .auth-aside .logo-hero-img {
-  width: min(280px, 70%);
-  margin: auto;
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 32px;
-  padding: 18px;
+  width: min(280px, 70%); /* Ancho */
+  margin: auto; /* Centrado vertical y horizontal en el flex */
+  background: rgba(255, 255, 255, 0.94); /* Fondo */
+  border-radius: 32px; /* Esquinas redondeadas */
+  padding: 18px; /* Relleno interno */
 }
+/* Enlace “volver” al landing */
 .back-link {
-  align-self: flex-start;
-  border: 0;
-  padding: 0;
-  color: var(--muted);
-  background: transparent;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-self: flex-start; /* No estira todo el ancho */
+  border: 0; /* Borde */
+  padding: 0; /* Relleno interno */
+  color: var(--muted); /* Color de texto */
+  background: transparent; /* Fondo */
+  font-size: 13px; /* Tamaño de fuente */
+  display: inline-flex; /* Flex en línea */
+  align-items: center; /* Centra verticalmente */
+  gap: 6px; /* Separación entre hijos */
 }
+/* Cita / titular del aside */
 .auth-quote { margin: 24px 0 auto }
+/* Título grande de la cita */
 .auth-quote h1 {
-  max-width: 12ch;
-  margin: 16px 0 12px;
-  font-size: clamp(36px, 4.4vw, 64px);
-  line-height: 1.02;
+  max-width: 12ch; /* Ancho máximo */
+  margin: 16px 0 12px; /* Margen externo */
+  font-size: clamp(36px, 4.4vw, 64px); /* Tamaño de fuente */
+  line-height: 1.02; /* Interlineado */
 }
+/* Énfasis itálico blush en la cita */
 .auth-quote h1 em { font-style: italic; color: var(--blush); font-weight: 500 }
+/* Párrafo de apoyo de la cita */
 .auth-quote p { color: var(--muted); line-height: 1.6; max-width: 36ch }
+/* Pie legal / crédito del aside */
 .auth-footer { margin-top: 28px; color: var(--muted); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase }
+/* Panel de vidrio del formulario de login/registro */
 .auth-panel {
-  width: min(440px, calc(100% - 48px));
-  margin: auto;
-  padding: 28px 28px 32px;
-  border-radius: 28px;
-  background: var(--surface-strong);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(18px);
+  width: min(440px, calc(100% - 48px)); /* Ancho */
+  margin: auto; /* Margen externo */
+  padding: 28px 28px 32px; /* Relleno interno */
+  border-radius: 28px; /* Esquinas redondeadas */
+  background: var(--surface-strong); /* Fondo */
+  border: 1px solid var(--line); /* Borde */
+  backdrop-filter: blur(18px); /* Desenfoque del fondo (vidrio) */
 }
+/* Marca compacta solo visible en auth móvil */
 .mobile-auth-brand { display: none; margin-bottom: 24px }
+/* Título del formulario (Iniciar sesión / Crear cuenta) */
 .auth-panel h2 { margin: 12px 0 10px; font-size: clamp(32px, 4vw, 44px) }
+/* Subtítulo y nota del formulario */
 .auth-subtitle, .auth-note { color: var(--muted); font-size: 14px; line-height: 1.6 }
+/* Formularios de auth y de tareas: columnas con gap */
 .auth-panel form, .task-form { display: grid; gap: 16px; margin-top: 28px }
+/* Etiquetas de campos (auth, tareas, compartir, chat) */
 .auth-panel label,
 .task-form label,
 .share-form label,
 .chat-recipient {
-  display: grid;
-  gap: 7px;
-  color: var(--ink-2);
-  font-size: 12px;
-  font-weight: 650;
+  display: grid; /* CSS Grid */
+  gap: 7px; /* Espacio entre label e input */
+  color: var(--ink-2); /* Color de texto */
+  font-size: 12px; /* Tamaño de fuente */
+  font-weight: 650; /* Grosor de la letra */
 }
+/* Campos de texto compartidos: input, select y textarea */
 .auth-panel input,
 .task-form input,
 .task-form select,
@@ -547,14 +653,15 @@ p { text-wrap: pretty }
 .search-wrap input,
 .search-wrap select,
 .chat-recipient input {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 13px;
-  color: var(--ink);
-  background: rgba(11, 16, 38, 0.45);
-  outline: 0;
+  width: 100%; /* Ancho */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 12px; /* Esquinas redondeadas */
+  padding: 12px 13px; /* Relleno interno */
+  color: var(--ink); /* Color de texto */
+  background: rgba(11, 16, 38, 0.45); /* Fondo navy translúcido */
+  outline: 0; /* Quita el outline nativo */
 }
+/* Foco de campos: borde lila + anillo índigo */
 .auth-panel input:focus,
 .task-form input:focus,
 .task-form select:focus,
@@ -563,653 +670,793 @@ p { text-wrap: pretty }
 .chat-input input:focus,
 .search-wrap input:focus,
 .search-wrap select:focus {
-  border-color: var(--lilac);
-  box-shadow: 0 0 0 3px rgba(61, 70, 232, 0.28);
+  border-color: var(--lilac); /* Color del borde */
+  box-shadow: 0 0 0 3px rgba(61, 70, 232, 0.28); /* Sombra */
 }
+/* Botón submit a todo el ancho del panel */
 .auth-submit { width: 100%; margin-top: 4px }
+/* Acceso demo destacado en blush */
 .demo-button { color: var(--blush); font-weight: 700 }
+/* Nota centrada bajo el formulario */
 .auth-note { margin-top: 24px; text-align: center; font-size: 12px }
+/* Mensajes de error de auth y formularios */
 .auth-message, .form-error {
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: #ffd6dc;
-  background: rgba(255, 107, 122, 0.16);
-  font-size: 13px;
+  padding: 10px 12px; /* Relleno interno */
+  border-radius: 10px; /* Esquinas redondeadas */
+  color: #ffd6dc; /* Color de texto */
+  background: rgba(255, 107, 122, 0.16); /* Fondo rojo suave */
+  font-size: 13px; /* Tamaño de fuente */
 }
 
+/* Cascarón de la app autenticada: sidebar + workspace */
 .app-shell {
-  min-height: 100vh;
-  display: flex;
-  background: transparent;
+  min-height: 100vh; /* Alto mínimo */
+  display: flex; /* Flexbox: hijos en fila */
+  background: transparent; /* El WebGL se ve detrás */
 }
+/* Menú lateral fijo (desktop) */
 .sidebar {
-  position: fixed;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  width: var(--sidebar);
-  height: 100vh;
-  padding: 22px 14px 16px;
-  color: var(--ink-2);
-  background: var(--dark);
-  border-right: 1px solid var(--dark-line);
-  backdrop-filter: blur(22px);
+  position: fixed; /* Fijo al viewport */
+  z-index: 30; /* Por encima del workspace y overlays móviles */
+  display: flex; /* Flexbox: hijos en fila */
+  flex-direction: column; /* Dirección de flex (columna o fila) */
+  width: var(--sidebar); /* 232 px */
+  height: 100vh; /* Alto */
+  padding: 22px 14px 16px; /* Relleno interno */
+  color: var(--ink-2); /* Color de texto */
+  background: var(--dark); /* Navy translúcido */
+  border-right: 1px solid var(--dark-line); /* Borde derecho */
+  backdrop-filter: blur(22px); /* Vidrio del sidebar */
 }
+/* Cabecera del sidebar: marca y botón cerrar (móvil) */
 .sidebar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  justify-content: space-between; /* Extremos opuestos */
+  padding: 0 8px; /* Relleno interno */
 }
+/* Rótulo de sección del menú (MAYÚSCULAS) */
 .sidebar-caption {
-  margin: 28px 12px 10px;
-  color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  margin: 28px 12px 10px; /* Margen externo */
+  color: var(--muted); /* Color de texto */
+  font-size: 10px; /* Tamaño de fuente */
+  letter-spacing: 0.16em; /* Espaciado entre letras */
+  text-transform: uppercase; /* Mayúsculas / capitalización */
 }
+/* Lista de nav y bloque inferior (logout) */
 .sidebar nav, .sidebar-bottom { display: grid; gap: 2px }
+/* Ítem de navegación del sidebar */
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 40px;
-  border: 0;
-  border-radius: 12px;
-  padding: 8px 10px;
-  color: rgba(247, 241, 255, 0.72);
-  background: transparent;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  gap: 10px; /* Separación entre hijos */
+  width: 100%; /* Ancho */
+  min-height: 40px; /* Alto mínimo */
+  border: 0; /* Borde */
+  border-radius: 12px; /* Esquinas redondeadas */
+  padding: 8px 10px; /* Relleno interno */
+  color: rgba(247, 241, 255, 0.72); /* Texto semitransparente */
+  background: transparent; /* Fondo */
+  text-align: left; /* Alineación del texto */
+  font-size: 13px; /* Tamaño de fuente */
+  font-weight: 500; /* Grosor de la letra */
 }
+/* Hover del ítem: texto blanco y fondo suave */
 .nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.05) }
+/* Ítem activo: fondo índigo y barra dorada a la izquierda */
 .nav-item.active {
-  color: #fff;
-  background: rgba(61, 70, 232, 0.28);
-  box-shadow: inset 2px 0 0 var(--gold);
+  color: #fff; /* Color de texto */
+  background: rgba(61, 70, 232, 0.28); /* Fondo */
+  box-shadow: inset 2px 0 0 var(--gold); /* Sombra */
 }
+/* Icono SVG del ítem de nav */
 .nav-symbol {
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  color: var(--lilac);
+  width: 18px; /* Ancho */
+  height: 18px; /* Alto */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  color: var(--lilac); /* Color de texto */
 }
+/* El icono activo pasa a dorado */
 .nav-item.active .nav-symbol { color: var(--gold) }
+/* Bloque inferior del sidebar (cerrar sesión) */
 .sidebar-bottom {
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--dark-line);
+  margin-top: auto; /* Empuja al fondo */
+  padding-top: 14px; /* Relleno superior */
+  border-top: 1px solid var(--dark-line); /* Borde superior */
 }
+/* Color de aviso para logout */
 .logout { color: #ffb3bc }
+/* Controles móviles ocultos en desktop */
 .close-nav, .menu-toggle, .mobile-overlay, .bottom-nav { display: none }
+/* Área de trabajo a la derecha del sidebar */
 .workspace {
-  width: calc(100% - var(--sidebar));
-  margin-left: var(--sidebar);
-  min-width: 0;
+  width: calc(100% - var(--sidebar)); /* Resta el ancho del menú */
+  margin-left: var(--sidebar); /* Deja hueco para el sidebar fijo */
+  min-width: 0; /* Evita overflow en flex/grid */
 }
+/* Encabezado sticky del workspace (título + usuario) */
 .workspace-header {
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: var(--header);
-  padding: 18px 32px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(11, 16, 38, 0.48);
-  backdrop-filter: blur(18px);
+  position: sticky; /* Se pega al hacer scroll */
+  top: 0; /* Desplazamiento desde arriba */
+  z-index: 12; /* Orden de apilamiento */
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  justify-content: space-between; /* Extremos opuestos */
+  gap: 16px; /* Separación entre hijos */
+  min-height: var(--header); /* Alto mínimo */
+  padding: 18px 32px; /* Relleno interno */
+  border-bottom: 1px solid var(--line); /* Borde inferior */
+  background: rgba(11, 16, 38, 0.48); /* Fondo */
+  backdrop-filter: blur(18px); /* Desenfoque del fondo (vidrio) */
 }
+/* Título de la vista actual */
 .workspace-header h1 { font-size: clamp(22px, 3vw, 34px) }
+/* Bloque de usuario a la derecha (notis + avatar) */
 .header-user { display: flex; align-items: center; gap: 10px; position: relative }
+/* Botón circular de notificaciones */
 .notification-button {
-  position: relative;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--ink);
-  display: grid;
-  place-items: center;
+  position: relative; /* Posición relativa (ancla para absolutos) */
+  width: 42px; /* Ancho */
+  height: 42px; /* Alto */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 50%; /* Esquinas redondeadas */
+  background: var(--surface); /* Fondo */
+  color: var(--ink); /* Color de texto */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
 }
+/* Punto dorado de “hay notificaciones” */
 .notification-dot {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(11, 16, 38, 0.8);
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  top: 8px; /* Desplazamiento desde arriba */
+  right: 8px; /* Desplazamiento desde la derecha */
+  width: 8px; /* Ancho */
+  height: 8px; /* Alto */
+  border-radius: 50%; /* Esquinas redondeadas */
+  background: var(--gold); /* Fondo */
+  box-shadow: 0 0 0 3px rgba(11, 16, 38, 0.8); /* Anillo navy para recortar */
 }
+/* Avatares circulares con degradado índigo-lila */
 .avatar, .preview-avatar, .profile-avatar, .small-avatar {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: #fff;
-  background: linear-gradient(135deg, var(--indigo), var(--lilac));
-  font-weight: 700;
-  font-size: 13px;
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  width: 40px; /* Ancho */
+  height: 40px; /* Alto */
+  border-radius: 50%; /* Esquinas redondeadas */
+  color: #fff; /* Color de texto */
+  background: linear-gradient(135deg, var(--indigo), var(--lilac)); /* Fondo */
+  font-weight: 700; /* Grosor de la letra */
+  font-size: 13px; /* Tamaño de fuente */
 }
+/* Avatar compacto */
 .small-avatar { width: 32px; height: 32px }
+/* Panel desplegable de notificaciones */
 .notification-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: min(340px, calc(100vw - 32px));
-  padding: 16px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lift);
-  display: grid;
-  gap: 8px;
-  z-index: 20;
+  position: absolute; /* Sale del flujo, respecto al padre posicionado */
+  top: calc(100% + 8px); /* Debajo del botón */
+  right: 0; /* Desplazamiento desde la derecha */
+  width: min(340px, calc(100vw - 32px)); /* Ancho */
+  padding: 16px; /* Relleno interno */
+  border-radius: var(--radius-md); /* Esquinas redondeadas */
+  box-shadow: var(--shadow-lift); /* Sombra */
+  display: grid; /* CSS Grid */
+  gap: 8px; /* Separación entre hijos */
+  z-index: 20; /* Orden de apilamiento */
 }
+/* Cada aviso dentro del panel */
 .notification-item {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.04);
+  display: grid; /* CSS Grid */
+  gap: 2px; /* Separación entre hijos */
+  width: 100%; /* Ancho */
+  border: 0; /* Borde */
+  border-radius: 10px; /* Esquinas redondeadas */
+  padding: 10px; /* Relleno interno */
+  text-align: left; /* Alineación del texto */
+  background: rgba(255, 255, 255, 0.04); /* Fondo */
 }
+/* Fecha/hora pequeña del aviso */
 .notification-item small { color: var(--muted) }
+/* Contenido principal de cada vista (dashboard, tareas…) */
 .content-area {
-  width: min(1120px, calc(100% - 48px));
-  margin: 0 auto;
-  padding: 28px 0 96px;
-  animation: rise var(--motion-medium) var(--ease) both;
+  width: min(1120px, calc(100% - 48px)); /* Ancho */
+  margin: 0 auto; /* Margen externo */
+  padding: 28px 0 96px; /* Relleno interno */
+  animation: rise var(--motion-medium) var(--ease) both; /* Entra suavemente */
 }
 
+/* Banner de aviso de éxito (toast estático) */
 .notice {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: min(1120px, calc(100% - 48px));
-  margin: 16px auto 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  color: #d9ffe9;
-  background: rgba(61, 214, 163, 0.16);
-  border: 1px solid rgba(61, 214, 163, 0.32);
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  justify-content: space-between; /* Extremos opuestos */
+  gap: 12px; /* Separación entre hijos */
+  width: min(1120px, calc(100% - 48px)); /* Ancho */
+  margin: 16px auto 0; /* Margen externo */
+  padding: 12px 14px; /* Relleno interno */
+  border-radius: 12px; /* Esquinas redondeadas */
+  color: #d9ffe9; /* Color de texto */
+  background: rgba(61, 214, 163, 0.16); /* Verde suave */
+  border: 1px solid rgba(61, 214, 163, 0.32); /* Borde */
 }
+/* Botón cerrar del notice */
 .notice button { border: 0; background: transparent; color: inherit }
 
+/* Cabecera del dashboard: saludo a la izquierda, acción a la derecha */
 .dash-hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 24px;
-  margin-bottom: 28px;
+  display: flex; /* Flexbox: hijos en fila */
+  justify-content: space-between; /* Extremos opuestos */
+  align-items: end; /* Alinea al final del eje cruzado */
+  gap: 24px; /* Separación entre hijos */
+  margin-bottom: 28px; /* Margen inferior */
 }
+/* Título de bienvenida grande */
 .dash-hero h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1 }
+/* Subtítulo del dashboard */
 .dash-hero p { color: var(--muted); margin-top: 8px; font-size: 16px }
+/* Cuatro tarjetas de estadísticas */
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 36px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: repeat(4, 1fr); /* Columnas de la grilla */
+  gap: 14px; /* Separación entre hijos */
+  margin-bottom: 36px; /* Margen inferior */
 }
+/* Tarjeta de estadística (número grande) */
 .stat-card {
-  min-height: 128px;
-  padding: 18px 18px 16px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  min-height: 128px; /* Alto mínimo */
+  padding: 18px 18px 16px; /* Relleno interno */
+  border-radius: 20px; /* Esquinas redondeadas */
+  display: flex; /* Flexbox: hijos en fila */
+  flex-direction: column; /* Dirección de flex (columna o fila) */
+  justify-content: space-between; /* Extremos opuestos */
 }
+/* Etiqueta y pie de la stat */
 .stat-card span, .stat-card small { color: var(--muted); font-size: 12px }
+/* Número principal de la stat */
 .stat-card strong {
-  font-family: var(--font-display);
-  font-size: 42px;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display); /* Familia tipográfica */
+  font-size: 42px; /* Tamaño de fuente */
+  line-height: 1; /* Interlineado */
+  letter-spacing: -0.04em; /* Espaciado entre letras */
+  font-variant-numeric: tabular-nums; /* Cifras que no “saltan” */
 }
+/* Barra de color superior: lila */
 .stat-green { box-shadow: inset 0 3px 0 var(--lilac) }
+/* Barra de color superior: dorado */
 .stat-gold { box-shadow: inset 0 3px 0 var(--gold) }
+/* Barra de color superior: naranja */
 .stat-coral { box-shadow: inset 0 3px 0 var(--orange) }
+/* Barra de color superior: teal */
 .stat-ink { box-shadow: inset 0 3px 0 var(--teal) }
 
+/* Fila de título de sección (título a la izquierda, acción a la derecha) */
 .welcome-row, .section-title {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 8px 0 18px;
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: end; /* Alinea al final del eje cruzado */
+  justify-content: space-between; /* Extremos opuestos */
+  gap: 16px; /* Separación entre hijos */
+  margin: 8px 0 18px; /* Margen externo */
 }
+/* Texto de apoyo bajo títulos */
 .lead { color: var(--muted); margin-bottom: 12px }
+/* Barra de búsqueda tipo píldora */
 .search-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(11, 16, 38, 0.45);
-  margin-bottom: 16px;
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  gap: 8px; /* Separación entre hijos */
+  min-height: 44px; /* Alto mínimo */
+  padding: 0 12px; /* Relleno interno */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 999px; /* Esquinas redondeadas */
+  background: rgba(11, 16, 38, 0.45); /* Fondo */
+  margin-bottom: 16px; /* Margen inferior */
 }
+/* Input/select internos de la búsqueda: sin borde propio */
 .search-wrap input, .search-wrap select {
-  border: 0;
-  background: transparent;
-  padding: 10px 0;
-  box-shadow: none;
+  border: 0; /* Borde */
+  background: transparent; /* Fondo */
+  padding: 10px 0; /* Relleno interno */
+  box-shadow: none; /* Sombra */
 }
+/* Dashboard: lista principal + panel lateral */
 .dash-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 0.85fr;
-  gap: 22px;
-  margin-top: 8px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: 1.35fr 0.85fr; /* Columnas de la grilla */
+  gap: 22px; /* Separación entre hijos */
+  margin-top: 8px; /* Margen superior */
 }
+/* Panel genérico de vidrio */
 .panel-card {
-  padding: 22px;
-  border-radius: 24px;
+  padding: 22px; /* Relleno interno */
+  border-radius: 24px; /* Esquinas redondeadas */
 }
+/* Tarjeta de progreso (separada de las demás) */
 .progress-card { margin-bottom: 28px }
+/* Porcentaje / cifra del progreso */
 .progress-card strong {
-  display: block;
-  margin-top: 8px;
-  font-family: var(--font-display);
-  font-size: 28px;
-  letter-spacing: -0.04em;
+  display: block; /* Caja de bloque */
+  margin-top: 8px; /* Margen superior */
+  font-family: var(--font-display); /* Familia tipográfica */
+  font-size: 28px; /* Tamaño de fuente */
+  letter-spacing: -0.04em; /* Espaciado entre letras */
 }
+/* Lead dentro de progreso sin margen extra */
 .progress-card .lead { margin: 0 }
+/* Título interno de un panel */
 .panel-card > h2 { font-size: 28px; margin: 8px 0 16px }
+/* Tres atajos del dashboard */
 .quick-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 28px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: repeat(3, 1fr); /* Columnas de la grilla */
+  gap: 12px; /* Separación entre hijos */
+  margin-top: 28px; /* Margen superior */
 }
+/* Botón-tarjeta de atajo (nueva tarea, calendario…) */
 .quick-action {
-  display: grid;
-  gap: 8px;
-  min-height: 108px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  text-align: left;
-  background: var(--surface-strong);
-  color: var(--ink);
-  backdrop-filter: blur(12px);
+  display: grid; /* CSS Grid */
+  gap: 8px; /* Separación entre hijos */
+  min-height: 108px; /* Alto mínimo */
+  padding: 16px; /* Relleno interno */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 18px; /* Esquinas redondeadas */
+  text-align: left; /* Alineación del texto */
+  background: var(--surface-strong); /* Fondo */
+  color: var(--ink); /* Color de texto */
+  backdrop-filter: blur(12px); /* Desenfoque del fondo (vidrio) */
 }
+/* Hover del atajo: borde lila */
 .quick-action:hover { border-color: var(--lilac) }
+/* Texto secundario del atajo */
 .quick-action small { color: var(--muted) }
 
+/* Filas reutilizables: tarea, foco, agenda y compartir */
 .task-card, .focus-choice, .agenda-task, .share-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface-strong);
-  text-align: left;
-  color: inherit;
+  display: flex; /* Flexbox: hijos en fila */
+  align-items: center; /* Centra verticalmente */
+  gap: 14px; /* Separación entre hijos */
+  width: 100%; /* Ancho */
+  padding: 16px; /* Relleno interno */
+  border: 1px solid var(--line); /* Borde */
+  border-radius: 18px; /* Esquinas redondeadas */
+  background: var(--surface-strong); /* Fondo */
+  text-align: left; /* Alineación del texto */
+  color: inherit; /* Color de texto */
 }
+/* Tarjeta de tarea: margen y transición al completar */
 .task-card { margin-bottom: 10px; transition: opacity var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease) }
+/* Hover de filas interactivas */
 .task-card:hover, .focus-choice:hover, .agenda-task:hover { border-color: var(--lilac) }
+/* Tarea completada: se atenúa */
 .task-card.is-complete { opacity: 0.55 }
+/* Checkbox circular de la tarea */
 .check-button {
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 50%;
-  background: transparent;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  color: white;
-  transition: background var(--motion-quick) var(--ease), transform var(--motion-quick) var(--ease);
+  width: 22px; /* Ancho */
+  height: 22px; /* Alto */
+  border: 1.5px solid var(--line-strong); /* Borde */
+  border-radius: 50%; /* Esquinas redondeadas */
+  background: transparent; /* Fondo */
+  flex: 0 0 auto; /* No se encoge */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  color: white; /* Color de texto */
+  transition: background var(--motion-quick) var(--ease), transform var(--motion-quick) var(--ease); /* Animación de cambios */
 }
+/* Checkbox marcado: verde y un poco más grande */
 .is-complete .check-button {
-  border-color: var(--success);
-  background: var(--success);
-  transform: scale(1.05);
+  border-color: var(--success); /* Color del borde */
+  background: var(--success); /* Fondo */
+  transform: scale(1.05); /* Transformación (mover, escalar, rotar) */
 }
+/* Bloque de texto de la tarea (título + meta) */
 .task-content { min-width: 0; flex: 1 }
+/* Título + badge de prioridad en fila */
 .task-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+/* Título de la tarea usa fuente UI, no display */
 .task-heading h3 { font-size: 17px; font-family: var(--font-ui); letter-spacing: -0.02em }
+/* Fecha y descripción secundarias */
 .task-meta, .task-description { color: var(--muted); font-size: 13px; margin-top: 4px }
+/* Botones editar/borrar a la derecha */
 .task-actions { display: flex; gap: 6px }
+/* Enlace de adjunto bajo la tarea */
 .task-attachment { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px }
+/* Chip de prioridad (píldora) */
 .priority {
-  border-radius: 999px;
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  border-radius: 999px; /* Esquinas redondeadas */
+  padding: 3px 8px; /* Relleno interno */
+  font-size: 11px; /* Tamaño de fuente */
+  font-weight: 700; /* Grosor de la letra */
+  letter-spacing: 0.04em; /* Espaciado entre letras */
+  text-transform: uppercase; /* Mayúsculas / capitalización */
 }
+/* Prioridad alta: magenta */
 .priority-alta { color: #ffd6e7; background: rgba(226, 24, 122, 0.28) }
+/* Prioridad media: dorado */
 .priority-media { color: #ffe7b3; background: rgba(240, 188, 18, 0.22) }
+/* Prioridad baja: teal */
 .priority-baja { color: #cffff6; background: rgba(20, 196, 192, 0.22) }
 
+/* Estado vacío o de carga: recuadro punteado centrado */
 .empty-state, .loading-state {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  min-height: 220px;
-  padding: 36px 20px;
-  border: 1px dashed var(--line-strong);
-  border-radius: 24px;
-  text-align: center;
-  color: var(--muted);
-  background: rgba(11, 16, 38, 0.28);
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  gap: 8px; /* Separación entre hijos */
+  min-height: 220px; /* Alto mínimo */
+  padding: 36px 20px; /* Relleno interno */
+  border: 1px dashed var(--line-strong); /* Borde */
+  border-radius: 24px; /* Esquinas redondeadas */
+  text-align: center; /* Alineación del texto */
+  color: var(--muted); /* Color de texto */
+  background: rgba(11, 16, 38, 0.28); /* Fondo */
 }
+/* Título del empty state */
 .empty-state h3 { color: var(--ink); font-size: 24px }
+/* Texto de apoyo del empty */
 .empty-copy { color: var(--muted); font-size: 14px; line-height: 1.5 }
+/* Empty de compartir (más compacto) */
 .share-empty { display: grid; gap: 6px; color: var(--muted); padding: 12px 0 }
+/* Opción de modo foco */
 .focus-choice { margin-bottom: 8px }
+/* Icono lila de la opción de foco */
 .focus-choice-icon { color: var(--lilac) }
+/* Spinner de carga circular */
 .loading-spinner {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--line);
-  border-top-color: var(--lilac);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  width: 22px; /* Ancho */
+  height: 22px; /* Alto */
+  border: 2px solid var(--line); /* Borde */
+  border-top-color: var(--lilac); /* El arco lila gira */
+  border-radius: 50%; /* Esquinas redondeadas */
+  animation: spin 0.8s linear infinite; /* Animación por keyframes */
 }
 
+/* Panel grande de sesión de foco */
 .focus-panel {
-  display: grid;
-  place-items: center;
-  text-align: center;
-  gap: 12px;
-  min-height: 62vh;
-  padding: 48px 24px;
-  border-radius: 32px;
-  color: var(--ink);
-  background: rgba(11, 16, 38, 0.45);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(18px);
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  text-align: center; /* Alineación del texto */
+  gap: 12px; /* Separación entre hijos */
+  min-height: 62vh; /* Alto mínimo */
+  padding: 48px 24px; /* Relleno interno */
+  border-radius: 32px; /* Esquinas redondeadas */
+  color: var(--ink); /* Color de texto */
+  background: rgba(11, 16, 38, 0.45); /* Fondo */
+  border: 1px solid var(--line); /* Borde */
+  backdrop-filter: blur(18px); /* Desenfoque del fondo (vidrio) */
 }
+/* Temporizador / título del foco */
 .focus-panel h2 { font-size: clamp(32px, 5vw, 56px) }
+/* Círculo ornamental del modo foco */
 .focus-orbit {
-  width: 64px;
-  height: 64px;
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--gold);
+  width: 64px; /* Ancho */
+  height: 64px; /* Alto */
+  border: 1px solid rgba(255,255,255,.2); /* Borde */
+  border-radius: 50%; /* Esquinas redondeadas */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  color: var(--gold); /* Color de texto */
 }
+/* Estado (Play / Pausa) en fila */
 .focus-status { display: flex; gap: 10px; align-items: center }
 
+/* Vista calendario: grilla + agenda del día */
 .calendar-view .calendar-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
-  gap: 18px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: 1.4fr 0.8fr; /* Mes a la izquierda, agenda a la derecha */
+  gap: 18px; /* Separación entre hijos */
 }
+/* Encabezados y celdas: 7 columnas (lun–dom) */
 .calendar-weekdays, .calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  display: grid; /* CSS Grid */
+  grid-template-columns: repeat(7, 1fr); /* Columnas de la grilla */
+  gap: 8px; /* Separación entre hijos */
 }
+/* Espacio bajo los nombres de día */
 .calendar-weekdays { margin-bottom: 8px }
+/* Nombre de cada día de la semana */
 .calendar-weekdays span {
-  text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-align: center; /* Alineación del texto */
+  color: var(--muted); /* Color de texto */
+  font-size: 11px; /* Tamaño de fuente */
+  letter-spacing: 0.08em; /* Espaciado entre letras */
+  text-transform: uppercase; /* Mayúsculas / capitalización */
 }
+/* Contenedor de los días del mes */
 .calendar-days {
-  padding: 12px;
-  border-radius: 24px;
+  padding: 12px; /* Relleno interno */
+  border-radius: 24px; /* Esquinas redondeadas */
 }
+/* Celda-botón de un día */
 .calendar-day {
-  min-height: 72px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  color: var(--ink);
+  min-height: 72px; /* Alto mínimo */
+  border: 0; /* Borde */
+  border-radius: 14px; /* Esquinas redondeadas */
+  background: transparent; /* Fondo */
+  display: grid; /* CSS Grid */
+  gap: 4px; /* Separación entre hijos */
+  justify-items: center; /* Alinea celdas hacia el centro */
+  color: var(--ink); /* Color de texto */
 }
+/* Oculta un span interno (reservado) */
 .calendar-day span { display: none }
+/* Número del día con cifras tabulares */
 .calendar-day b { font-variant-numeric: tabular-nums; font-size: 16px }
+/* Día seleccionado: fondo índigo */
 .calendar-day.selected { background: var(--indigo); color: #fff }
+/* Texto blanco en el día seleccionado */
 .calendar-day.selected span, .calendar-day.selected b { color: #fff }
+/* Celdas vacías del mes anterior/siguiente: no clicables */
 .calendar-day-empty { pointer-events: none }
+/* Punto dorado: ese día tiene tareas */
 .has-task {
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
+  display: block; /* Caja de bloque */
+  width: 6px; /* Ancho */
+  height: 6px; /* Alto */
+  border-radius: 50%; /* Esquinas redondeadas */
+  background: var(--gold); /* Fondo */
 }
+/* En el día seleccionado el punto pasa a blush */
 .calendar-day.selected .has-task { background: var(--blush) }
+/* Controles prev / mes / next */
 .calendar-controls { display: flex; align-items: center; gap: 8px }
+/* Nombre del mes centrado */
 .calendar-month { min-width: 160px; text-align: center; text-transform: capitalize; font-weight: 600 }
+/* Panel de agenda del día elegido */
 .day-agenda {
-  padding: 20px;
-  border-radius: 24px;
-  display: grid;
-  gap: 10px;
-  align-content: start;
+  padding: 20px; /* Relleno interno */
+  border-radius: 24px; /* Esquinas redondeadas */
+  display: grid; /* CSS Grid */
+  gap: 10px; /* Separación entre hijos */
+  align-content: start; /* Las tareas se pegan arriba */
 }
+/* Separación entre tareas de agenda */
 .day-agenda .agenda-task,
 .panel-card .agenda-task { margin-bottom: 8px }
+/* Enlace “ver calendario” */
 .calendar-link { margin-top: 12px }
 
+/* Título de vistas de panel (compartir, chat, perfil) */
 .panel-view h2 { font-size: clamp(28px, 4vw, 44px); margin: 8px 0 10px }
+/* Intro de la vista */
 .panel-intro { color: var(--muted); max-width: 52ch; margin-bottom: 24px }
+/* Formularios y ventanas de compartir / chat / perfil */
 .share-form, .chat-window, .profile-card {
-  padding: 20px;
-  border-radius: 24px;
+  padding: 20px; /* Relleno interno */
+  border-radius: 24px; /* Esquinas redondeadas */
 }
+/* Listas de compartidos */
 .share-list, .shared-success { display: grid; gap: 10px; margin-top: 16px }
+/* Fila de un usuario compartido: nombre a la izq, acción a la der */
 .share-row { justify-content: space-between }
+/* Filas de historial de compartidos */
 .shared-success span, .received-shares span {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
+  display: flex; /* Flexbox: hijos en fila */
+  justify-content: space-between; /* Extremos opuestos */
+  gap: 12px; /* Separación entre hijos */
+  align-items: center; /* Centra verticalmente */
+  padding: 12px 0; /* Relleno interno */
+  border-bottom: 1px solid var(--line); /* Borde inferior */
 }
+/* Ventana de chat: columna de mensajes */
 .chat-window { display: grid; gap: 12px }
+/* Contacto actual (avatar + nombre) */
 .chat-contact { display: flex; align-items: center; gap: 10px }
+/* Área scrolleable de mensajes */
 .chat-messages {
-  min-height: 280px;
-  max-height: 48vh;
-  overflow: auto;
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 16px;
-  background: rgba(11, 16, 38, 0.35);
+  min-height: 280px; /* Alto mínimo */
+  max-height: 48vh; /* Alto máximo */
+  overflow: auto; /* Scroll interno */
+  display: grid; /* CSS Grid */
+  gap: 8px; /* Separación entre hijos */
+  padding: 12px; /* Relleno interno */
+  border-radius: 16px; /* Esquinas redondeadas */
+  background: rgba(11, 16, 38, 0.35); /* Fondo */
 }
+/* Burbujas de chat (entrantes y salientes) */
 .incoming, .outgoing {
-  max-width: 78%;
-  padding: 10px 12px;
-  border-radius: 16px;
-  font-size: 14px;
-  line-height: 1.45;
+  max-width: 78%; /* Ancho máximo */
+  padding: 10px 12px; /* Relleno interno */
+  border-radius: 16px; /* Esquinas redondeadas */
+  font-size: 14px; /* Tamaño de fuente */
+  line-height: 1.45; /* Interlineado */
 }
+/* Mensaje recibido: a la izquierda, vidrio */
 .incoming { justify-self: start; background: rgba(255,255,255,0.08); border: 1px solid var(--line) }
+/* Mensaje enviado: a la derecha, índigo */
 .outgoing { justify-self: end; background: var(--indigo); color: #fff }
+/* Hora del mensaje */
 .chat-meta { display: block; margin-top: 4px; opacity: 0.65; font-size: 10px }
+/* Fila de escribir mensaje */
 .chat-input { display: flex; gap: 8px }
+/* Cabecera de perfil: avatar + datos */
 .profile-card { display: flex; gap: 16px; align-items: center; margin-bottom: 18px }
+/* Avatar grande del perfil */
 .profile-avatar { width: 64px; height: 64px; font-size: 22px }
+/* Badge “DEMO” */
 .demo-tag {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  font-weight: 700;
+  display: inline-block; /* Caja en línea con ancho propio */
+  margin-top: 6px; /* Margen superior */
+  padding: 3px 8px; /* Relleno interno */
+  border-radius: 999px; /* Esquinas redondeadas */
+  background: rgba(255,255,255,0.08); /* Fondo */
+  font-size: 10px; /* Tamaño de fuente */
+  letter-spacing: 0.12em; /* Espaciado entre letras */
+  font-weight: 700; /* Grosor de la letra */
 }
+/* Listas de ajustes y datos de perfil */
 .settings-list, .profile-info {
-  display: grid;
-  gap: 0;
-  border-radius: 20px;
-  overflow: hidden;
+  display: grid; /* CSS Grid */
+  gap: 0; /* Separación entre hijos */
+  border-radius: 20px; /* Esquinas redondeadas */
+  overflow: hidden; /* Recorta las filas al radio */
 }
+/* Cada ajuste: texto a la izquierda, control a la derecha */
 .settings-list label {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px 16px;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--line);
+  display: grid; /* CSS Grid */
+  grid-template-columns: 1fr auto; /* Columnas de la grilla */
+  gap: 8px 16px; /* Separación entre hijos */
+  padding: 16px 18px; /* Relleno interno */
+  border-bottom: 1px solid var(--line); /* Borde inferior */
 }
+/* Bloque de info (email, rol…) */
 .profile-info { padding: 16px 18px; gap: 6px }
+/* Etiqueta pequeña de un dato */
 .profile-info span { color: var(--muted); font-size: 12px }
+/* Botón logout en perfil */
 .logout-profile { margin-top: 20px }
 
+/* Fondo oscuro del modal (centra el diálogo) */
 .modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(8, 11, 28, 0.62);
-  animation: fade var(--motion-fast) var(--ease);
+  position: fixed; /* Fijo al viewport */
+  inset: 0; /* Top/right/bottom/left a la vez */
+  z-index: 40; /* Encima de toda la app */
+  display: grid; /* CSS Grid */
+  place-items: center; /* Centra en ambos ejes (grid/flex) */
+  padding: 20px; /* Relleno interno */
+  background: rgba(8, 11, 28, 0.62); /* Fondo */
+  animation: fade var(--motion-fast) var(--ease); /* Animación por keyframes */
 }
+/* Diálogo modal de crear/editar tarea */
 .modal {
-  width: min(640px, 100%);
-  max-height: min(90vh, 820px);
-  overflow: auto;
-  padding: 22px;
-  border-radius: 28px;
-  box-shadow: var(--shadow-lift);
-  animation: pop var(--motion-fast) var(--ease);
+  width: min(640px, 100%); /* Ancho */
+  max-height: min(90vh, 820px); /* Alto máximo */
+  overflow: auto; /* Qué hacer si se desborda */
+  padding: 22px; /* Relleno interno */
+  border-radius: 28px; /* Esquinas redondeadas */
+  box-shadow: var(--shadow-lift); /* Sombra */
+  animation: pop var(--motion-fast) var(--ease); /* Escala al aparecer */
 }
+/* Cabecera del modal: título + cerrar */
 .modal-header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px }
+/* Dos columnas en el formulario del modal */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+/* Botones del pie del formulario */
 .form-actions { display: flex; gap: 12px; align-items: center }
+/* Variante centrada (alarma) */
 .form-actions.center { justify-content: center }
+/* Modal de alarma: texto centrado */
 .alarm-modal { text-align: center }
 
+/* Pista de la barra de progreso */
 .progress-track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden;
-  margin-top: 10px;
+  height: 6px; /* Alto */
+  border-radius: 999px; /* Esquinas redondeadas */
+  background: rgba(255,255,255,0.08); /* Fondo */
+  overflow: hidden; /* Qué hacer si se desborda */
+  margin-top: 10px; /* Margen superior */
 }
+/* Relleno degradado índigo → lila → blush */
 .progress-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--indigo), var(--lilac), var(--blush));
+  height: 100%; /* Alto */
+  border-radius: inherit; /* Esquinas redondeadas */
+  background: linear-gradient(90deg, var(--indigo), var(--lilac), var(--blush)); /* Fondo */
 }
 
+/* Entrada: sube y aparece (landing y vistas) */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(12px) }
-  to { opacity: 1; transform: none }
+  from { opacity: 0; transform: translateY(12px) } /* Estado inicial */
+  to { opacity: 1; transform: none } /* Estado final */
 }
+/* Fundido del backdrop del modal */
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+/* Pop del modal: escala 0.96 → 1 */
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.96) }
-  to { opacity: 1; transform: none }
+  from { opacity: 0; transform: scale(0.96) } /* Estado inicial */
+  to { opacity: 1; transform: none } /* Estado final */
 }
+/* Giro continuo del spinner */
 @keyframes spin { to { transform: rotate(360deg) } }
 
+/* Accesibilidad: si el usuario pide menos movimiento, se apagan animaciones */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
+    animation: none !important; /* Sin keyframes */
+    transition: none !important; /* Sin transiciones */
+    scroll-behavior: auto !important; /* Scroll instantáneo */
   }
 }
 
+/* Tablet / desktop estrecho: una columna en hero, bandas, dashboard, calendario y auth */
 @media (max-width: 980px) {
   .hero, .problem-band, .benefit-band, .dash-grid, .calendar-view .calendar-layout, .auth-page {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Apila las columnas */
   }
-  .landing-nav { display: none }
-  .feature-grid { grid-template-columns: 1fr 1fr }
-  .stats-grid, .quick-actions, .faq-grid { grid-template-columns: 1fr 1fr }
-  .form-grid { grid-template-columns: 1fr }
-  .ascii-stage { margin: 0 auto }
+  .landing-nav { display: none } /* Oculta la nav de escritorio */
+  .feature-grid { grid-template-columns: 1fr 1fr } /* Features a 2 columnas */
+  .stats-grid, .quick-actions, .faq-grid { grid-template-columns: 1fr 1fr } /* Stats, atajos y FAQ a 2 */
+  .form-grid { grid-template-columns: 1fr } /* Formulario del modal a 1 columna */
+  .ascii-stage { margin: 0 auto } /* Centra el visual del hero */
 }
 
+/* Móvil: sidebar off-canvas, bottom nav y auth simplificado */
 @media (max-width: 850px) {
-  .workspace { width: 100%; margin-left: 0 }
+  .workspace { width: 100%; margin-left: 0 } /* El contenido usa todo el ancho */
   .sidebar {
-    transform: translateX(-110%);
-    transition: transform var(--motion-fast) var(--ease);
+    transform: translateX(-110%); /* Lo saca a la izquierda */
+    transition: transform var(--motion-fast) var(--ease); /* Animación de cambios */
   }
-  .sidebar.is-open { transform: none }
+  .sidebar.is-open { transform: none } /* Lo muestra al abrir el menú */
   .menu-toggle, .close-nav {
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--surface);
-    color: var(--ink);
+    display: grid; /* Aparecen hamburguesa y cerrar */
+    place-items: center; /* Centra en ambos ejes (grid/flex) */
+    width: 42px; /* Ancho */
+    height: 42px; /* Alto */
+    border: 1px solid var(--line); /* Borde */
+    border-radius: 12px; /* Esquinas redondeadas */
+    background: var(--surface); /* Fondo */
+    color: var(--ink); /* Color de texto */
   }
   .close-nav { border-color: var(--dark-line); color: var(--ink); background: transparent }
   .mobile-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 25;
-    background: rgba(8, 11, 28, 0.45);
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Fijo al viewport */
+    inset: 0; /* Top/right/bottom/left a la vez */
+    z-index: 25; /* Debajo del sidebar (30), encima del contenido */
+    background: rgba(8, 11, 28, 0.45); /* Fondo */
   }
-  .sidebar.is-open + .mobile-overlay { display: block }
+  .sidebar.is-open + .mobile-overlay { display: block } /* Oscurece al abrir el menú */
   .bottom-nav {
-    display: flex;
-    position: fixed;
-    z-index: 20;
-    left: 12px;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
-    padding: 8px;
-    border-radius: 22px;
-    background: rgba(8, 11, 28, 0.86);
-    box-shadow: var(--shadow-lift);
-    justify-content: space-around;
-    backdrop-filter: blur(16px);
+    display: flex; /* Barra inferior fija */
+    position: fixed; /* Fijo al viewport */
+    z-index: 20; /* Orden de apilamiento */
+    left: 12px; /* Desplazamiento desde la izquierda */
+    right: 12px; /* Desplazamiento desde la derecha */
+    bottom: calc(12px + env(safe-area-inset-bottom)); /* Respeta el notch/home */
+    padding: 8px; /* Relleno interno */
+    border-radius: 22px; /* Esquinas redondeadas */
+    background: rgba(8, 11, 28, 0.86); /* Fondo */
+    box-shadow: var(--shadow-lift); /* Sombra */
+    justify-content: space-around; /* Espacio alrededor de cada ítem */
+    backdrop-filter: blur(16px); /* Desenfoque del fondo (vidrio) */
   }
   .bottom-nav button {
-    flex: 1;
-    border: 0;
-    background: transparent;
-    color: rgba(255, 214, 231, 0.62);
-    display: grid;
-    place-items: center;
-    gap: 2px;
-    min-height: 48px;
-    font-size: 10px;
-    font-weight: 600;
+    flex: 1; /* Reparte el ancho */
+    border: 0; /* Borde */
+    background: transparent; /* Fondo */
+    color: rgba(255, 214, 231, 0.62); /* Color de texto */
+    display: grid; /* CSS Grid */
+    place-items: center; /* Centra en ambos ejes (grid/flex) */
+    gap: 2px; /* Separación entre hijos */
+    min-height: 48px; /* Área de toque */
+    font-size: 10px; /* Tamaño de fuente */
+    font-weight: 600; /* Grosor de la letra */
   }
-  .bottom-nav button.active { color: #fff }
-  .content-area { width: min(1120px, calc(100% - 28px)); padding-bottom: 120px }
-  .workspace-header { padding: 14px 16px }
-  .auth-aside { display: none }
-  .auth-page { grid-template-columns: 1fr }
-  .mobile-auth-brand { display: block }
-  .hero { min-height: auto; padding-top: 24px }
+  .bottom-nav button.active { color: #fff } /* Ítem activo blanco */
+  .content-area { width: min(1120px, calc(100% - 28px)); padding-bottom: 120px } /* Hueco para la bottom nav */
+  .workspace-header { padding: 14px 16px } /* Header más compacto */
+  .auth-aside { display: none } /* Oculta el quote de auth */
+  .auth-page { grid-template-columns: 1fr } /* Auth a una columna */
+  .mobile-auth-brand { display: block } /* Muestra la marca en el panel */
+  .hero { min-height: auto; padding-top: 24px } /* Hero más bajo */
 }
 
+/* Móvil estrecho: una columna y tipografías más chicas */
 @media (max-width: 560px) {
   .landing-header, .hero, .problem-band, .feature-section, .landing-footer, .landing-faq, .benefit-band {
-    width: min(1180px, calc(100% - 28px));
+    width: min(1180px, calc(100% - 28px)); /* Márgenes laterales más chicos */
   }
-  .hero h1, .morphing-text { font-size: 36px }
-  .stats-grid, .quick-actions, .faq-grid, .feature-grid { grid-template-columns: 1fr }
-  .dash-hero, .welcome-row, .section-title, .landing-footer { flex-direction: column; align-items: start }
-  .calendar-day { min-height: 54px }
-  .modal { padding: 16px; border-radius: 22px }
-  .logo-plate { width: 84px; height: 84px }
+  .hero h1, .morphing-text { font-size: 36px } /* Título del hero más compacto */
+  .stats-grid, .quick-actions, .faq-grid, .feature-grid { grid-template-columns: 1fr } /* Todo a 1 columna */
+  .dash-hero, .welcome-row, .section-title, .landing-footer { flex-direction: column; align-items: start } /* Apila cabeceras */
+  .calendar-day { min-height: 54px } /* Celdas del mes más bajas */
+  .modal { padding: 16px; border-radius: 22px } /* Modal más compacto */
+  .logo-plate { width: 84px; height: 84px } /* Placa del logo más pequeña */
 }

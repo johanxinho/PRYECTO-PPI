@@ -1,12 +1,232 @@
-/* Contemporary visual layer — keeps the existing component structure and behavior intact. */
+/* Capa visual contemporánea de RECORDATE.
+   No cambia la estructura HTML: solo colores, radios, sombras y degradados. */
+/* Capa visual: degradado suave de fondo de la landing */
 .landing{background:linear-gradient(180deg,#f8fbff 0%,#fff 44%,#f6f8ff 100%)}
-.landing-header{position:relative;z-index:2;height:96px}.brand{color:var(--navy);letter-spacing:.08em}.brand-mark,.mini-mark{border-radius:12px;background:linear-gradient(135deg,#315efb,#6d8cff);box-shadow:0 10px 22px #315efb36}.landing-nav{gap:30px;color:#60708a;font-weight:600}.landing-nav a{position:relative}.landing-nav a:after{position:absolute;right:0;bottom:-7px;left:0;height:2px;border-radius:4px;background:var(--green);content:"";transform:scaleX(0);transition:transform .2s}.landing-nav a:hover:after{transform:scaleX(1)}
-.outline-button,.primary-button{border-radius:11px;padding:13px 19px;font-weight:700;letter-spacing:.01em}.outline-button{border-color:#ced9ec;background:#ffffffb8;box-shadow:0 4px 16px #18365c0b}.primary-button{background:linear-gradient(135deg,#315efb,#5279ff);box-shadow:0 12px 24px #315efb36}.primary-button:hover{background:linear-gradient(135deg,#244bdd,#4169ee);box-shadow:0 16px 27px #315efb40}
-.hero{position:relative;min-height:690px;gap:72px}.hero:before,.hero:after{position:absolute;z-index:0;border-radius:50%;content:"";filter:blur(4px);pointer-events:none}.hero:before{top:40px;right:-130px;width:450px;height:450px;background:radial-gradient(circle,#dce9ff 0%,#eff5ff00 67%)}.hero:after{bottom:25px;left:-180px;width:310px;height:310px;background:radial-gradient(circle,#fff0d8 0%,#fff7ec00 67%)}.hero-copy,.dashboard-preview{position:relative;z-index:1}.hero h1{color:var(--navy);font-size:clamp(45px,5.3vw,74px);letter-spacing:-.06em}.hero h1 em{color:var(--green);text-decoration:underline;text-decoration-color:#b9caff;text-decoration-thickness:8px;text-underline-offset:5px}.hero-copy>p:not(.demo-note){color:#60708a;font-size:17px}.demo-note{display:flex;align-items:center;gap:8px;color:#7c8ba3}.demo-note:before{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 5px #18a8791a;content:""}
-.dashboard-preview{border:1px solid #dae5f7;border-radius:24px;background:linear-gradient(135deg,#edf4ff,#fafdff);box-shadow:0 32px 75px #163b7140;transform:rotate(1.5deg)}.dashboard-preview:hover{transform:rotate(0) translateY(-6px);transition:transform .35s ease}.preview-body{border-color:#e4eaf3;border-radius:16px;box-shadow:0 12px 30px #18365c0e}.preview-sidebar{background:linear-gradient(180deg,#13264b,#223c70)}.preview-sidebar i:first-child{background:#ffcb7b}.preview-main strong,.preview-top{color:var(--navy)}.preview-stats span{border:1px solid #e6ecf7;background:#f8faff}.preview-stats b{color:var(--green)}
-.problem-band{border-color:#e6ecf4}.problem-band h2,.benefit-band h2,.section-heading h2{color:var(--navy)}.problem-band p,.feature-item p{color:#6c7b93}.feature-section{padding-top:120px;padding-bottom:120px}.feature-grid{border-color:#dfe7f2}.feature-item{position:relative;padding-top:31px;border-color:#dfe7f2}.feature-item>span{color:var(--green)}.feature-item h3{color:var(--navy)}.feature-item:before{position:absolute;top:22px;left:0;width:36px;height:3px;border-radius:3px;background:linear-gradient(90deg,#315efb,#90a9ff);content:""}.benefit-band{position:relative;overflow:hidden;background:linear-gradient(115deg,#0d1b36,#193d79)}.benefit-band:after{position:absolute;right:-100px;bottom:-160px;width:410px;height:410px;border:1px solid #ffffff20;border-radius:50%;box-shadow:0 0 0 45px #ffffff08,0 0 0 90px #ffffff05;content:""}.benefit-band>*{position:relative;z-index:1}.benefit-band .primary-button{background:linear-gradient(135deg,#ffbd65,#ffdc95);box-shadow:none}.landing-footer{color:#738198}
-.auth-page{background:#f7f9fd}.auth-aside{position:relative;overflow:hidden;background:linear-gradient(145deg,#0d1b36,#244c91)}.auth-aside:after{position:absolute;right:-150px;bottom:-140px;width:430px;height:430px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 50px #ffffff0a,0 0 0 100px #ffffff08;content:""}.auth-quote,.auth-aside .brand,.back-link,.auth-footer{position:relative;z-index:1}.auth-panel{padding:38px;border:1px solid #e5ebf5;border-radius:24px;background:#fff;box-shadow:0 25px 65px #17335c12}.auth-panel h2{color:var(--navy)}.auth-panel input,.task-form input,.task-form select,.task-form textarea,.share-form input,.chat-input input{border-color:#dbe3f0;background:#fbfcff}.auth-panel input:focus,.task-form input:focus,.task-form select:focus,.task-form textarea:focus,.share-form input:focus,.chat-input input:focus{border-color:#7896ff;box-shadow:0 0 0 4px #315efb16}
-.app-shell{background:linear-gradient(135deg,#f7f9fd,#eef3fb)}.sidebar{width:262px;padding:28px 16px 20px;background:linear-gradient(180deg,#0e1b35,#182f5b);box-shadow:9px 0 30px #0d1b3526}.sidebar .brand{color:#fff}.sidebar-caption{margin-top:53px;color:#7c9bd1}.nav-item{margin:2px 0;border-radius:10px;padding:12px;color:#b6c8e9;font-weight:600}.nav-item:hover,.nav-item.active{background:#ffffff16;box-shadow:none}.nav-item.active{color:#fff;box-shadow:inset 3px 0 #ffbf66}.nav-symbol{color:#94b2e8}.workspace{width:calc(100% - 262px);margin-left:262px}.workspace-header{position:sticky;z-index:5;top:0;min-height:112px;border-color:#e4eaf3;background:#ffffffdf;backdrop-filter:blur(16px)}.workspace-header h1,.section-title h2,.panel-view h2,.calendar-view h2{color:var(--navy)}.notification-button{color:var(--green)}.avatar{color:#fff;background:linear-gradient(135deg,#315efb,#7994ff);box-shadow:0 5px 13px #315efb30}.content-area{max-width:1180px}.lead,.panel-intro{color:#6a7890}.search-wrap{border:1px solid #dfe6f1;border-radius:12px;padding:0 13px;background:#fff;box-shadow:0 5px 18px #18365c08}.stats-grid{gap:18px}.stat-card{position:relative;overflow:hidden;min-height:140px;border:1px solid #e7ecf5;border-radius:16px;box-shadow:0 10px 28px #193d700d}.stat-card:after{position:absolute;right:-18px;bottom:-24px;width:83px;height:83px;border-radius:50%;background:#315efb0d;content:""}.stat-card strong{color:var(--navy)}.stat-green{border-top-color:#315efb}.stat-gold{border-top-color:#ffb85c}.stat-coral{border-top-color:#dc6d78}.stat-ink{border-top-color:#486690}
-.task-card,.calendar-days,.day-agenda,.share-form,.chat-window,.profile-card{border-color:#e2e9f3;border-radius:15px;box-shadow:0 8px 24px #1638640a}.task-card{padding:19px;background:#ffffffeb}.task-card:hover{border-color:#c7d5fb;box-shadow:0 14px 30px #315efb18}.task-heading h3,.share-row b,.focus-choice b,.agenda-task b,.profile-card h3{color:var(--navy)}.check-button{border-color:#b9c8e5}.is-complete .check-button{border-color:var(--success);background:var(--success)}.priority{padding:4px 9px}.priority-alta{color:#bd4055;background:#fff0f2}.priority-media{color:#a06414;background:#fff5e5}.priority-baja{color:#247a61;background:#e7f8f1}.notice{border-color:#b9d8ca;border-radius:12px;color:#167a58;background:#effbf5}.empty-state{border-color:#bfcef0;background:#fff}.focus-panel{border-radius:22px;background:linear-gradient(135deg,#10254b,#214989);box-shadow:0 26px 55px #18365c33}.calendar-day{border-radius:10px;background:#f5f8fd}.calendar-day.selected,.calendar-day.selected b{background:var(--green)}.agenda-task,.focus-choice,.share-row{border-color:#e1e8f3;border-radius:11px}.chat-window{background:#fff}.chat-contact{border-color:#e5ebf4}.chat-messages{background:#f7f9fd}.incoming{background:#e9efff}.outgoing{background:linear-gradient(135deg,#315efb,#587dff)}.profile-card{padding:27px}.profile-info,.settings-list{border-radius:14px;background:#f0f4ff}.modal{border-radius:20px;box-shadow:0 30px 80px #0d1b3566}.modal-backdrop{background:#0d1b3573}
-@media(max-width:850px){.workspace{width:100%;margin-left:0}.sidebar{width:262px}.auth-panel{border:0;box-shadow:none}.hero{min-height:auto}.dashboard-preview{transform:none}.dashboard-preview:hover{transform:translateY(-3px)}}
-@media(max-width:560px){.hero h1{font-size:45px}.stats-grid{gap:10px}.stat-card{border-radius:13px}.auth-panel{padding:0}.workspace-header{padding-right:18px;padding-left:18px}}
+/* Cabecera un poco más alta y por encima de los blobs */
+.landing-header{position:relative;z-index:2;height:96px}
+/* Marca en azul navy y tracking más corto */
+.brand{color:var(--navy);letter-spacing:.08em}
+/* Isotipo con degradado azul y sombra */
+.brand-mark,.mini-mark{border-radius:12px;background:linear-gradient(135deg,#315efb,#6d8cff);box-shadow:0 10px 22px #315efb36}
+/* Menú con más peso tipográfico y color pizarra */
+.landing-nav{gap:30px;color:#60708a;font-weight:600}
+/* Posición relativa para el subrayado animado */
+.landing-nav a{position:relative}
+/* Línea verde que crece desde escala 0 */
+.landing-nav a:after{position:absolute;right:0;bottom:-7px;left:0;height:2px;border-radius:4px;background:var(--green);content:"";transform:scaleX(0);transition:transform .2s}
+/* Al hover la línea se muestra completa */
+.landing-nav a:hover:after{transform:scaleX(1)}
+/* Botones más redondeados (capa contemporánea) */
+.outline-button,.primary-button{border-radius:11px;padding:13px 19px;font-weight:700;letter-spacing:.01em}
+/* Outline con borde lila-gris y sombra suave */
+.outline-button{border-color:#ced9ec;background:#ffffffb8;box-shadow:0 4px 16px #18365c0b}
+/* Primario en degradado azul */
+.primary-button{background:linear-gradient(135deg,#315efb,#5279ff);box-shadow:0 12px 24px #315efb36}
+/* Hover: degradado más oscuro y sombra mayor */
+.primary-button:hover{background:linear-gradient(135deg,#244bdd,#4169ee);box-shadow:0 16px 27px #315efb40}
+/* Héroe más alto; relative para los blobs decorativos */
+.hero{position:relative;min-height:690px;gap:72px}
+/* Blobs circulares desenfocados (no reciben clics) */
+.hero:before,.hero:after{position:absolute;z-index:0;border-radius:50%;content:"";filter:blur(4px);pointer-events:none}
+/* Blob azul arriba a la derecha */
+.hero:before{top:40px;right:-130px;width:450px;height:450px;background:radial-gradient(circle,#dce9ff 0%,#eff5ff00 67%)}
+/* Blob dorado abajo a la izquierda */
+.hero:after{bottom:25px;left:-180px;width:310px;height:310px;background:radial-gradient(circle,#fff0d8 0%,#fff7ec00 67%)}
+/* Quedan por encima de los blobs (z-index 1) */
+.hero-copy,.dashboard-preview{position:relative;z-index:1}
+/* Título navy más grande y tracking más cerrado */
+.hero h1{color:var(--navy);font-size:clamp(45px,5.3vw,74px);letter-spacing:-.06em}
+/* Palabra destacada: verde con subrayado grueso */
+.hero h1 em{color:var(--green);text-decoration:underline;text-decoration-color:#b9caff;text-decoration-thickness:8px;text-underline-offset:5px}
+/* Párrafo del héroe en gris pizarra */
+.hero-copy>p:not(.demo-note){color:#60708a;font-size:17px}
+/* Nota demo como fila con punto de estado */
+.demo-note{display:flex;align-items:center;gap:8px;color:#7c8ba3}
+/* Punto verde con halo (simula 'en vivo') */
+.demo-note:before{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 5px #18a8791a;content:""}
+/* Maqueta con borde azul y mayor radio */
+.dashboard-preview{border:1px solid #dae5f7;border-radius:24px;background:linear-gradient(135deg,#edf4ff,#fafdff);box-shadow:0 32px 75px #163b7140;transform:rotate(1.5deg)}
+/* Al hover se endereza y sube */
+.dashboard-preview:hover{transform:rotate(0) translateY(-6px);transition:transform .35s ease}
+/* Cuerpo de maqueta con sombra y radio 16 */
+.preview-body{border-color:#e4eaf3;border-radius:16px;box-shadow:0 12px 30px #18365c0e}
+/* Riel con degradado navy */
+.preview-sidebar{background:linear-gradient(180deg,#13264b,#223c70)}
+/* Rayita activa en dorado */
+.preview-sidebar i:first-child{background:#ffcb7b}
+/* Títulos de maqueta en navy */
+.preview-main strong,.preview-top{color:var(--navy)}
+/* Mini stats con borde y fondo casi blanco */
+.preview-stats span{border:1px solid #e6ecf7;background:#f8faff}
+/* Número en azul de marca */
+.preview-stats b{color:var(--green)}
+/* Borde de la banda en gris-azul */
+.problem-band{border-color:#e6ecf4}
+/* Títulos de sección en navy */
+.problem-band h2,.benefit-band h2,.section-heading h2{color:var(--navy)}
+/* Párrafos en gris pizarra */
+.problem-band p,.feature-item p{color:#6c7b93}
+/* Más aire vertical en características */
+.feature-section{padding-top:120px;padding-bottom:120px}
+/* Líneas de la grilla en azul muy claro */
+.feature-grid{border-color:#dfe7f2}
+/* Relative para la barrita decorativa :before */
+.feature-item{position:relative;padding-top:31px;border-color:#dfe7f2}
+/* Etiqueta de característica en azul */
+.feature-item>span{color:var(--green)}
+/* Título de característica en navy */
+.feature-item h3{color:var(--navy)}
+/* Barrita degradada sobre cada característica */
+.feature-item:before{position:absolute;top:22px;left:0;width:36px;height:3px;border-radius:3px;background:linear-gradient(90deg,#315efb,#90a9ff);content:""}
+/* Banda oscura con degradado navy (recorte de blobs) */
+.benefit-band{position:relative;overflow:hidden;background:linear-gradient(115deg,#0d1b36,#193d79)}
+/* Círculos concéntricos decorativos abajo a la derecha */
+.benefit-band:after{position:absolute;right:-100px;bottom:-160px;width:410px;height:410px;border:1px solid #ffffff20;border-radius:50%;box-shadow:0 0 0 45px #ffffff08,0 0 0 90px #ffffff05;content:""}
+/* Contenido de la banda por encima del círculo */
+.benefit-band>*{position:relative;z-index:1}
+/* Botón dorado claro, sin sombra extra */
+.benefit-band .primary-button{background:linear-gradient(135deg,#ffbd65,#ffdc95);box-shadow:none}
+/* Pie en gris pizarra */
+.landing-footer{color:#738198}
+/* Fondo gris-azul de las pantallas de auth */
+.auth-page{background:#f7f9fd}
+/* Aside de auth con degradado y recorte */
+.auth-aside{position:relative;overflow:hidden;background:linear-gradient(145deg,#0d1b36,#244c91)}
+/* Círculos decorativos del aside */
+.auth-aside:after{position:absolute;right:-150px;bottom:-140px;width:430px;height:430px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 50px #ffffff0a,0 0 0 100px #ffffff08;content:""}
+/* Textos del aside por encima del círculo */
+.auth-quote,.auth-aside .brand,.back-link,.auth-footer{position:relative;z-index:1}
+/* Tarjeta blanca del formulario con sombra y radio 24 */
+.auth-panel{padding:38px;border:1px solid #e5ebf5;border-radius:24px;background:#fff;box-shadow:0 25px 65px #17335c12}
+/* Título del form en navy */
+.auth-panel h2{color:var(--navy)}
+/* Inputs con borde azul-gris */
+.auth-panel input,.task-form input,.task-form select,.task-form textarea,.share-form input,.chat-input input{border-color:#dbe3f0;background:#fbfcff}
+/* Foco azul con anillo semitransparente */
+.auth-panel input:focus,.task-form input:focus,.task-form select:focus,.task-form textarea:focus,.share-form input:focus,.chat-input input:focus{border-color:#7896ff;box-shadow:0 0 0 4px #315efb16}
+/* Fondo degradado del cascarón autenticado */
+.app-shell{background:linear-gradient(135deg,#f7f9fd,#eef3fb)}
+/* Sidebar navy más ancho, con sombra lateral */
+.sidebar{width:262px;padding:28px 16px 20px;background:linear-gradient(180deg,#0e1b35,#182f5b);box-shadow:9px 0 30px #0d1b3526}
+/* Marca blanca en el sidebar navy */
+.sidebar .brand{color:#fff}
+/* Rótulos del menú en azul claro */
+.sidebar-caption{margin-top:53px;color:#7c9bd1}
+/* Ítems del menú con radio 10 y peso 600 */
+.nav-item{margin:2px 0;border-radius:10px;padding:12px;color:#b6c8e9;font-weight:600}
+/* Hover: velo blanco semitransparente */
+.nav-item:hover,.nav-item.active{background:#ffffff16;box-shadow:none}
+/* Activo: texto blanco y barra dorada interior */
+.nav-item.active{color:#fff;box-shadow:inset 3px 0 #ffbf66}
+/* Símbolo del menú en azul claro */
+.nav-symbol{color:#94b2e8}
+/* Workspace desplazado 262px (ancho nuevo del sidebar) */
+.workspace{width:calc(100% - 262px);margin-left:262px}
+/* Header pegajoso con blur (se queda al hacer scroll) */
+.workspace-header{position:sticky;z-index:5;top:0;min-height:112px;border-color:#e4eaf3;background:#ffffffdf;backdrop-filter:blur(16px)}
+/* Títulos internos en navy */
+.workspace-header h1,.section-title h2,.panel-view h2,.calendar-view h2{color:var(--navy)}
+/* Campana en azul de marca */
+.notification-button{color:var(--green)}
+/* Avatar con degradado azul y sombra */
+.avatar{color:#fff;background:linear-gradient(135deg,#315efb,#7994ff);box-shadow:0 5px 13px #315efb30}
+/* Contenido un poco más ancho (1180px) */
+.content-area{max-width:1180px}
+/* Textos de apoyo en gris pizarra */
+.lead,.panel-intro{color:#6a7890}
+/* Búsqueda como pastilla blanca con borde */
+.search-wrap{border:1px solid #dfe6f1;border-radius:12px;padding:0 13px;background:#fff;box-shadow:0 5px 18px #18365c08}
+/* Más separación entre estadísticas */
+.stats-grid{gap:18px}
+/* Tarjeta de stat con radio 16 y círculo decorativo */
+.stat-card{position:relative;overflow:hidden;min-height:140px;border:1px solid #e7ecf5;border-radius:16px;box-shadow:0 10px 28px #193d700d}
+/* Círculo azul suave en la esquina de la stat */
+.stat-card:after{position:absolute;right:-18px;bottom:-24px;width:83px;height:83px;border-radius:50%;background:#315efb0d;content:""}
+/* Número de la stat en navy */
+.stat-card strong{color:var(--navy)}
+/* Acento superior azul (capa contemporánea) */
+.stat-green{border-top-color:#315efb}
+/* Acento superior naranja */
+.stat-gold{border-top-color:#ffb85c}
+/* Acento superior coral */
+.stat-coral{border-top-color:#dc6d78}
+/* Acento superior azul-gris */
+.stat-ink{border-top-color:#486690}
+/* Tarjetas internas: borde azul-gris, radio 15 y sombra */
+.task-card,.calendar-days,.day-agenda,.share-form,.chat-window,.profile-card{border-color:#e2e9f3;border-radius:15px;box-shadow:0 8px 24px #1638640a}
+/* Tarea con más padding y fondo semitransparente */
+.task-card{padding:19px;background:#ffffffeb}
+/* Hover azul de la tarjeta de tarea */
+.task-card:hover{border-color:#c7d5fb;box-shadow:0 14px 30px #315efb18}
+/* Títulos de filas en navy */
+.task-heading h3,.share-row b,.focus-choice b,.agenda-task b,.profile-card h3{color:var(--navy)}
+/* Círculo de check con borde azul-gris */
+.check-button{border-color:#b9c8e5}
+/* Check completado en verde success */
+.is-complete .check-button{border-color:var(--success);background:var(--success)}
+/* Chip de prioridad un poco más holgado */
+.priority{padding:4px 9px}
+/* Alta: rojo sobre rosado */
+.priority-alta{color:#bd4055;background:#fff0f2}
+/* Media: ámbar sobre crema */
+.priority-media{color:#a06414;background:#fff5e5}
+/* Baja: verde sobre menta */
+.priority-baja{color:#247a61;background:#e7f8f1}
+/* Aviso de éxito más redondeado */
+.notice{border-color:#b9d8ca;border-radius:12px;color:#167a58;background:#effbf5}
+/* Vacío con borde azul y fondo blanco */
+.empty-state{border-color:#bfcef0;background:#fff}
+/* Panel de enfoque con degradado navy */
+.focus-panel{border-radius:22px;background:linear-gradient(135deg,#10254b,#214989);box-shadow:0 26px 55px #18365c33}
+/* Día del calendario con fondo azul muy claro */
+.calendar-day{border-radius:10px;background:#f5f8fd}
+/* Día seleccionado en azul de marca */
+.calendar-day.selected,.calendar-day.selected b{background:var(--green)}
+/* Filas internas con radio 11 */
+.agenda-task,.focus-choice,.share-row{border-color:#e1e8f3;border-radius:11px}
+/* Chat con fondo blanco */
+.chat-window{background:#fff}
+/* Cabecera del chat con borde azul-gris */
+.chat-contact{border-color:#e5ebf4}
+/* Fondo de burbujas gris-azul */
+.chat-messages{background:#f7f9fd}
+/* Burbuja recibida azul clara */
+.incoming{background:#e9efff}
+/* Burbuja enviada con degradado azul */
+.outgoing{background:linear-gradient(135deg,#315efb,#587dff)}
+/* Perfil con más padding */
+.profile-card{padding:27px}
+/* Bloques de perfil sobre lavanda */
+.profile-info,.settings-list{border-radius:14px;background:#f0f4ff}
+/* Modal más redondeado y con sombra profunda */
+.modal{border-radius:20px;box-shadow:0 30px 80px #0d1b3566}
+/* Backdrop navy semitransparente */
+.modal-backdrop{background:#0d1b3573}
+/* Tablet y pantallas medianas (hasta 850px): apila columnas y muestra el menú hamburguesa */
+@media(max-width:850px){
+  /* Workspace desplazado 262px (ancho nuevo del sidebar) (pantalla ≤ 850px) */
+  .workspace{width:100%;margin-left:0}
+  /* Sidebar navy más ancho, con sombra lateral (pantalla ≤ 850px) */
+  .sidebar{width:262px}
+  /* Tarjeta blanca del formulario con sombra y radio 24 (pantalla ≤ 850px) */
+  .auth-panel{border:0;box-shadow:none}
+  /* Héroe más alto; relative para los blobs decorativos (pantalla ≤ 850px) */
+  .hero{min-height:auto}
+  /* Maqueta con borde azul y mayor radio (pantalla ≤ 850px) */
+  .dashboard-preview{transform:none}
+  /* Al hover se endereza y sube (pantalla ≤ 850px) */
+  .dashboard-preview:hover{transform:translateY(-3px)}
+}
+/* Celular (hasta 560px): una columna, tipografías más chicas y botones a todo el ancho */
+@media(max-width:560px){
+  /* Título navy más grande y tracking más cerrado (pantalla ≤ 560px) */
+  .hero h1{font-size:45px}
+  /* Más separación entre estadísticas (pantalla ≤ 560px) */
+  .stats-grid{gap:10px}
+  /* Tarjeta de stat con radio 16 y círculo decorativo (pantalla ≤ 560px) */
+  .stat-card{border-radius:13px}
+  /* Tarjeta blanca del formulario con sombra y radio 24 (pantalla ≤ 560px) */
+  .auth-panel{padding:0}
+  /* Header pegajoso con blur (se queda al hacer scroll) (pantalla ≤ 560px) */
+  .workspace-header{padding-right:18px;padding-left:18px}
+}

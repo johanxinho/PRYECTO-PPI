@@ -121,6 +121,7 @@ La migración crea las tablas, políticas RLS y funciones necesarias para perfil
 
 ## Documentación adicional
 
+- [docs/MANUAL-DE-USUARIO.md](docs/MANUAL-DE-USUARIO.md): cómo usar la página publicada (portada, cuenta, demo, tareas, calendario, enfoque, mensajes).
 - [docs/PROJECT-DOCUMENTATION.md](docs/PROJECT-DOCUMENTATION.md): documentación técnica del repositorio, flujo del proyecto y estado real de funciones.
 - [ppi-react/README.md](ppi-react/README.md): guía específica de la aplicación principal.
 

@@ -1,222 +1,390 @@
-# Manual de usuario - RECORDATE
+# Manual de usuario — RECORDATE
 
 ## Bienvenido a RECORDATE
-RECORDATE es una plataforma pensada para ayudarte a organizar tus tareas, trabajos, entregas y actividades académicas de forma más clara y ordenada. Con RECORDATE puedes registrar tus pendientes, revisar tu calendario, recibir recordatorios, comunicarte con otros usuarios y mantener un mejor control de tu tiempo.
 
-## 1. ¿Qué puedes hacer en RECORDATE?
-Con RECORDATE puedes:
-- Crear tareas académicas y personales.
-- Ver tus actividades en una lista organizada.
-- Buscar tareas por título, materia o descripción.
-- Filtrar tareas por prioridad, estado o fecha.
-- Revisar tu agenda en formato de calendario.
-- Activar recordatorios para no olvidar entregas importantes.
-- Entrar al modo enfoque para trabajar en una sola actividad.
-- Compartir tareas con otros usuarios.
-- Enviar mensajes internos dentro de la plataforma.
-- Configurar tu perfil y preferencias.
+RECORDATE es la agenda académica del Proyecto Pedagógico Integrador (PPI) de grado 11 de la IE La Candelaria, Medellín. Sirve para organizar tareas, trabajos, entregas y recordatorios en un solo lugar, desde el celular o el computador.
 
-## 2. Requisitos para usar la página
-Para utilizar RECORDATE, necesitas:
-- Un navegador actualizado (Chrome, Edge, Firefox o Safari).
+Este manual explica **cómo usar la página publicada**, no cómo programarla.
+
+**Dirección de la aplicación:** [https://johanxinho.github.io/PRYECTO-PPI/](https://johanxinho.github.io/PRYECTO-PPI/)
+
+**Código del proyecto:** [https://github.com/johanxinho/PRYECTO-PPI](https://github.com/johanxinho/PRYECTO-PPI)
+
+---
+
+## 1. ¿Qué puedes hacer?
+
+- Ver la portada del proyecto y conocer RECORDATE antes de entrar.
+- Crear una cuenta real (se guarda en la nube) o explorar una **demostración local**.
+- Registrar, editar, completar y eliminar tareas académicas.
+- Buscar y filtrar por título, materia, prioridad, estado o fecha.
+- Revisar la agenda en calendario.
+- Activar recordatorios y alarmas mientras la página está abierta.
+- Trabajar en **modo enfoque** (una sola tarea en pantalla).
+- Compartir actividades con compañeros registrados.
+- Enviar mensajes internos.
+- Adjuntar una imagen a una tarea (máximo 5 MB).
+- Ajustar perfil, notificaciones del navegador y preferencias.
+
+---
+
+## 2. Requisitos
+
+- Un navegador actualizado: Chrome, Edge, Firefox o Safari.
 - Conexión a internet.
-- Una cuenta de usuario activa.
-- Permisos de notificaciones del navegador si deseas recibir avisos.
+- Para guardar la agenda en la nube: una cuenta con correo y contraseña.
+- Para avisos del navegador: aceptar el permiso de notificaciones cuando RECORDATE lo pida.
+
+La página funciona en computador y en celular. En el teléfono el menú aparece abajo, pensado para usarlo con una mano.
+
+---
 
 ## 3. Cómo abrir la página
-1. Abre tu navegador.
-2. Ingresa la URL de la aplicación.
-3. Espera a que la página cargue.
-4. Si aparece la pantalla de inicio, ya puedes iniciar sesión o crear una cuenta.
 
-## 4. Crear una cuenta
-1. En la pantalla principal, pulsa la opción "Regístrate".
-2. Escribe tu nombre completo.
-3. Escribe tu correo electrónico.
-4. Crea una contraseña segura.
-5. Confirma la contraseña.
-6. Presiona "Crear mi cuenta".
-7. Si el sistema solicita verificación, revisa tu correo y escribe el código de 6 dígitos que te enviaron.
+1. Abre el navegador.
+2. Entra a [https://johanxinho.github.io/PRYECTO-PPI/](https://johanxinho.github.io/PRYECTO-PPI/).
+3. Espera a que cargue la **portada** (fondo oscuro, logo del calendario y el retrato animado a la derecha).
+4. Desde ahí puedes leer el proyecto, iniciar sesión o entrar a la demostración.
 
-## 5. Iniciar sesión
-1. En la pantalla principal, selecciona "Iniciar sesión".
-2. Escribe tu correo electrónico.
-3. Escribe tu contraseña.
-4. Pulsa "Iniciar sesión".
+Si la dirección no abre, recarga o prueba otro navegador. El enlace debe incluir `/PRYECTO-PPI/` al final.
 
-## 6. Recuperar tu contraseña
-Si olvidaste tu contraseña:
-1. Selecciona la opción "¿Olvidaste tu contraseña?".
-2. Escribe tu correo electrónico.
-3. Revisa tu correo para recibir el enlace de recuperación.
-4. Crea una nueva contraseña.
-5. Guarda los cambios.
+---
 
-## 7. Conocer el panel principal
-Cuando inicias sesión, verás la pantalla principal con varias secciones:
-- Inicio
-- Mis tareas
-- Calendario
-- Recordatorios
-- Prioridades
-- Modo enfoque
-- Compartir agendas
-- Mensajes
-- Perfil
-- Configuración
+## 4. La portada (antes de iniciar sesión)
 
-## 8. Crear una tarea
-Para registrar una nueva actividad:
-1. Haz clic en el botón para crear una nueva actividad.
-2. Completa los siguientes campos:
-   - Título
-   - Materia
-   - Fecha
-   - Hora
-   - Prioridad
-   - Recordatorio
-   - Descripción
-3. Si lo deseas, adjunta una imagen.
-4. Guarda la tarea.
+Al abrir RECORDATE ves la landing. No necesitas cuenta para leerla.
 
-### Campos recomendados
-- Título: escribe un nombre claro para tu actividad.
-- Materia: indica la asignatura o área relacionada.
-- Fecha y hora: organiza el momento exacto de la entrega.
-- Prioridad: define si la actividad es alta, media o baja.
-- Recordatorio: ayuda a recibir avisos antes de la fecha.
+**Arriba**
+- Logo RECORDATE (calendario con checklist).
+- Enlaces: Características, Cómo funciona, Beneficios, Preguntas.
+- Botón **Iniciar sesión**.
 
-## 9. Editar, eliminar y completar tareas
-Desde la lista de tareas puedes:
-- Marcar una tarea como completada o pendiente.
-- Editar una tarea ya creada si cambió la fecha o la descripción.
-- Eliminar una tarea que ya no necesitas.
-- Buscar tareas por palabras clave.
-- Filtrar la información según prioridad, estado o fecha.
+**Hero (bloque principal)**
+- El título fijo *Tu día académico.*
+- Palabras que van cambiando: Recuerda, Organiza, Prioriza, Avanza.
+- Texto de presentación del PPI.
+- Botón **Comenzar ahora**: abre la pantalla de acceso.
+- **Conocer más**: baja a la explicación del problema.
+- A la derecha, la animación **Electric Gaze** (retrato en puntos ASCII). Es visual; no se toca ni se configura.
 
-## 10. Buscar y filtrar tareas
-La búsqueda te permite encontrar tareas más rápido.
+**Más abajo**
+- El reto académico que resuelve RECORDATE.
+- Seis características numeradas (tareas, recordatorios, enfoque, equipo, búsqueda, avance).
+- Beneficios y el botón **Abrir RECORDATE**.
+- Preguntas frecuentes.
+- Pie de página con la marca y el crédito del PPI.
 
-### Puedes buscar por:
-- Título
-- Materia
-- Descripción
+Toda esa portada es informativa. Para usar la agenda pulsa **Comenzar ahora**, **Iniciar sesión** o **Abrir RECORDATE**.
 
-### Puedes filtrar por:
-- Prioridad
-- Estado (completada o pendiente)
-- Fecha específica
+---
 
-Esto ayuda a ordenar mejor tus pendientes y localizar actividades rápidamente.
+## 5. Crear una cuenta (nube)
 
-## 11. Usar el calendario
-La sección de calendario te permite:
-- Ver tus actividades organizadas por fecha.
-- Navegar entre diferentes meses.
-- Revisar qué tareas tienes programadas para cada día.
-- Abrir directamente una tarea desde el calendario.
+Sirve para guardar tus tareas en Supabase y recuperarlas en otro dispositivo.
 
-## 12. Activar recordatorios y notificaciones
-Los recordatorios te ayudan a no olvidar actividades importantes.
+1. En la portada pulsa **Comenzar ahora** o **Iniciar sesión**.
+2. En el formulario pulsa **¿No tienes cuenta? Regístrate**.
+3. Escribe tu nombre completo.
+4. Escribe un correo válido.
+5. Crea una contraseña de **mínimo 6 caracteres** y confírmala.
+6. Pulsa **Crear mi cuenta**.
+7. Si pide verificación, revisa el correo y escribe el **código de 6 dígitos**.
+8. Si no llega, usa **Reenviar código**. El código caduca; pide uno nuevo si hace falta.
 
-### Puedes hacer lo siguiente:
-- Activar recordatorios al crear una tarea.
-- Revisar la configuración de tu perfil.
-- Permitir notificaciones del navegador para ver avisos visuales y sonoros.
+Al verificar, entras al panel. En otro dispositivo inicia sesión con el mismo correo.
 
-## 13. Modo enfoque
-El modo enfoque está pensado para ayudarte a concentrarte en una sola tarea.
+---
 
-### Cómo usarlo:
-1. Selecciona una tarea.
-2. Abre el modo enfoque.
-3. Trabaja con esa actividad sin distracciones.
-4. Cuando termines, puedes volver a la vista principal.
+## 6. Iniciar sesión
 
-## 14. Compartir agendas con otros usuarios
-La función de compartir agendas permite colaborar con otras personas.
+1. En la portada pulsa **Iniciar sesión**.
+2. Escribe correo y contraseña.
+3. Pulsa **Iniciar sesión**.
 
-### Para compartir una tarea:
-1. Entra a la sección "Compartir agendas".
-2. Escribe el correo de la persona con la que deseas compartir.
-3. Selecciona la actividad que quieres compartir.
-4. Guarda la acción.
+Si los datos son correctos se abre el panel (Inicio). La sesión se mantiene al recargar, hasta que cierres sesión.
 
-### También puedes:
-- Ver tareas compartidas.
-- Revocar acceso a una agenda compartida si ya no necesitas compartirla.
+---
 
-## 15. Enviar y recibir mensajes
-En la sección de mensajes puedes:
-- Buscar a un usuario por correo.
-- Enviar mensajes internos.
-- Leer conversaciones recientes.
-- Mantener comunicación con compañeros o docentes.
+## 7. Explorar la demostración (sin cuenta)
 
-## 16. Configurar tu perfil
-Desde la sección de perfil y configuración puedes:
-- Ver tu información personal.
-- Activar o desactivar recordatorios.
-- Activar o desactivar alarmas.
-- Habilitar o deshabilitar notificaciones del navegador.
-- Elegir si quieres ver tareas completadas.
-- Cerrar sesión cuando termines.
+En la pantalla de acceso está **Explorar demostración**.
 
-## 17. Recomendaciones para un mejor uso
-- Usa títulos claros y específicos.
-- Asigna prioridades para distinguir tareas urgentes y simples.
-- Revisa tu calendario cada día.
-- Completa las tareas en orden de importancia.
-- Activa los recordatorios para evitar olvidos.
-- Mantén tu perfil actualizado.
+- Entras como *Andrea Restrepo* con tareas de ejemplo.
+- Los datos viven **solo en este navegador** (no se suben a la nube).
+- No hay adjuntos ni notificaciones push en este modo.
+- Puedes crear, editar y completar tareas para entender el flujo.
+- Al borrar los datos del sitio o cambiar de dispositivo, la demo se reinicia.
 
-## 18. Solución rápida de problemas
+Para un trabajo real del colegio usa una **cuenta con correo**, no la demostración.
+
+---
+
+## 8. Recuperar la contraseña
+
+Solo aplica a cuentas reales, no a la demo.
+
+1. En el acceso pulsa **¿Olvidaste tu contraseña?**.
+2. Escribe tu correo y pulsa **Enviar enlace**.
+3. Abre el correo y sigue el enlace.
+4. Escribe una contraseña nueva (mínimo 6 caracteres) y confírmala.
+5. Pulsa **Actualizar contraseña** y vuelve a entrar.
+
+---
+
+## 9. El panel principal
+
+Después de entrar ves el escritorio oscuro de RECORDATE, con tarjetas semitransparentes.
+
+**Menú (computador: columna izquierda; celular: barra inferior)**
+
+| Sección | Para qué sirve |
+| --- | --- |
+| Inicio | Resumen del día, saludo y métricas |
+| Mis tareas | Lista completa, búsqueda, filtros y alta de actividades |
+| Calendario | Mes con las tareas por día |
+| Recordatorios | Actividades con aviso configurado |
+| Prioridades | Agrupadas en Alta, Media y Baja |
+| Modo enfoque | Una sola tarea a pantalla completa |
+| Compartir agendas | Enviar una tarea a un compañero por correo |
+| Mensajes | Chat interno entre usuarios registrados |
+| Perfil | Nombre, correo y preferencias |
+| Configuración | Los mismos ajustes de perfil y cierre de sesión |
+
+Arriba a la derecha: campana de notificaciones internas, acceso a perfil y **cerrar sesión**. En celular, el botón de menú abre el resto de secciones.
+
+---
+
+## 10. Crear una tarea
+
+1. Entra a **Mis tareas** (o usa el botón de nueva actividad desde Inicio).
+2. Pulsa el botón para crear.
+3. Completa:
+   - **Título** (obligatorio)
+   - **Materia** (obligatorio)
+   - **Fecha** (obligatorio)
+   - **Hora** (obligatorio)
+   - **Prioridad:** Alta, Media o Baja
+   - **Recordatorio:** al momento, 5 / 10 / 30 minutos, 1 / 3 / 12 / 24 horas o 1 día antes
+   - **Descripción** (opcional)
+   - **Adjuntar imagen** (opcional, solo cuentas reales, máximo 5 MB)
+4. Pulsa **Crear tarea**.
+
+Si falta título, materia, fecha u hora, RECORDATE no guarda y muestra el aviso.
+
+### Consejos
+- Título concreto: *Taller 3 de trigonometría*, no *tarea*.
+- La fecha y la hora son las de la entrega o el evento.
+- Prioridad Alta para lo que no puede esperar.
+
+---
+
+## 11. Editar, completar y eliminar
+
+En cada tarjeta de tarea puedes:
+
+- **Completar / desmarcar:** el círculo a la izquierda.
+- **Editar** (lápiz): cambia fecha, hora, texto o prioridad y guarda.
+- **Eliminar** (papelera): quita la tarea. Pide confirmación si el flujo lo muestra.
+- **Modo enfoque** (icono de diana): abre esa actividad a pantalla completa.
+- **Ver imagen:** si hay adjunto, la abre en otra pestaña. El dueño puede quitarla con la X.
+
+Solo el dueño edita, completa o borra. Una tarea compartida se ve, pero no se administra.
+
+---
+
+## 12. Buscar y filtrar
+
+En **Mis tareas**:
+
+**Buscar** por título, materia o descripción.
+
+**Filtrar** por:
+
+- Prioridad (Alta, Media, Baja)
+- Estado (pendiente o completada)
+- Fecha concreta
+
+Combina búsqueda y filtros. Quita los filtros para volver a la lista completa.
+
+En **Perfil** puedes ocultar las tareas ya completadas si no quieres verlas.
+
+---
+
+## 13. Calendario
+
+- Mes actual con las actividades en su día.
+- Flechas para cambiar de mes.
+- Al tocar un día o una tarea, vas al detalle o a la lista.
+
+Sirve para ver entregas de un vistazo, no para crear eventos sueltos: las actividades se crean en **Mis tareas**.
+
+---
+
+## 14. Recordatorios, alarmas y notificaciones
+
+Al crear o editar una tarea eliges cuándo avisar.
+
+**Dentro de RECORDATE (página abierta)**
+- La sección **Recordatorios** lista lo que tiene aviso.
+- Si las **alarmas** están activas en Perfil, suena y se muestra el aviso a la hora calculada.
+
+**Notificaciones del navegador**
+1. En Perfil o Configuración activa las notificaciones del navegador.
+2. Acepta el permiso cuando el navegador lo pida.
+3. Verás avisos aunque cambies de pestaña, mientras el sitio siga abierto.
+
+La campana del encabezado muestra avisos internos: tareas, mensajes y agendas compartidas. Puedes marcar uno o todos como leídos.
+
+> Las notificaciones con la aplicación **totalmente cerrada** (Web Push) están preparadas, pero dependen de un envío externo que este proyecto no incluye. Los recordatorios útiles del PPI son los de la página abierta y el permiso del navegador.
+
+---
+
+## 15. Modo enfoque
+
+Para trabajar sin el resto de la lista:
+
+1. Elige una tarea y pulsa el icono de enfoque, o entra a **Modo enfoque** y selecciona.
+2. Ves título, materia, hora y descripción al frente.
+3. Cuando termines, vuelve al panel con el control de salida.
+
+No pausa el resto de RECORDATE: solo concentra la vista.
+
+---
+
+## 16. Compartir agendas
+
+Para que un compañero **con cuenta en RECORDATE** vea una de tus tareas:
+
+1. Entra a **Compartir agendas**.
+2. Escribe el correo con el que se registró.
+3. Elige la actividad (debe estar pendiente).
+4. Guarda. El otro la verá en su lista (sin poder editarla ni borrarla).
+5. Cuando ya no haga falta, **revoca** el acceso desde la misma sección.
+
+En la demostración el compartido es local y de prueba; en cuenta real usa el correo exacto del compañero.
+
+---
+
+## 17. Mensajes
+
+1. Abre **Mensajes**.
+2. Busca al usuario por correo.
+3. Escribe y envía.
+4. Lee la conversación en el mismo panel.
+
+Solo hay chat entre cuentas registradas. La demo simula un compañero local; no llega a otra persona.
+
+---
+
+## 18. Perfil y configuración
+
+Ahí puedes:
+
+- Ver nombre y correo (y si la cuenta es real o demo).
+- Activar o desactivar **recordatorios**.
+- Activar o desactivar **alarmas**.
+- Activar o desactivar **notificaciones del navegador**.
+- Mostrar u ocultar **tareas completadas**.
+- **Cerrar sesión**.
+
+Cerrar sesión te devuelve a la portada. En la demo también sale del usuario de ejemplo.
+
+---
+
+## 19. Cómo se ve RECORDATE
+
+La versión publicada usa una identidad oscura:
+
+- Fondo navy con textura en movimiento.
+- Tarjetas de vidrio (texto sobre cristal).
+- Logo oficial: calendario con checklist.
+- En la portada, animación ASCII del retrato *Electric Gaze*.
+
+No hay que configurar el aspecto. Si el movimiento molesta, el sistema de **reducir movimiento** del dispositivo baja o congela esas animaciones.
+
+---
+
+## 20. Recomendaciones
+
+- Entra siempre por el enlace de GitHub Pages indicado arriba.
+- Usa cuenta real para el trabajo del colegio; la demo es solo para probar.
+- Títulos claros y prioridad Alta para lo urgente.
+- Revisa el calendario al empezar el día.
+- Activa recordatorios en las entregas importantes y deja RECORDATE abierto cerca de la hora.
+- Adjunta capturas o fotos del taller cuando ayuden; no subas archivos de más de 5 MB.
+- Cierra sesión en computadores compartidos.
+
+---
+
+## 21. Problemas frecuentes
+
+### La página no abre o se ve en blanco
+- Comprueba la URL completa: `https://johanxinho.github.io/PRYECTO-PPI/`.
+- Recarga. Prueba otro navegador o datos móviles.
+
 ### No puedo iniciar sesión
-- Verifica que tu correo y contraseña sean correctos.
-- Si olvidaste tu contraseña, usa la opción de recuperación.
-- Si el problema continua, consulta al administrador.
+- Correo y contraseña exactos.
+- Si acabas de registrarte, verifica el código de 6 dígitos.
+- Usa **¿Olvidaste tu contraseña?** en cuentas reales.
 
-### La página no abre correctamente
-- Verifica tu conexión a internet.
-- Recarga la página.
-- Intenta abrir la aplicación en otro navegador.
-- Si aparece un error persistente, contacta al soporte.
+### No llega el código o el correo de recuperación
+- Revisa spam.
+- Pulsa **Reenviar código**.
+- Confirma que el correo esté bien escrito.
 
 ### No puedo crear o ver tareas
-- Asegúrate de haber iniciado sesión.
-- Completa todos los campos obligatorios.
-- Verifica que la información está bien escrita.
+- Debes haber iniciado sesión (cuenta o demo).
+- Completa título, materia, fecha y hora.
+- Si usas cuenta real y sigue fallando, avisa al docente o al administrador: puede faltar la migración de Supabase.
 
-### No recibo notificaciones o recordatorios
-- Acepta los permisos de notificación del navegador.
-- Revisa la configuración de recordatorios en tu perfil.
-- Asegúrate de que la tarea tenga un recordatorio configurado.
+### La imagen no se adjunta
+- Solo en cuenta real, no en la demo.
+- Formato de imagen y **máximo 5 MB**.
 
-### No puedo compartir agendas
-- Verifica que el correo ingresado sea correcto.
-- Asegúrate de que la tarea esté pendiente y disponible para compartir.
-- Si el problema continúa, contacta al administrador.
+### No suenan recordatorios
+- Activa recordatorios y alarmas en Perfil.
+- Deja la pestaña abierta a la hora del aviso.
+- Acepta notificaciones del navegador si las quieres fuera de la pestaña.
 
-## 19. Preguntas frecuentes
-### ¿Puedo usar RECORDATE desde cualquier navegador?
-Sí, siempre que el navegador sea compatible y tengas conexión a internet.
+### No puedo compartir
+- El correo debe ser de alguien ya registrado.
+- La tarea debe estar pendiente.
+- En la demo el compartido no llega a otra persona.
 
-### ¿Puedo cambiar la fecha o hora de una tarea después de crearla?
-Sí, puedes editar la tarea desde la lista.
+### En el celular no veo todas las secciones
+- Usa la barra inferior y el botón de menú para Perfil y Configuración.
 
-### ¿Puedo eliminar tareas que ya no necesito?
-Sí, puedes borrar cualquier tarea que ya no te sirva.
+---
 
-### ¿Qué pasa si no quiero recibir notificaciones?
-Puedes desactivar notificaciones y alarmas desde tu perfil.
+## 22. Preguntas frecuentes
 
-### ¿Es necesario completar todas las tareas de una vez?
-No. Puedes ir trabajando en tus pendientes según tu tiempo y prioridad.
+**¿Tengo que crear cuenta?**  
+Para guardar en la nube, sí. Para conocer la interfaz puedes usar **Explorar demostración**.
 
-## 20. Soporte
-Si necesitas ayuda adicional, puedes comunicarte con:
+**¿Funciona en el celular?**  
+Sí. El menú se adapta a iPhone y Android.
+
+**¿Puedo cambiar fecha u hora después?**  
+Sí, con **Editar** en la tarjeta.
+
+**¿Puedo borrar una tarea?**  
+Sí, si eres el dueño.
+
+**¿Qué pasa si no quiero avisos?**  
+Desactívalos en Perfil.
+
+**¿La animación de la portada es una función?**  
+No. Es parte de la identidad visual. La agenda se usa desde el panel, después de entrar.
+
+**¿Dónde está publicada?**  
+En GitHub Pages: [https://johanxinho.github.io/PRYECTO-PPI/](https://johanxinho.github.io/PRYECTO-PPI/).
+
+---
+
+## 23. Soporte
+
 - El administrador del sistema.
-- Tu docente encargado del proyecto.
-- El equipo responsable de RECORDATE.
+- El docente encargado del PPI.
+- El equipo de RECORDATE.
 
-Gracias por usar RECORDATE y esperamos que te ayude a organizar mejor tu tiempo.
+Gracias por usar RECORDATE. El objetivo es que el día académico se vea claro: qué hay que hacer, cuándo y con qué prioridad.

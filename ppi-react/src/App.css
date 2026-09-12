@@ -1,12 +1,646 @@
-.landing{color:var(--ink);background:var(--paper);overflow:hidden}.landing-header,.hero,.problem-band,.feature-section,.benefit-band,.landing-footer{max-width:1240px;margin:auto;padding-left:42px;padding-right:42px}.landing-header{height:90px;display:flex;align-items:center;justify-content:space-between;gap:28px}.brand{display:flex;align-items:center;gap:10px;color:var(--green-dark);letter-spacing:.12em;font-size:15px;font-weight:700;white-space:nowrap}.brand-mark,.mini-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px 10px 10px 3px;background:var(--green);color:white;font-family:'Space Grotesk';font-size:19px;letter-spacing:0}.landing-nav{display:flex;gap:28px;color:#66766e;font-size:13px}.landing-nav a,.text-button{text-decoration:none;transition:color .2s}.landing-nav a:hover,.text-button:hover{color:var(--green)}.outline-button,.primary-button{border:0;border-radius:7px;padding:12px 17px;font-weight:700;font-size:13px;transition:transform .2s,box-shadow .2s,background .2s}.outline-button{border:1px solid #b8cec3;color:var(--green);background:transparent}.outline-button:hover{background:var(--green-soft)}.primary-button{background:var(--green);color:white;box-shadow:0 9px 18px #176b4d29}.primary-button:hover{background:var(--green-dark);transform:translateY(-2px)}.primary-button span,.text-button span{margin-left:9px}.hero{min-height:650px;display:grid;grid-template-columns:minmax(0,.9fr) minmax(430px,1.1fr);align-items:center;gap:60px;padding-top:58px;padding-bottom:78px}.hero-copy,.dashboard-preview{animation:rise .65s ease both}.eyebrow{display:block;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase}.accent-label{color:var(--green)}.hero h1{max-width:630px;margin:22px 0;color:var(--green-dark);font-size:clamp(42px,5.1vw,70px);line-height:1.02;letter-spacing:-.045em}em{color:var(--gold);font-style:normal}.hero-copy>p:not(.demo-note){max-width:500px;color:#63736b;font-size:17px;line-height:1.7}.hero-actions{display:flex;align-items:center;gap:25px;margin-top:32px}.demo-note{margin-top:27px;color:#94a39c;font-size:12px}.dashboard-preview{min-height:405px;padding:17px;border:1px solid #d3e5db;border-radius:18px;background:#f2f7f4;box-shadow:0 28px 65px #176b4d1f;transform:rotate(1.3deg);animation-delay:.12s}.preview-top{display:flex;align-items:center;gap:10px;padding:3px 7px 16px;color:var(--green-dark);font-size:13px;font-weight:600}.preview-top .preview-avatar{margin-left:auto}.mini-mark{width:25px;height:25px;font-size:14px}.preview-avatar,.avatar{display:grid;place-items:center;width:29px;height:29px;border-radius:50%;color:var(--green);background:#d3e8dc;font-size:12px;font-weight:700}.preview-body{display:grid;grid-template-columns:46px 1fr;min-height:340px;overflow:hidden;border:1px solid #e1ece5;border-radius:12px;background:#fff}.preview-sidebar{display:flex;flex-direction:column;align-items:center;gap:23px;padding-top:28px;background:var(--green-dark)}.preview-sidebar i{width:15px;height:3px;border-radius:3px;background:#8bb49e}.preview-sidebar i:first-child{background:var(--gold);width:19px}.preview-main{padding:31px 32px}.preview-kicker{color:var(--gold);font-size:9px;font-weight:700;letter-spacing:.12em}.preview-main strong{display:block;margin:9px 0 25px;color:var(--green-dark);font-size:20px}.preview-stats{display:flex;gap:12px;margin-bottom:22px}.preview-stats span{display:flex;flex-direction:column;gap:3px;width:115px;padding:10px;border-radius:8px;background:#f4f8f5;color:#77857e;font-size:10px}.preview-stats b{color:var(--green);font-size:21px}.preview-task{display:flex;align-items:center;gap:10px;padding:13px 0;border-top:1px solid #ecf0ed}.task-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%}.green{background:var(--green)}.gold{background:var(--gold)}.preview-task div{display:flex;flex-direction:column;gap:4px}.preview-task b{color:var(--ink);font-size:12px}.preview-task small{color:#91a097;font-size:10px}.preview-task em{margin-left:auto;font-size:9px}.problem-band,.benefit-band{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding-top:82px;padding-bottom:82px}.problem-band{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.problem-band h2,.benefit-band h2,.section-heading h2{max-width:530px;margin-top:16px;color:var(--green-dark);font-size:32px;line-height:1.13}.problem-band p{max-width:480px;color:var(--muted);line-height:1.7}.feature-section{padding-top:100px;padding-bottom:105px}.section-heading{margin-bottom:45px}.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.feature-item{min-height:190px;padding:27px 24px 24px 0;border-bottom:1px solid var(--line)}.feature-item:nth-child(3n+2),.feature-item:nth-child(3n+3){padding-left:24px;border-left:1px solid var(--line)}.feature-item>span{color:var(--gold);font-size:12px;font-weight:700}.feature-item h3{margin:25px 0 8px;color:var(--green-dark);font-size:18px}.feature-item p{max-width:250px;color:var(--muted);font-size:13px;line-height:1.6}.benefit-band{max-width:none;padding-left:max(42px,calc((100% - 1156px)/2));padding-right:max(42px,calc((100% - 1156px)/2));background:var(--green-dark)}.benefit-band h2{color:#fff}.benefit-band .eyebrow{color:#9bc2aa}.benefit-band .primary-button{background:var(--gold);color:#2e3a28}.landing-footer{min-height:100px;display:flex;align-items:center;gap:30px;color:#839088;font-size:11px}.landing-footer .brand{margin-right:auto}.landing-footer .brand-mark{width:27px;height:27px;font-size:14px}
-.auth-page{min-height:100vh;display:grid;grid-template-columns:minmax(360px,1fr) minmax(420px,560px);background:#fff}.auth-aside{display:flex;flex-direction:column;padding:38px max(42px,7vw);color:#fff;background:var(--green-dark)}.brand-light{color:#fff}.auth-aside .brand-mark{background:var(--gold);color:var(--green-dark)}.back-link{align-self:flex-start;margin-bottom:78px;border:0;padding:0;color:#b3d2bf;background:transparent;font-size:12px}.auth-quote{margin:auto 0}.auth-quote h1{max-width:460px;margin:22px 0;font-size:clamp(36px,4vw,59px);line-height:1.03}.auth-quote p{color:#b3d2bf;line-height:1.6}.auth-footer{margin-top:auto;color:#82ae98;font-size:11px}.auth-panel{width:min(380px,calc(100% - 48px));margin:auto}.mobile-auth-brand{display:none}.auth-panel h2{margin:16px 0 10px;color:var(--green-dark);font-size:35px}.auth-subtitle,.auth-note{color:var(--muted);font-size:13px;line-height:1.6}.auth-panel form{display:grid;gap:17px;margin-top:30px}.auth-panel label,.task-form label,.share-form label{display:grid;gap:7px;color:#43574c;font-size:12px;font-weight:700}.auth-panel input,.task-form input,.task-form select,.task-form textarea,.share-form input,.chat-input input{width:100%;border:1px solid #cfdfd5;border-radius:6px;padding:12px 13px;color:var(--ink);background:#fbfdfc;outline:0}.auth-panel input:focus,.task-form input:focus,.task-form select:focus,.task-form textarea:focus,.share-form input:focus,.chat-input input:focus{border-color:var(--green);box-shadow:0 0 0 3px #dbeee3}.auth-submit{width:100%;margin-top:5px}.demo-button,.switch-button{width:100%;border:0;background:transparent;padding:15px 0 5px;color:var(--green);font-size:12px;font-weight:700}.demo-button{color:var(--gold)}.switch-button{color:var(--muted);font-weight:500}.auth-note{margin-top:29px;text-align:center;font-size:11px}.auth-message,.form-error{padding:10px;border-radius:5px;color:#a2412f;background:#fff0ec;font-size:12px}
-.app-shell{min-height:100vh;display:flex;background:#f7faf8}.sidebar{position:fixed;z-index:10;display:flex;flex-direction:column;width:245px;height:100vh;padding:30px 18px 22px;color:#c4dfcf;background:var(--green-dark)}.sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:0 11px}.sidebar .brand{color:#fff}.sidebar-caption{margin:47px 12px 13px;color:#719c84;font-size:10px;text-transform:uppercase;letter-spacing:.13em}.sidebar nav,.sidebar-bottom{display:grid;gap:4px}.nav-item{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:6px;padding:11px 12px;color:#abcbb9;background:transparent;text-align:left;font-size:12px}.nav-item:hover,.nav-item.active{color:#fff;background:#225c45}.nav-item.active{box-shadow:inset 3px 0 var(--gold)}.nav-symbol{width:16px;color:#88b19a;text-align:center;font-size:15px}.nav-item.active .nav-symbol{color:var(--gold)}.sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #245842}.logout{color:#da9f91}.close-nav,.menu-toggle{display:none}.workspace{width:calc(100% - 245px);margin-left:245px}.workspace-header{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:125px;padding:30px max(32px,5vw);border-bottom:1px solid var(--line);background:#ffffffd9}.workspace-header h1{margin-top:8px;color:var(--green-dark);font-size:clamp(25px,3vw,37px)}.header-user{position:relative;display:flex;align-items:center;gap:18px}.notification-button{position:relative;border:0;color:var(--green);background:transparent;font-size:23px}.notification-dot{position:absolute;top:1px;right:0;width:6px;height:6px;border:1px solid white;border-radius:50%;background:var(--gold)}.notification-panel{position:absolute;z-index:4;top:43px;right:46px;display:grid;gap:9px;width:250px;padding:17px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 15px 35px #174b3020}.notification-panel strong{color:var(--green-dark);font-size:13px}.notification-panel p,.notification-panel span{color:var(--muted);font-size:11px}.content-area{max-width:1100px;margin:auto;padding:46px max(30px,5vw) 70px}.welcome-row,.section-title{display:flex;align-items:end;justify-content:space-between;gap:25px}.lead{margin:14px 0 18px;color:var(--muted);font-size:13px}.search-wrap{display:flex;align-items:center;gap:9px;width:min(360px,100%);border-bottom:1px solid #baccc2;color:var(--green)}.search-wrap input{width:100%;border:0;padding:9px 0;outline:0;color:var(--ink);background:transparent;font-size:13px}.add-task-button{white-space:nowrap}.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:45px 0 57px}.stat-card{display:flex;flex-direction:column;min-height:130px;padding:17px;border-radius:8px;background:#fff;box-shadow:0 6px 18px #1b57320c}.stat-card>span{color:var(--muted);font-size:11px}.stat-card strong{margin:15px 0 2px;color:var(--green-dark);font-size:32px}.stat-card small{color:#9aa9a1;font-size:10px}.stat-green{border-top:3px solid var(--green)}.stat-gold{border-top:3px solid var(--gold)}.stat-coral{border-top:3px solid #cb806c}.stat-ink{border-top:3px solid #426354}.section-title{align-items:center;margin-bottom:17px}.section-title h2,.panel-view h2,.calendar-view h2{margin-top:8px;color:var(--green-dark);font-size:23px}.tasks{display:grid;gap:9px}.task-card{display:flex;align-items:flex-start;gap:13px;padding:17px;border:1px solid var(--line);border-radius:7px;background:#fff;transition:transform .2s,box-shadow .2s}.task-card:hover{transform:translateY(-2px);box-shadow:0 7px 18px #1b57320b}.check-button{flex:0 0 auto;width:20px;height:20px;border:1.5px solid #a9c6b5;border-radius:50%;color:#fff;background:#fff;font-size:11px}.is-complete .check-button{border-color:var(--green);background:var(--green)}.task-content{flex:1;min-width:0}.task-heading{display:flex;align-items:center;gap:10px}.task-heading h3{overflow:hidden;color:var(--green-dark);font-size:14px;text-overflow:ellipsis;white-space:nowrap}.is-complete h3{color:#8b9b92;text-decoration:line-through}.priority{display:inline-block;flex:0 0 auto;border-radius:10px;padding:3px 8px;font-size:9px;font-weight:700}.priority-alta{color:#9b4d3e;background:#f9e7e1}.priority-media{color:#92712e;background:#fbf1d5}.priority-baja{color:var(--green);background:var(--green-soft)}.task-meta,.task-description{margin-top:6px;color:var(--muted);font-size:11px}.task-description{color:#65786e;line-height:1.5}.task-actions{display:flex;gap:3px}.icon-button{border:0;border-radius:4px;padding:5px 7px;color:#739084;background:transparent;font-size:16px}.icon-button:hover{color:var(--green);background:var(--green-soft)}.danger:hover{color:#b65243;background:#fff0ec}.notice{display:flex;justify-content:space-between;max-width:1100px;margin:17px auto -20px;padding:11px 14px;border:1px solid #b9dbca;border-radius:5px;color:var(--green);background:#eaf6ee;font-size:12px}.notice button{border:0;color:inherit;background:transparent}.empty-state{padding:54px 20px;border:1px dashed #bbd3c5;border-radius:8px;text-align:center}.empty-state>span{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;color:var(--green);background:var(--green-soft)}.empty-state h3{margin:15px 0 5px;color:var(--green-dark);font-size:16px}.empty-state p,.empty-copy{color:var(--muted);font-size:12px}
-.focus-panel,.panel-view,.calendar-view{animation:rise .35s ease both}.focus-panel{position:relative;max-width:650px;margin:40px auto;padding:52px;border-radius:12px;color:#d5e9db;background:var(--green-dark);box-shadow:0 22px 50px #174b3022}.focus-panel h2{margin:20px 0 10px;color:#fff;font-size:34px}.focus-panel .task-meta,.focus-panel>p:not(.task-meta){color:#a9c9b5;line-height:1.6}.focus-panel .primary-button{margin-top:28px;background:var(--gold);color:var(--green-dark)}.focus-orbit{position:absolute;top:40px;right:45px;color:#8bbda0;font-size:70px}.focus-status{display:flex;align-items:center;gap:12px;margin-top:25px;font-size:12px}.panel-view{max-width:760px}.panel-intro{max-width:560px;margin-top:12px;color:var(--muted);font-size:13px;line-height:1.6}.share-form{display:grid;gap:25px;margin-top:35px;padding:23px;border:1px solid var(--line);border-radius:8px;background:#fff}.share-list{display:grid;gap:9px}.share-row,.focus-choice,.agenda-task{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:6px;padding:13px;background:#fbfdfc;text-align:left}.share-row span,.focus-choice span:nth-child(2),.agenda-task span{display:grid;gap:5px}.share-row b,.focus-choice b,.agenda-task b{color:var(--green-dark);font-size:12px}.share-row small,.focus-choice small,.agenda-task small{color:var(--muted);font-size:10px}.shared-success{display:grid;gap:8px;margin-top:16px;padding:16px;border-radius:7px;color:var(--green);background:var(--green-soft);font-size:12px}.calendar-month{color:var(--muted);font-size:12px}.calendar-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:35px}.calendar-days,.day-agenda{display:grid;align-content:start;gap:8px;padding:20px;border:1px solid var(--line);border-radius:8px;background:#fff}.calendar-day{display:flex;align-items:center;justify-content:space-between;border:0;border-radius:6px;padding:12px;color:var(--muted);background:#f6faf7;text-align:left}.calendar-day b{color:var(--green-dark);font-size:17px}.calendar-day i{width:6px;height:6px;border-radius:50%}.calendar-day i.has-task{background:var(--gold)}.calendar-day.selected,.calendar-day.selected b{color:#fff;background:var(--green)}.day-agenda h3{margin:7px 0 10px;color:var(--green-dark);font-size:18px}.agenda-task,.focus-choice{width:100%}.agenda-task:hover,.focus-choice:hover{border-color:#a8ccb6;background:var(--green-soft)}.focus-choice-icon{color:var(--green);font-size:22px}.chat-window{overflow:hidden;margin-top:32px;border:1px solid var(--line);border-radius:8px;background:#fff}.chat-contact{display:flex;align-items:center;gap:10px;padding:15px;border-bottom:1px solid var(--line)}.chat-contact>span:nth-child(2){display:grid;gap:3px}.chat-contact small{color:var(--muted);font-size:10px}.chat-contact i{width:7px;height:7px;margin-left:auto;border-radius:50%;background:#5fb47a}.small-avatar{width:30px;height:30px}.chat-messages{display:grid;gap:10px;min-height:220px;padding:23px;align-content:end;background:#fbfdfc}.chat-messages p{max-width:70%;padding:10px 13px;border-radius:10px;font-size:12px}.incoming{justify-self:start;background:#e8f1eb}.outgoing{justify-self:end;color:#fff;background:var(--green)}.chat-input{display:flex;gap:8px;padding:13px;border-top:1px solid var(--line)}.chat-input input{flex:1}.profile-card{display:flex;align-items:center;gap:18px;margin-top:35px;padding:24px;border:1px solid var(--line);border-radius:8px;background:#fff}.profile-avatar{display:grid;place-items:center;width:62px;height:62px;border-radius:50%;color:#fff;background:var(--green);font-size:25px}.profile-card h3{color:var(--green-dark);font-size:18px}.profile-card p{margin:4px 0 8px;color:var(--muted);font-size:12px}.demo-tag{color:var(--green);font-size:9px;font-weight:700}.profile-info,.settings-list{display:grid;gap:9px;margin-top:20px;padding:20px;border-radius:8px;background:#eaf4ed}.profile-info span{margin-top:8px;color:var(--muted);font-size:10px;text-transform:uppercase}.profile-info b,.settings-list b{color:var(--green-dark);font-size:13px}.settings-list label{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #cfe2d5}.settings-list span{display:grid;gap:5px}.settings-list small{color:var(--muted);font-size:11px}.settings-list input{accent-color:var(--green)}.logout-profile{margin-top:22px}.modal-backdrop{position:fixed;z-index:20;inset:0;display:grid;place-items:center;padding:20px;background:#0b443399}.modal{width:min(620px,100%);max-height:90vh;overflow-y:auto;padding:27px;border-radius:10px;background:#fff}.modal-header{display:flex;justify-content:space-between;margin-bottom:26px}.modal-header h2{margin-top:7px;color:var(--green-dark);font-size:25px}.task-form{display:grid;gap:17px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.task-form textarea{resize:vertical}.form-actions{display:flex;align-items:center;gap:17px;margin-top:3px}@keyframes rise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:850px){.landing-header,.hero,.problem-band,.feature-section,.landing-footer{padding-left:24px;padding-right:24px}.landing-nav{display:none}.hero{grid-template-columns:1fr;gap:40px;padding-top:60px}.dashboard-preview{max-width:620px;width:100%}.problem-band{gap:25px}.feature-grid{grid-template-columns:1fr 1fr}.feature-item:nth-child(3n+2),.feature-item:nth-child(3n+3){padding-left:0;border-left:0}.feature-item:nth-child(even){padding-left:22px;border-left:1px solid var(--line)}.auth-page{grid-template-columns:1fr}.auth-aside{display:none}.auth-panel{padding:45px 0}.mobile-auth-brand{display:block;margin-bottom:70px}.mobile-auth-brand .brand{color:var(--green-dark)}.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.is-open{transform:translateX(0);box-shadow:10px 0 30px #092d1e30}.close-nav,.menu-toggle{display:block;border:0;color:#aacbb8;background:transparent;font-size:24px}.mobile-overlay{display:none}.sidebar.is-open+.mobile-overlay{position:fixed;z-index:9;display:block;inset:0;background:#092d1e66}.workspace{width:100%;margin-left:0}.menu-toggle{margin-right:16px;color:var(--green);font-size:20px}.workspace-header{justify-content:flex-start}.header-user{margin-left:auto}.calendar-layout{grid-template-columns:1fr}}
-@media(max-width:560px){.landing-header{height:74px}.landing-header .outline-button{padding:9px 11px;font-size:11px}.hero{min-height:0;padding-top:60px;padding-bottom:65px}.hero h1{font-size:43px}.hero-copy>p:not(.demo-note){font-size:15px}.hero-actions{align-items:flex-start;flex-direction:column;gap:11px}.dashboard-preview{min-height:330px;padding:10px}.preview-body{grid-template-columns:31px 1fr;min-height:280px}.preview-main{padding:22px 16px}.preview-stats span{width:95px}.problem-band,.benefit-band{grid-template-columns:1fr;gap:28px;padding-top:60px;padding-bottom:60px}.problem-band h2,.benefit-band h2,.section-heading h2{font-size:27px}.feature-section{padding-top:65px;padding-bottom:65px}.feature-grid{grid-template-columns:1fr}.feature-item,.feature-item:nth-child(even){min-height:150px;padding:22px 0;border-left:0}.landing-footer{flex-wrap:wrap;gap:14px;padding-top:25px;padding-bottom:25px}.landing-footer .brand{width:100%}.auth-panel{width:calc(100% - 40px);padding:30px 0}.mobile-auth-brand{margin-bottom:55px}.content-area{padding:32px 18px 50px}.workspace-header{min-height:95px;padding:20px 18px}.workspace-header h1{font-size:25px}.stats-grid{grid-template-columns:1fr 1fr;gap:8px;margin:30px 0 40px}.stat-card{min-height:112px;padding:13px}.stat-card strong{font-size:27px}.welcome-row{align-items:flex-start;flex-direction:column}.add-task-button{width:100%}.section-title{align-items:flex-start}.task-card{padding:13px 10px}.task-actions{gap:0}.task-heading{align-items:flex-start;flex-direction:column;gap:5px}.form-grid{grid-template-columns:1fr}.modal{padding:20px}.focus-panel{padding:38px 25px}.focus-orbit{top:21px;right:20px;font-size:45px}.focus-panel h2{font-size:28px}.calendar-month{display:none}.share-row{align-items:flex-start;flex-direction:column}.share-row .outline-button{width:100%}.chat-input .primary-button{padding-left:13px;padding-right:13px}}
-
-button:disabled{cursor:not-allowed;opacity:.58;transform:none!important;box-shadow:none}.loading-state{display:flex;align-items:center;justify-content:center;gap:12px;min-height:180px}.loading-spinner{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.share-form{overflow:visible}.share-list{width:100%;overflow:visible}.share-row{width:100%;min-height:64px}.share-row>span{min-width:0;flex:1}.share-row .outline-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:112px;min-height:44px;white-space:nowrap;color:var(--green)}.share-empty{display:grid;gap:6px;padding:18px;border:1px dashed #b9cec2;border-radius:10px;color:var(--green-dark);background:#f7fbf8}.share-empty span{color:var(--muted);font-size:12px}.shared-success{overflow:visible}.shared-success>span{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.shared-success .text-button{display:inline-flex;align-items:center;min-height:36px;padding:6px 9px;color:var(--green);font-weight:700}
-.task-card,.stat-card,.share-row,.chat-window,.profile-card{transition:border-color .2s,box-shadow .2s,transform .2s}.task-card:hover,.share-row:hover{border-color:#b9d2c4;box-shadow:0 8px 20px #174b3010;transform:translateY(-1px)}.modal-backdrop{padding:18px;overflow-y:auto}.modal{width:min(650px,100%);max-height:calc(100vh - 36px);overflow-y:auto}.notification-item{min-width:0}.chat-messages{min-height:160px}.assistant-panel{overflow:hidden}.assistant-input input:focus{border-color:var(--green);box-shadow:0 0 0 3px #dbeee3}
-@media(max-width:560px){.modal-backdrop{padding:10px}.modal{max-height:calc(100vh - 20px)}.notification-panel{right:0;width:min(280px,calc(100vw - 36px))}.assistant-launcher{right:16px;bottom:16px}.assistant-panel{right:16px;bottom:76px;height:min(600px,calc(100vh - 94px))}.task-content{min-width:0}.task-heading h3,.task-description{overflow-wrap:anywhere}.chat-window{padding:12px}.chat-input{align-items:stretch}.chat-input input{min-width:0}.profile-card{align-items:flex-start}}
-@media(max-width:560px){.share-row{align-items:stretch;flex-direction:column}.share-row .outline-button{width:100%;min-height:46px}.share-form{padding:17px}.shared-success>span{align-items:flex-start;flex-direction:column}.shared-success .text-button{padding-left:0}}
+/* RECORDATE — estilos de la interfaz (landing, auth, agenda, chat y perfil).
+   Cada regla conserva los mismos selectores y valores; solo se documenta qué hace. */
+/* Página de aterrizaje: color de texto, fondo de papel y recorte de desbordes */
+.landing{color:var(--ink);background:var(--paper);overflow:hidden}
+/* Ancho máximo común, centrado y padding horizontal de las secciones de la landing */
+.landing-header,.hero,.problem-band,.feature-section,.benefit-band,.landing-footer{max-width:1240px;margin:auto;padding-left:42px;padding-right:42px}
+/* Cabecera de la landing: fila flex con logo, menú y botones */
+.landing-header{height:90px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+/* Marca: logo + nombre en una fila, sin saltos de línea */
+.brand{display:flex;align-items:center;gap:10px;color:var(--green-dark);letter-spacing:.12em;font-size:15px;font-weight:700;white-space:nowrap}
+/* Cuadrado de la letra R: grid centrado, esquinas y color verde */
+.brand-mark,.mini-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px 10px 10px 3px;background:var(--green);color:white;font-family:'Space Grotesk';font-size:19px;letter-spacing:0}
+/* Menú de la landing: enlaces en fila con color gris */
+.landing-nav{display:flex;gap:28px;color:#66766e;font-size:13px}
+/* Enlaces y botones de texto: sin subrayado y transición de color */
+.landing-nav a,.text-button{text-decoration:none;transition:color .2s}
+/* Al pasar el mouse, el texto pasa a verde */
+.landing-nav a:hover,.text-button:hover{color:var(--green)}
+/* Base compartida de botones: bordes redondeados, padding y transiciones */
+.outline-button,.primary-button{border:0;border-radius:7px;padding:12px 17px;font-weight:700;font-size:13px;transition:transform .2s,box-shadow .2s,background .2s}
+/* Botón con borde verde y fondo transparente */
+.outline-button{border:1px solid #b8cec3;color:var(--green);background:transparent}
+/* Hover del botón outline: fondo verde suave */
+.outline-button:hover{background:var(--green-soft)}
+/* Botón principal: fondo verde, texto blanco y sombra */
+.primary-button{background:var(--green);color:white;box-shadow:0 9px 18px #176b4d29}
+/* Hover del botón principal: verde más oscuro y sube 2px */
+.primary-button:hover{background:var(--green-dark);transform:translateY(-2px)}
+/* Espacio a la izquierda de la flecha dentro del botón */
+.primary-button span,.text-button span{margin-left:9px}
+/* Sección héroe: dos columnas (texto + vista previa) y altura mínima */
+.hero{min-height:650px;display:grid;grid-template-columns:minmax(0,.9fr) minmax(430px,1.1fr);align-items:center;gap:60px;padding-top:58px;padding-bottom:78px}
+/* Animación de entrada rise para el texto y la maqueta */
+.hero-copy,.dashboard-preview{animation:rise .65s ease both}
+/* Etiqueta pequeña en mayúsculas encima de los títulos */
+.eyebrow{display:block;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase}
+/* Variante verde de la etiqueta eyebrow */
+.accent-label{color:var(--green)}
+/* Título grande del héroe: tamaño fluido y tracking negativo */
+.hero h1{max-width:630px;margin:22px 0;color:var(--green-dark);font-size:clamp(42px,5.1vw,70px);line-height:1.02;letter-spacing:-.045em}
+/* Énfasis en dorado (se usa dentro de títulos, no en cursiva) */
+em{color:var(--gold);font-style:normal}
+/* Párrafo introductorio del héroe (no la nota demo) */
+.hero-copy>p:not(.demo-note){max-width:500px;color:#63736b;font-size:17px;line-height:1.7}
+/* Fila de botones de acción del héroe */
+.hero-actions{display:flex;align-items:center;gap:25px;margin-top:32px}
+/* Nota pequeña que explica el modo demostración */
+.demo-note{margin-top:27px;color:#94a39c;font-size:12px}
+/* Maqueta inclinada de la agenda (tarjeta con sombra) */
+.dashboard-preview{min-height:405px;padding:17px;border:1px solid #d3e5db;border-radius:18px;background:#f2f7f4;box-shadow:0 28px 65px #176b4d1f;transform:rotate(1.3deg);animation-delay:.12s}
+/* Barra superior de la maqueta: marca y avatar */
+.preview-top{display:flex;align-items:center;gap:10px;padding:3px 7px 16px;color:var(--green-dark);font-size:13px;font-weight:600}
+/* Empuja el avatar a la derecha */
+.preview-top .preview-avatar{margin-left:auto}
+/* Versión chica del isotipo R */
+.mini-mark{width:25px;height:25px;font-size:14px}
+/* Avatar circular con inicial centrada */
+.preview-avatar,.avatar{display:grid;place-items:center;width:29px;height:29px;border-radius:50%;color:var(--green);background:#d3e8dc;font-size:12px;font-weight:700}
+/* Cuerpo de la maqueta: riel izquierdo + contenido */
+.preview-body{display:grid;grid-template-columns:46px 1fr;min-height:340px;overflow:hidden;border:1px solid #e1ece5;border-radius:12px;background:#fff}
+/* Riel oscuro de la maqueta (imita el menú) */
+.preview-sidebar{display:flex;flex-direction:column;align-items:center;gap:23px;padding-top:28px;background:var(--green-dark)}
+/* Rayitas decorativas del riel */
+.preview-sidebar i{width:15px;height:3px;border-radius:3px;background:#8bb49e}
+/* Primera rayita más ancha y dorada (ítem activo) */
+.preview-sidebar i:first-child{background:var(--gold);width:19px}
+/* Área de contenido de la maqueta */
+.preview-main{padding:31px 32px}
+/* Texto kicker dorado y muy pequeño */
+.preview-kicker{color:var(--gold);font-size:9px;font-weight:700;letter-spacing:.12em}
+/* Título dentro de la maqueta */
+.preview-main strong{display:block;margin:9px 0 25px;color:var(--green-dark);font-size:20px}
+/* Fila de mini estadísticas de la maqueta */
+.preview-stats{display:flex;gap:12px;margin-bottom:22px}
+/* Cada tarjeta de estadística */
+.preview-stats span{display:flex;flex-direction:column;gap:3px;width:115px;padding:10px;border-radius:8px;background:#f4f8f5;color:#77857e;font-size:10px}
+/* Número grande de la estadística */
+.preview-stats b{color:var(--green);font-size:21px}
+/* Fila de tarea de ejemplo en la maqueta */
+.preview-task{display:flex;align-items:center;gap:10px;padding:13px 0;border-top:1px solid #ecf0ed}
+/* Punto de color de prioridad (no crece ni se encoge) */
+.task-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%}
+/* Fondo verde (punto de prioridad o acento) */
+.green{background:var(--green)}
+/* Fondo dorado (punto de prioridad o acento) */
+.gold{background:var(--gold)}
+/* Columna título + materia de la tarea maqueta */
+.preview-task div{display:flex;flex-direction:column;gap:4px}
+/* Título de la tarea en la maqueta */
+.preview-task b{color:var(--ink);font-size:12px}
+/* Materia / hora en la maqueta */
+.preview-task small{color:#91a097;font-size:10px}
+/* Prioridad alineada a la derecha en la maqueta */
+.preview-task em{margin-left:auto;font-size:9px}
+/* Bandas de dos columnas (problema y beneficio) */
+.problem-band,.benefit-band{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding-top:82px;padding-bottom:82px}
+/* Separadores superior e inferior de la banda de problema */
+.problem-band{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+/* Títulos de sección: verde oscuro y interlineado compacto */
+.problem-band h2,.benefit-band h2,.section-heading h2{max-width:530px;margin-top:16px;color:var(--green-dark);font-size:32px;line-height:1.13}
+/* Párrafo explicativo de la banda de problema */
+.problem-band p{max-width:480px;color:var(--muted);line-height:1.7}
+/* Sección de características: padding vertical amplio */
+.feature-section{padding-top:100px;padding-bottom:105px}
+/* Espacio debajo del encabezado de sección */
+.section-heading{margin-bottom:45px}
+/* Grilla de 3 columnas con línea superior */
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+/* Celda de característica: altura mínima y borde inferior */
+.feature-item{min-height:190px;padding:27px 24px 24px 0;border-bottom:1px solid var(--line)}
+/* Columnas 2 y 3: padding y borde izquierdo */
+.feature-item:nth-child(3n+2),.feature-item:nth-child(3n+3){padding-left:24px;border-left:1px solid var(--line)}
+/* Número o etiqueta dorada de la característica */
+.feature-item>span{color:var(--gold);font-size:12px;font-weight:700}
+/* Título de cada característica */
+.feature-item h3{margin:25px 0 8px;color:var(--green-dark);font-size:18px}
+/* Texto corto de cada característica */
+.feature-item p{max-width:250px;color:var(--muted);font-size:13px;line-height:1.6}
+/* Banda de beneficios a ancho completo con fondo verde oscuro */
+.benefit-band{max-width:none;padding-left:max(42px,calc((100% - 1156px)/2));padding-right:max(42px,calc((100% - 1156px)/2));background:var(--green-dark)}
+/* Título blanco sobre el fondo oscuro */
+.benefit-band h2{color:#fff}
+/* Etiqueta clara sobre el fondo oscuro */
+.benefit-band .eyebrow{color:#9bc2aa}
+/* Botón dorado sobre la banda oscura */
+.benefit-band .primary-button{background:var(--gold);color:#2e3a28}
+/* Pie de la landing: fila con marca y textos chicos */
+.landing-footer{min-height:100px;display:flex;align-items:center;gap:30px;color:#839088;font-size:11px}
+/* La marca empuja el resto del pie a la derecha */
+.landing-footer .brand{margin-right:auto}
+/* Isotipo más pequeño en el pie */
+.landing-footer .brand-mark{width:27px;height:27px;font-size:14px}
+/* Página de login/registro: dos columnas (frase + formulario) */
+.auth-page{min-height:100vh;display:grid;grid-template-columns:minmax(360px,1fr) minmax(420px,560px);background:#fff}
+/* Columna izquierda oscura con la cita de marca */
+.auth-aside{display:flex;flex-direction:column;padding:38px max(42px,7vw);color:#fff;background:var(--green-dark)}
+/* Marca en blanco para fondos oscuros */
+.brand-light{color:#fff}
+/* Isotipo dorado sobre el aside de auth */
+.auth-aside .brand-mark{background:var(--gold);color:var(--green-dark)}
+/* Botón 'volver' transparente en la esquina */
+.back-link{align-self:flex-start;margin-bottom:78px;border:0;padding:0;color:#b3d2bf;background:transparent;font-size:12px}
+/* Bloque de cita centrado en el aside */
+.auth-quote{margin:auto 0}
+/* Título grande de la cita de auth */
+.auth-quote h1{max-width:460px;margin:22px 0;font-size:clamp(36px,4vw,59px);line-height:1.03}
+/* Párrafo de apoyo de la cita */
+.auth-quote p{color:#b3d2bf;line-height:1.6}
+/* Texto pequeño pegado abajo del aside */
+.auth-footer{margin-top:auto;color:#82ae98;font-size:11px}
+/* Panel del formulario, centrado y con ancho máximo */
+.auth-panel{width:min(380px,calc(100% - 48px));margin:auto}
+/* Marca móvil oculta en escritorio */
+.mobile-auth-brand{display:none}
+/* Título del formulario de auth */
+.auth-panel h2{margin:16px 0 10px;color:var(--green-dark);font-size:35px}
+/* Textos de ayuda en gris */
+.auth-subtitle,.auth-note{color:var(--muted);font-size:13px;line-height:1.6}
+/* Formulario de auth en columna con espacios */
+.auth-panel form{display:grid;gap:17px;margin-top:30px}
+/* Etiquetas de campos: negrita y apiladas sobre el input */
+.auth-panel label,.task-form label,.share-form label{display:grid;gap:7px;color:#43574c;font-size:12px;font-weight:700}
+/* Campos de texto compartidos: borde, padding y fondo claro */
+.auth-panel input,.task-form input,.task-form select,.task-form textarea,.share-form input,.chat-input input{width:100%;border:1px solid #cfdfd5;border-radius:6px;padding:12px 13px;color:var(--ink);background:#fbfdfc;outline:0}
+/* Foco verde con anillo suave (accesible) */
+.auth-panel input:focus,.task-form input:focus,.task-form select:focus,.task-form textarea:focus,.share-form input:focus,.chat-input input:focus{border-color:var(--green);box-shadow:0 0 0 3px #dbeee3}
+/* Botón enviar a todo el ancho */
+.auth-submit{width:100%;margin-top:5px}
+/* Botones de texto a todo el ancho (demo / cambiar vista) */
+.demo-button,.switch-button{width:100%;border:0;background:transparent;padding:15px 0 5px;color:var(--green);font-size:12px;font-weight:700}
+/* El modo demo se destaca en dorado */
+.demo-button{color:var(--gold)}
+/* Enlace para pasar de login a registro (gris) */
+.switch-button{color:var(--muted);font-weight:500}
+/* Nota centrada debajo del formulario */
+.auth-note{margin-top:29px;text-align:center;font-size:11px}
+/* Caja de error: fondo coral y texto oscuro */
+.auth-message,.form-error{padding:10px;border-radius:5px;color:#a2412f;background:#fff0ec;font-size:12px}
+/* Cascarón de la app autenticada: flex a pantalla completa */
+.app-shell{min-height:100vh;display:flex;background:#f7faf8}
+/* Menú lateral fijo, verde oscuro, altura de la ventana */
+.sidebar{position:fixed;z-index:10;display:flex;flex-direction:column;width:245px;height:100vh;padding:30px 18px 22px;color:#c4dfcf;background:var(--green-dark)}
+/* Cabecera del sidebar: marca y botón cerrar */
+.sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:0 11px}
+/* Nombre de marca en blanco dentro del menú */
+.sidebar .brand{color:#fff}
+/* Rótulo de sección del menú (AGENDA, etc.) */
+.sidebar-caption{margin:47px 12px 13px;color:#719c84;font-size:10px;text-transform:uppercase;letter-spacing:.13em}
+/* Lista vertical de botones de navegación */
+.sidebar nav,.sidebar-bottom{display:grid;gap:4px}
+/* Cada ítem del menú: fila con ícono y texto */
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:6px;padding:11px 12px;color:#abcbb9;background:transparent;text-align:left;font-size:12px}
+/* Ítem activo o hover: fondo más claro y texto blanco */
+.nav-item:hover,.nav-item.active{color:#fff;background:#225c45}
+/* Barra dorada a la izquierda del ítem activo */
+.nav-item.active{box-shadow:inset 3px 0 var(--gold)}
+/* Ícono/símbolo del ítem de menú */
+.nav-symbol{width:16px;color:#88b19a;text-align:center;font-size:15px}
+/* El símbolo del ítem activo se pone dorado */
+.nav-item.active .nav-symbol{color:var(--gold)}
+/* Bloque inferior del sidebar (cerrar sesión) */
+.sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid #245842}
+/* Color coral para la acción de salir */
+.logout{color:#da9f91}
+/* Botones hamburguesa/cerrar: ocultos en escritorio */
+.close-nav,.menu-toggle{display:none}
+/* Área de trabajo a la derecha del sidebar */
+.workspace{width:calc(100% - 245px);margin-left:245px}
+/* Encabezado del workspace: título y usuario */
+.workspace-header{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:125px;padding:30px max(32px,5vw);border-bottom:1px solid var(--line);background:#ffffffd9}
+/* Título de la vista actual (Agenda, Perfil...) */
+.workspace-header h1{margin-top:8px;color:var(--green-dark);font-size:clamp(25px,3vw,37px)}
+/* Zona derecha: campana de avisos + avatar */
+.header-user{position:relative;display:flex;align-items:center;gap:18px}
+/* Botón de la campana de notificaciones */
+.notification-button{position:relative;border:0;color:var(--green);background:transparent;font-size:23px}
+/* Punto dorado de 'hay avisos sin leer' */
+.notification-dot{position:absolute;top:1px;right:0;width:6px;height:6px;border:1px solid white;border-radius:50%;background:var(--gold)}
+/* Desplegable absoluto con la lista de avisos */
+.notification-panel{position:absolute;z-index:4;top:43px;right:46px;display:grid;gap:9px;width:250px;padding:17px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 15px 35px #174b3020}
+/* Título de una notificación */
+.notification-panel strong{color:var(--green-dark);font-size:13px}
+/* Cuerpo y fecha de la notificación, en gris */
+.notification-panel p,.notification-panel span{color:var(--muted);font-size:11px}
+/* Contenido principal centrado con padding */
+.content-area{max-width:1100px;margin:auto;padding:46px max(30px,5vw) 70px}
+/* Fila título + acción (buscar / nueva tarea) */
+.welcome-row,.section-title{display:flex;align-items:end;justify-content:space-between;gap:25px}
+/* Texto de apoyo debajo del saludo */
+.lead{margin:14px 0 18px;color:var(--muted);font-size:13px}
+/* Caja de búsqueda con ícono y línea inferior */
+.search-wrap{display:flex;align-items:center;gap:9px;width:min(360px,100%);border-bottom:1px solid #baccc2;color:var(--green)}
+/* Input de búsqueda sin borde propio */
+.search-wrap input{width:100%;border:0;padding:9px 0;outline:0;color:var(--ink);background:transparent;font-size:13px}
+/* El texto del botón no se parte en dos líneas */
+.add-task-button{white-space:nowrap}
+/* Cuatro tarjetas de estadísticas en una fila */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:45px 0 57px}
+/* Tarjeta de estadística: columna, sombra suave */
+.stat-card{display:flex;flex-direction:column;min-height:130px;padding:17px;border-radius:8px;background:#fff;box-shadow:0 6px 18px #1b57320c}
+/* Etiqueta pequeña de la estadística */
+.stat-card>span{color:var(--muted);font-size:11px}
+/* Número grande de la estadística */
+.stat-card strong{margin:15px 0 2px;color:var(--green-dark);font-size:32px}
+/* Texto de contexto bajo el número */
+.stat-card small{color:#9aa9a1;font-size:10px}
+/* Acento superior verde */
+.stat-green{border-top:3px solid var(--green)}
+/* Acento superior dorado */
+.stat-gold{border-top:3px solid var(--gold)}
+/* Acento superior coral */
+.stat-coral{border-top:3px solid #cb806c}
+/* Acento superior tinta */
+.stat-ink{border-top:3px solid #426354}
+/* Título de bloque (Hoy, Próximas...) alineado al centro vertical */
+.section-title{align-items:center;margin-bottom:17px}
+/* H2 de vistas internas */
+.section-title h2,.panel-view h2,.calendar-view h2{margin-top:8px;color:var(--green-dark);font-size:23px}
+/* Lista vertical de tarjetas de tarea */
+.tasks{display:grid;gap:9px}
+/* Tarjeta de una tarea: check, contenido y acciones */
+.task-card{display:flex;align-items:flex-start;gap:13px;padding:17px;border:1px solid var(--line);border-radius:7px;background:#fff;transition:transform .2s,box-shadow .2s}
+/* Hover: sube un poco y gana sombra */
+.task-card:hover{transform:translateY(-2px);box-shadow:0 7px 18px #1b57320b}
+/* Círculo para marcar la tarea como hecha */
+.check-button{flex:0 0 auto;width:20px;height:20px;border:1.5px solid #a9c6b5;border-radius:50%;color:#fff;background:#fff;font-size:11px}
+/* Check relleno de verde cuando ya está hecha */
+.is-complete .check-button{border-color:var(--green);background:var(--green)}
+/* Columna de texto de la tarea (se encoge si falta espacio) */
+.task-content{flex:1;min-width:0}
+/* Fila título + chip de prioridad */
+.task-heading{display:flex;align-items:center;gap:10px}
+/* Título de la tarea: una línea con puntos suspensivos */
+.task-heading h3{overflow:hidden;color:var(--green-dark);font-size:14px;text-overflow:ellipsis;white-space:nowrap}
+/* Título tachado y gris si está completada */
+.is-complete h3{color:#8b9b92;text-decoration:line-through}
+/* Chip de prioridad (píldora pequeña) */
+.priority{display:inline-block;flex:0 0 auto;border-radius:10px;padding:3px 8px;font-size:9px;font-weight:700}
+/* Prioridad alta: texto coral y fondo rosado */
+.priority-alta{color:#9b4d3e;background:#f9e7e1}
+/* Prioridad media: texto mostaza y fondo crema */
+.priority-media{color:#92712e;background:#fbf1d5}
+/* Prioridad baja: verde sobre verde suave */
+.priority-baja{color:var(--green);background:var(--green-soft)}
+/* Materia/hora y descripción: gris y tamaño chico */
+.task-meta,.task-description{margin-top:6px;color:var(--muted);font-size:11px}
+/* Descripción con interlineado más holgado */
+.task-description{color:#65786e;line-height:1.5}
+/* Botones de editar / borrar / compartir */
+.task-actions{display:flex;gap:3px}
+/* Botón solo ícono, fondo transparente */
+.icon-button{border:0;border-radius:4px;padding:5px 7px;color:#739084;background:transparent;font-size:16px}
+/* Hover del ícono: verde y fondo suave */
+.icon-button:hover{color:var(--green);background:var(--green-soft)}
+/* Hover de borrar: coral */
+.danger:hover{color:#b65243;background:#fff0ec}
+/* Barra de aviso (éxito o info) bajo el header */
+.notice{display:flex;justify-content:space-between;max-width:1100px;margin:17px auto -20px;padding:11px 14px;border:1px solid #b9dbca;border-radius:5px;color:var(--green);background:#eaf6ee;font-size:12px}
+/* Botón para cerrar el aviso */
+.notice button{border:0;color:inherit;background:transparent}
+/* Estado vacío: borde punteado y texto centrado */
+.empty-state{padding:54px 20px;border:1px dashed #bbd3c5;border-radius:8px;text-align:center}
+/* Ícono circular del estado vacío */
+.empty-state>span{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;color:var(--green);background:var(--green-soft)}
+/* Título del estado vacío */
+.empty-state h3{margin:15px 0 5px;color:var(--green-dark);font-size:16px}
+/* Texto de ayuda del estado vacío */
+.empty-state p,.empty-copy{color:var(--muted);font-size:12px}
+/* Animación rise al entrar a estas vistas */
+.focus-panel,.panel-view,.calendar-view{animation:rise .35s ease both}
+/* Panel de enfoque: tarjeta oscura centrada */
+.focus-panel{position:relative;max-width:650px;margin:40px auto;padding:52px;border-radius:12px;color:#d5e9db;background:var(--green-dark);box-shadow:0 22px 50px #174b3022}
+/* Título de la tarea en enfoque */
+.focus-panel h2{margin:20px 0 10px;color:#fff;font-size:34px}
+/* Textos secundarios claros sobre el panel oscuro */
+.focus-panel .task-meta,.focus-panel>p:not(.task-meta){color:#a9c9b5;line-height:1.6}
+/* Botón dorado dentro del panel de enfoque */
+.focus-panel .primary-button{margin-top:28px;background:var(--gold);color:var(--green-dark)}
+/* Decoración grande de reloj/órbita arriba a la derecha */
+.focus-orbit{position:absolute;top:40px;right:45px;color:#8bbda0;font-size:70px}
+/* Fila de estado (pendiente / hecha) del enfoque */
+.focus-status{display:flex;align-items:center;gap:12px;margin-top:25px;font-size:12px}
+/* Contenedor de vistas de panel (compartir, perfil) */
+.panel-view{max-width:760px}
+/* Párrafo introductorio de un panel */
+.panel-intro{max-width:560px;margin-top:12px;color:var(--muted);font-size:13px;line-height:1.6}
+/* Formulario para compartir tareas */
+.share-form{display:grid;gap:25px;margin-top:35px;padding:23px;border:1px solid var(--line);border-radius:8px;background:#fff}
+/* Lista de tareas o shares */
+.share-list{display:grid;gap:9px}
+/* Fila seleccionable: espacio entre texto y botón */
+.share-row,.focus-choice,.agenda-task{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:6px;padding:13px;background:#fbfdfc;text-align:left}
+/* Columna de título + detalle */
+.share-row span,.focus-choice span:nth-child(2),.agenda-task span{display:grid;gap:5px}
+/* Título en negrita de la fila */
+.share-row b,.focus-choice b,.agenda-task b{color:var(--green-dark);font-size:12px}
+/* Detalle chico en gris */
+.share-row small,.focus-choice small,.agenda-task small{color:var(--muted);font-size:10px}
+/* Caja verde de confirmación al compartir */
+.shared-success{display:grid;gap:8px;margin-top:16px;padding:16px;border-radius:7px;color:var(--green);background:var(--green-soft);font-size:12px}
+/* Nombre del mes sobre el calendario */
+.calendar-month{color:var(--muted);font-size:12px}
+/* Calendario a dos columnas: días | agenda del día */
+.calendar-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:35px}
+/* Tarjetas blancas de la grilla de días y de la agenda */
+.calendar-days,.day-agenda{display:grid;align-content:start;gap:8px;padding:20px;border:1px solid var(--line);border-radius:8px;background:#fff}
+/* Botón de un día del mes */
+.calendar-day{display:flex;align-items:center;justify-content:space-between;border:0;border-radius:6px;padding:12px;color:var(--muted);background:#f6faf7;text-align:left}
+/* Número del día */
+.calendar-day b{color:var(--green-dark);font-size:17px}
+/* Punto indicador (vacío por defecto) */
+.calendar-day i{width:6px;height:6px;border-radius:50%}
+/* Punto dorado si ese día tiene tareas */
+.calendar-day i.has-task{background:var(--gold)}
+/* Día elegido: fondo verde y texto blanco */
+.calendar-day.selected,.calendar-day.selected b{color:#fff;background:var(--green)}
+/* Título 'Agenda del día' */
+.day-agenda h3{margin:7px 0 10px;color:var(--green-dark);font-size:18px}
+/* La fila ocupa todo el ancho (es un botón) */
+.agenda-task,.focus-choice{width:100%}
+/* Hover de la fila: borde y fondo verdes */
+.agenda-task:hover,.focus-choice:hover{border-color:#a8ccb6;background:var(--green-soft)}
+/* Ícono grande a la izquierda de la opción de enfoque */
+.focus-choice-icon{color:var(--green);font-size:22px}
+/* Ventana de chat: borde y recorte */
+.chat-window{overflow:hidden;margin-top:32px;border:1px solid var(--line);border-radius:8px;background:#fff}
+/* Cabecera del chat con avatar y nombre */
+.chat-contact{display:flex;align-items:center;gap:10px;padding:15px;border-bottom:1px solid var(--line)}
+/* Nombre y estado apilados */
+.chat-contact>span:nth-child(2){display:grid;gap:3px}
+/* Subtítulo del contacto (en línea, etc.) */
+.chat-contact small{color:var(--muted);font-size:10px}
+/* Punto verde de 'en línea' */
+.chat-contact i{width:7px;height:7px;margin-left:auto;border-radius:50%;background:#5fb47a}
+/* Avatar más pequeño para el chat */
+.small-avatar{width:30px;height:30px}
+/* Área de burbujas, contenido abajo */
+.chat-messages{display:grid;gap:10px;min-height:220px;padding:23px;align-content:end;background:#fbfdfc}
+/* Burbuja de mensaje (máximo 70% del ancho) */
+.chat-messages p{max-width:70%;padding:10px 13px;border-radius:10px;font-size:12px}
+/* Mensaje recibido: a la izquierda, fondo claro */
+.incoming{justify-self:start;background:#e8f1eb}
+/* Mensaje enviado: a la derecha, fondo verde */
+.outgoing{justify-self:end;color:#fff;background:var(--green)}
+/* Barra inferior para escribir */
+.chat-input{display:flex;gap:8px;padding:13px;border-top:1px solid var(--line)}
+/* El input del chat crece y empuja el botón */
+.chat-input input{flex:1}
+/* Tarjeta de perfil: avatar + nombre + correo */
+.profile-card{display:flex;align-items:center;gap:18px;margin-top:35px;padding:24px;border:1px solid var(--line);border-radius:8px;background:#fff}
+/* Avatar grande circular del perfil */
+.profile-avatar{display:grid;place-items:center;width:62px;height:62px;border-radius:50%;color:#fff;background:var(--green);font-size:25px}
+/* Nombre del usuario */
+.profile-card h3{color:var(--green-dark);font-size:18px}
+/* Correo u otro dato bajo el nombre */
+.profile-card p{margin:4px 0 8px;color:var(--muted);font-size:12px}
+/* Etiqueta 'DEMO' pequeña y verde */
+.demo-tag{color:var(--green);font-size:9px;font-weight:700}
+/* Listas de datos / interruptores sobre fondo verde suave */
+.profile-info,.settings-list{display:grid;gap:9px;margin-top:20px;padding:20px;border-radius:8px;background:#eaf4ed}
+/* Rótulo en mayúsculas de un dato */
+.profile-info span{margin-top:8px;color:var(--muted);font-size:10px;text-transform:uppercase}
+/* Valor del dato (nombre, correo, rol) */
+.profile-info b,.settings-list b{color:var(--green-dark);font-size:13px}
+/* Fila de un ajuste: texto a la izquierda, switch a la derecha */
+.settings-list label{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #cfe2d5}
+/* Columna título + ayuda del ajuste */
+.settings-list span{display:grid;gap:5px}
+/* Texto de ayuda del ajuste */
+.settings-list small{color:var(--muted);font-size:11px}
+/* Color del checkbox/switch en verde de marca */
+.settings-list input{accent-color:var(--green)}
+/* Separación del botón salir en la vista perfil */
+.logout-profile{margin-top:22px}
+/* Fondo oscuro a pantalla completa detrás del modal */
+.modal-backdrop{position:fixed;z-index:20;inset:0;display:grid;place-items:center;padding:20px;background:#0b443399}
+/* Caja blanca del modal, con scroll si es alta */
+.modal{width:min(620px,100%);max-height:90vh;overflow-y:auto;padding:27px;border-radius:10px;background:#fff}
+/* Cabecera del modal: título y botón cerrar */
+.modal-header{display:flex;justify-content:space-between;margin-bottom:26px}
+/* Título del modal (Nueva tarea / Editar) */
+.modal-header h2{margin-top:7px;color:var(--green-dark);font-size:25px}
+/* Formulario de tarea en columna */
+.task-form{display:grid;gap:17px}
+/* Dos columnas para fecha/hora y materia/prioridad */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+/* El textarea solo se estira en vertical */
+.task-form textarea{resize:vertical}
+/* Fila de botones Guardar / Cancelar */
+.form-actions{display:flex;align-items:center;gap:17px;margin-top:3px}
+/* Animación rise: define los fotogramas from/to */
+@keyframes rise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+/* Tablet y pantallas medianas (hasta 850px): apila columnas y muestra el menú hamburguesa */
+@media(max-width:850px){
+  /* Menos padding horizontal en tablet */
+  .landing-header,.hero,.problem-band,.feature-section,.landing-footer{padding-left:24px;padding-right:24px}
+  /* El menú horizontal de la landing se oculta en tablet */
+  .landing-nav{display:none}
+  /* El héroe pasa a una sola columna */
+  .hero{grid-template-columns:1fr;gap:40px;padding-top:60px}
+  /* Maqueta inclinada de la agenda (tarjeta con sombra) (pantalla ≤ 850px) */
+  .dashboard-preview{max-width:620px;width:100%}
+  /* Separadores superior e inferior de la banda de problema (pantalla ≤ 850px) */
+  .problem-band{gap:25px}
+  /* Grilla de características en 2 columnas */
+  .feature-grid{grid-template-columns:1fr 1fr}
+  /* Se quitan bordes izquierdos de las columnas 2 y 3 */
+  .feature-item:nth-child(3n+2),.feature-item:nth-child(3n+3){padding-left:0;border-left:0}
+  /* En tablet, las características pares llevan borde izquierdo */
+  .feature-item:nth-child(even){padding-left:22px;border-left:1px solid var(--line)}
+  /* Auth en una sola columna (desaparece el aside) */
+  .auth-page{grid-template-columns:1fr}
+  /* Aside de auth oculto: el formulario queda a pantalla completa */
+  .auth-aside{display:none}
+  /* Panel del formulario, centrado y con ancho máximo (pantalla ≤ 850px) */
+  .auth-panel{padding:45px 0}
+  /* Marca móvil visible (en escritorio estaba oculta) */
+  .mobile-auth-brand{display:block;margin-bottom:70px}
+  /* Marca móvil en color oscuro (el aside ya no está) */
+  .mobile-auth-brand .brand{color:var(--green-dark)}
+  /* Sidebar fuera de pantalla; se anima al abrir */
+  .sidebar{transform:translateX(-100%);transition:transform .25s}
+  /* Sidebar abierto: vuelve a X=0 y proyecta sombra */
+  .sidebar.is-open{transform:translateX(0);box-shadow:10px 0 30px #092d1e30}
+  /* Hamburguesa y cerrar visibles en tablet */
+  .close-nav,.menu-toggle{display:block;border:0;color:#aacbb8;background:transparent;font-size:24px}
+  /* Capa oscura detrás del menú (oculta si el sidebar está cerrado) */
+  .mobile-overlay{display:none}
+  /* Con el menú abierto, el overlay cubre toda la pantalla */
+  .sidebar.is-open+.mobile-overlay{position:fixed;z-index:9;display:block;inset:0;background:#092d1e66}
+  /* Workspace a todo el ancho (el sidebar ya no empuja) */
+  .workspace{width:100%;margin-left:0}
+  /* Botón hamburguesa visible en el header (color verde) */
+  .menu-toggle{margin-right:16px;color:var(--green);font-size:20px}
+  /* Encabezado del workspace: título y usuario (pantalla ≤ 850px) */
+  .workspace-header{justify-content:flex-start}
+  /* Zona derecha: campana de avisos + avatar (pantalla ≤ 850px) */
+  .header-user{margin-left:auto}
+  /* Calendario en una sola columna */
+  .calendar-layout{grid-template-columns:1fr}
+}
+/* Celular (hasta 560px): una columna, tipografías más chicas y botones a todo el ancho */
+@media(max-width:560px){
+  /* Cabecera de la landing: fila flex con logo, menú y botones (pantalla ≤ 560px) */
+  .landing-header{height:74px}
+  /* Botón outline de la cabecera más compacto en celular */
+  .landing-header .outline-button{padding:9px 11px;font-size:11px}
+  /* Sección héroe: dos columnas (texto + vista previa) y altura mínima (pantalla ≤ 560px) */
+  .hero{min-height:0;padding-top:60px;padding-bottom:65px}
+  /* Título grande del héroe: tamaño fluido y tracking negativo (pantalla ≤ 560px) */
+  .hero h1{font-size:43px}
+  /* Párrafo introductorio del héroe (no la nota demo) (pantalla ≤ 560px) */
+  .hero-copy>p:not(.demo-note){font-size:15px}
+  /* Fila de botones de acción del héroe (pantalla ≤ 560px) */
+  .hero-actions{align-items:flex-start;flex-direction:column;gap:11px}
+  /* Maqueta inclinada de la agenda (tarjeta con sombra) (pantalla ≤ 560px) */
+  .dashboard-preview{min-height:330px;padding:10px}
+  /* Cuerpo de la maqueta: riel izquierdo + contenido (pantalla ≤ 560px) */
+  .preview-body{grid-template-columns:31px 1fr;min-height:280px}
+  /* Área de contenido de la maqueta (pantalla ≤ 560px) */
+  .preview-main{padding:22px 16px}
+  /* Cada tarjeta de estadística (pantalla ≤ 560px) */
+  .preview-stats span{width:95px}
+  /* Bandas de dos columnas (problema y beneficio) (pantalla ≤ 560px) */
+  .problem-band,.benefit-band{grid-template-columns:1fr;gap:28px;padding-top:60px;padding-bottom:60px}
+  /* Títulos de sección: verde oscuro y interlineado compacto (pantalla ≤ 560px) */
+  .problem-band h2,.benefit-band h2,.section-heading h2{font-size:27px}
+  /* Sección de características: padding vertical amplio (pantalla ≤ 560px) */
+  .feature-section{padding-top:65px;padding-bottom:65px}
+  /* Grilla de 3 columnas con línea superior (pantalla ≤ 560px) */
+  .feature-grid{grid-template-columns:1fr}
+  /* Características en una columna, sin borde izquierdo */
+  .feature-item,.feature-item:nth-child(even){min-height:150px;padding:22px 0;border-left:0}
+  /* Pie de la landing: fila con marca y textos chicos (pantalla ≤ 560px) */
+  .landing-footer{flex-wrap:wrap;gap:14px;padding-top:25px;padding-bottom:25px}
+  /* La marca empuja el resto del pie a la derecha (pantalla ≤ 560px) */
+  .landing-footer .brand{width:100%}
+  /* Panel del formulario, centrado y con ancho máximo (pantalla ≤ 560px) */
+  .auth-panel{width:calc(100% - 40px);padding:30px 0}
+  /* Marca móvil oculta en escritorio (pantalla ≤ 560px) */
+  .mobile-auth-brand{margin-bottom:55px}
+  /* Contenido principal centrado con padding (pantalla ≤ 560px) */
+  .content-area{padding:32px 18px 50px}
+  /* Encabezado del workspace: título y usuario (pantalla ≤ 560px) */
+  .workspace-header{min-height:95px;padding:20px 18px}
+  /* Título de la vista actual (Agenda, Perfil...) (pantalla ≤ 560px) */
+  .workspace-header h1{font-size:25px}
+  /* Cuatro tarjetas de estadísticas en una fila (pantalla ≤ 560px) */
+  .stats-grid{grid-template-columns:1fr 1fr;gap:8px;margin:30px 0 40px}
+  /* Tarjeta de estadística: columna, sombra suave (pantalla ≤ 560px) */
+  .stat-card{min-height:112px;padding:13px}
+  /* Número grande de la estadística (pantalla ≤ 560px) */
+  .stat-card strong{font-size:27px}
+  /* Saludo y buscador apilados en columna */
+  .welcome-row{align-items:flex-start;flex-direction:column}
+  /* El texto del botón no se parte en dos líneas (pantalla ≤ 560px) */
+  .add-task-button{width:100%}
+  /* Título de bloque (Hoy, Próximas...) alineado al centro vertical (pantalla ≤ 560px) */
+  .section-title{align-items:flex-start}
+  /* Tarjeta de una tarea: check, contenido y acciones (pantalla ≤ 560px) */
+  .task-card{padding:13px 10px}
+  /* Botones de editar / borrar / compartir (pantalla ≤ 560px) */
+  .task-actions{gap:0}
+  /* Fila título + chip de prioridad (pantalla ≤ 560px) */
+  .task-heading{align-items:flex-start;flex-direction:column;gap:5px}
+  /* Dos columnas para fecha/hora y materia/prioridad (pantalla ≤ 560px) */
+  .form-grid{grid-template-columns:1fr}
+  /* Caja blanca del modal, con scroll si es alta (pantalla ≤ 560px) */
+  .modal{padding:20px}
+  /* Panel de enfoque: tarjeta oscura centrada (pantalla ≤ 560px) */
+  .focus-panel{padding:38px 25px}
+  /* Decoración grande de reloj/órbita arriba a la derecha (pantalla ≤ 560px) */
+  .focus-orbit{top:21px;right:20px;font-size:45px}
+  /* Título de la tarea en enfoque (pantalla ≤ 560px) */
+  .focus-panel h2{font-size:28px}
+  /* Nombre del mes sobre el calendario (pantalla ≤ 560px) */
+  .calendar-month{display:none}
+  /* Fila de share apilada: texto arriba, botón abajo */
+  .share-row{align-items:flex-start;flex-direction:column}
+  /* Botón Revocar: tamaño mínimo táctil (pantalla ≤ 560px) */
+  .share-row .outline-button{width:100%}
+  /* Botón enviar del chat con menos padding horizontal */
+  .chat-input .primary-button{padding-left:13px;padding-right:13px}
+}
+/* Botón deshabilitado: no se puede hacer clic y se ve opaco */
+button:disabled{cursor:not-allowed;opacity:.58;transform:none!important;box-shadow:none}
+/* Estado de carga centrado */
+.loading-state{display:flex;align-items:center;justify-content:center;gap:12px;min-height:180px}
+/* Círculo animado de carga */
+.loading-spinner{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+/* Animación spin: define los fotogramas from/to */
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Formulario para compartir tareas */
+.share-form{overflow:visible}
+/* Lista de tareas o shares */
+.share-list{width:100%;overflow:visible}
+/* Fila de share: ocupa todo el ancho y altura táctil mínima */
+.share-row{width:100%;min-height:64px}
+/* El texto de la fila de share se encoge; el botón no */
+.share-row>span{min-width:0;flex:1}
+/* Botón Revocar: tamaño mínimo táctil */
+.share-row .outline-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:112px;min-height:44px;white-space:nowrap;color:var(--green)}
+/* Estado vacío de la lista de compartidos (borde punteado) */
+.share-empty{display:grid;gap:6px;padding:18px;border:1px dashed #b9cec2;border-radius:10px;color:var(--green-dark);background:#f7fbf8}
+/* Texto de ayuda del estado vacío de shares */
+.share-empty span{color:var(--muted);font-size:12px}
+/* Caja verde de confirmación al compartir */
+.shared-success{overflow:visible}
+/* Fila interna del aviso de éxito (texto + acción) */
+.shared-success>span{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* Botón de texto dentro del aviso de éxito */
+.shared-success .text-button{display:inline-flex;align-items:center;min-height:36px;padding:6px 9px;color:var(--green);font-weight:700}
+/* Transición suave de borde, sombra y desplazamiento en tarjetas clave */
+.task-card,.stat-card,.share-row,.chat-window,.profile-card{transition:border-color .2s,box-shadow .2s,transform .2s}
+/* Estado hover de .task-card */
+.task-card:hover,.share-row:hover{border-color:#b9d2c4;box-shadow:0 8px 20px #174b3010;transform:translateY(-1px)}
+/* Fondo oscuro a pantalla completa detrás del modal */
+.modal-backdrop{padding:18px;overflow-y:auto}
+/* Caja blanca del modal, con scroll si es alta */
+.modal{width:min(650px,100%);max-height:calc(100vh - 36px);overflow-y:auto}
+/* Ítem de notificación: no desborda el panel */
+.notification-item{min-width:0}
+/* Área de burbujas, contenido abajo */
+.chat-messages{min-height:160px}
+/* Panel del asistente: recorta el contenido */
+.assistant-panel{overflow:hidden}
+/* Foco verde del input del asistente */
+.assistant-input input:focus{border-color:var(--green);box-shadow:0 0 0 3px #dbeee3}
+/* Celular (hasta 560px): una columna, tipografías más chicas y botones a todo el ancho */
+@media(max-width:560px){
+  /* Fondo oscuro a pantalla completa detrás del modal (pantalla ≤ 560px) */
+  .modal-backdrop{padding:10px}
+  /* Caja blanca del modal, con scroll si es alta (pantalla ≤ 560px) */
+  .modal{max-height:calc(100vh - 20px)}
+  /* Desplegable absoluto con la lista de avisos (pantalla ≤ 560px) */
+  .notification-panel{right:0;width:min(280px,calc(100vw - 36px))}
+  /* Botón flotante del asistente (esquina inferior) (pantalla ≤ 560px) */
+  .assistant-launcher{right:16px;bottom:16px}
+  /* Panel del asistente: recorta el contenido (pantalla ≤ 560px) */
+  .assistant-panel{right:16px;bottom:76px;height:min(600px,calc(100vh - 94px))}
+  /* Columna de texto de la tarea (se encoge si falta espacio) (pantalla ≤ 560px) */
+  .task-content{min-width:0}
+  /* Títulos y descripciones de tarea pueden partir en cualquier carácter */
+  .task-heading h3,.task-description{overflow-wrap:anywhere}
+  /* Ventana de chat: borde y recorte (pantalla ≤ 560px) */
+  .chat-window{padding:12px}
+  /* Barra inferior para escribir (pantalla ≤ 560px) */
+  .chat-input{align-items:stretch}
+  /* El input del chat crece y empuja el botón (pantalla ≤ 560px) */
+  .chat-input input{min-width:0}
+  /* Tarjeta de perfil: avatar + nombre + correo (pantalla ≤ 560px) */
+  .profile-card{align-items:flex-start}
+}
+/* Celular (hasta 560px): una columna, tipografías más chicas y botones a todo el ancho */
+@media(max-width:560px){
+  /* En celular la fila de share se estira a columna completa */
+  .share-row{align-items:stretch;flex-direction:column}
+  /* Botón Revocar: tamaño mínimo táctil (pantalla ≤ 560px) */
+  .share-row .outline-button{width:100%;min-height:46px}
+  /* Formulario para compartir tareas (pantalla ≤ 560px) */
+  .share-form{padding:17px}
+  /* Fila interna del aviso de éxito (texto + acción) (pantalla ≤ 560px) */
+  .shared-success>span{align-items:flex-start;flex-direction:column}
+  /* Botón de texto dentro del aviso de éxito (pantalla ≤ 560px) */
+  .shared-success .text-button{padding-left:0}
+}

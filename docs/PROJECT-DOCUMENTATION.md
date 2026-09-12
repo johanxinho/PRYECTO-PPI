@@ -15,32 +15,40 @@ PRYECTO-PPI/
 ├── ppi-react/                         # Aplicación principal RECORDATE
 │   ├── index.html                     # Documento raíz y metadatos de la aplicación
 │   ├── package.json                   # Scripts y dependencias de ppi-react
+│   ├── vite.config.js                 # Base /PRYECTO-PPI/, alias @ y fallback 404.html
 │   ├── .env.example                   # Plantilla de variables públicas de Supabase
+│   ├── .env.production                # URL y clave publishable usadas en el build de Pages
 │   ├── src/
 │   │   ├── main.jsx                   # Punto de entrada React
-│   │   ├── App.jsx                    # Landing, autenticación visual y dashboard
-│   │   ├── App.css                    # Estilos de la aplicación y responsive
-│   │   ├── index.css                  # Tokens globales, tipografías y reset base
+│   │   ├── App.jsx                    # Landing, sesión y panel (tareas, calendario, enfoque)
+│   │   ├── Brand.jsx                  # Logo oficial (calendario + wordmark)
+│   │   ├── recordate.css              # Identidad navy, vidrio y layout
+│   │   ├── paths.js                   # Rutas SPA conscientes del BASE_URL de Pages
 │   │   ├── supabaseClient.js          # Cliente Supabase condicionado por variables env
-│   │   ├── dataService.js             # Perfiles, tareas y operaciones persistentes
-│   │   ├── components/Login.jsx       # Inicio de sesión, registro y verificación OTP
-│   │   └── components/                # Componentes heredados no usados actualmente
-│   ├── public/                        # Recursos públicos servidos por Vite
+│   │   ├── dataService.js             # Perfiles, tareas, mensajes, shares y adjuntos
+│   │   ├── demoStore.js               # Agenda local de demostración
+│   │   ├── shaders/halftoneFrag.js    # Fragment shader WebGL del fondo
+│   │   └── components/
+│   │       ├── Login.jsx              # Inicio de sesión, registro, OTP y recuperación
+│   │       ├── AsciiEffect.jsx        # Animación ASCII del retrato Electric Gaze
+│   │       ├── WebGLBackground.jsx    # Fondo Halftone a pantalla completa
+│   │       ├── GlassCard.jsx          # Superficie translúcida reutilizable
+│   │       └── ui/                    # MorphingText y DiaTextReveal del hero
+│   ├── public/brand/                  # Logo PNG, retrato Electric Gaze y marca SVG
+│   ├── public/sw.js                   # Service Worker de notificaciones
 │   └── README.md                      # Guía rápida de la aplicación principal
+├── docs/MANUAL-DE-USUARIO.md          # Cómo usar la página publicada
+├── docs/PROJECT-DOCUMENTATION.md      # Este documento técnico
+├── .github/workflows/pages.yml        # Build y publicación en la rama gh-pages
 ├── dia-30-07/                         # Ejercicio React/Vite independiente
-│   ├── src/App.jsx                    # Formulario de registro de estudiante
-│   ├── src/App.css                    # Estilos del formulario
-│   ├── src/index.css                  # Estilos base del ejercicio
-│   ├── src/main.jsx                   # Punto de entrada React
-│   └── package.json                   # Scripts y dependencias del ejercicio
 ├── iniciodesesión.html                # Prototipo HTML estático de login
 ├── registrarse.html                   # Prototipo HTML estático de registro
 ├── menu.html                          # Prototipo HTML estático de navegación
-├── Supabase Snippet Población y mantenimiento de tablas del PPI.csv
-├── package.json                       # Dependencia Supabase en la raíz, sin scripts de app
-├── .vscode/launch.json                # Configuración opcional de depuración en Chrome
+├── supabase/migrations/               # SQL de tablas, RLS y funciones
 └── README.md                          # Entrada general del repositorio
 ```
+
+Sitio publicado: https://johanxinho.github.io/PRYECTO-PPI/
 
 ## 3. Tecnología
 
@@ -50,8 +58,12 @@ La aplicación principal usa:
 - Vite 8 como servidor de desarrollo y empaquetador.
 - JavaScript con JSX, sin TypeScript.
 - Supabase JS para autenticación y persistencia real.
-- CSS propio para la identidad visual; Bootstrap figura como dependencia instalada, pero la interfaz actual no depende de sus clases.
+- CSS propio (`recordate.css`) para la identidad navy / vidrio.
+- WebGL1 (fondo Halftone) y Canvas2D (ASCII Electric Gaze) en la portada.
+- Motion (Framer) para DiaTextReveal; filtro SVG para MorphingText.
+- Lucide React para iconos.
 - Migración SQL de Supabase para perfiles, tareas, agendas compartidas y mensajes.
+- GitHub Pages (`gh-pages`) como hosting, no Vercel.
 - ESLint para validación estática.
 
 `dia-30-07` usa React 19, Vite 8 y Oxlint, pero no forma parte del arranque de RECORDATE.
@@ -76,17 +88,19 @@ No existe un router externo. La navegación interna se controla con los estados 
 
 Aunque actualmente están en un único archivo, estas funciones son componentes reutilizables y tienen responsabilidades separadas:
 
-- `Brand`: marca visual de RECORDATE.
-- `Landing`: portada, propuesta del PPI, características y llamada a entrar.
-- `DashboardPreview`: representación visual del dashboard en la landing.
+- `Brand` (`Brand.jsx`): logo PNG del calendario + wordmark RECORDATE.
+- `Landing`: portada PPI, MorphingText, AsciiEffect (Electric Gaze) y llamadas a entrar.
+- `Login`: inicio de sesión, registro, OTP de 6 dígitos, recuperación y acceso demo.
+- `WebGLBackground`: canvas WebGL a pantalla completa detrás de toda la UI.
+- `AsciiEffect`: muestreo de `public/brand/electric-gaze.jpg` a glifos ASCII animados.
 - `TaskForm`: formulario controlado para crear o editar actividades.
 - `PriorityBadge`: etiqueta visual de prioridad.
-- `TaskCard`: tarjeta con completar, editar, eliminar y modo enfoque.
-- `Stats`: tarjetas con métricas calculadas desde las tareas reales del navegador.
+- `TaskCard`: tarjeta con completar, editar, eliminar, adjunto y modo enfoque.
+- `Stats`: tarjetas con métricas calculadas desde las tareas reales.
 - `TaskList`: lista reutilizable con estado vacío y modo de selección para enfoque.
 - `Calendar`: días que tienen tareas y agenda del día seleccionado.
-- `SharePanel`: selección de actividad y preparación visual de envío por correo.
-- `Chat`: interfaz visual pendiente de conectar a las operaciones de mensajes.
+- `SharePanel`: compartir por correo y revocar acceso.
+- `Chat`: mensajes internos (Supabase o demoStore).
 - `Profile`: perfil y configuración de notificaciones de la sesión actual.
 
 ### Estado principal
