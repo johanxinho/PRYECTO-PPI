@@ -13,15 +13,12 @@ Cada push a `main` vuelve a construir y desplegar `ppi-react` mediante [`.github
 ### Cómo dejar GitHub Pages activo
 
 1. En el repositorio, abre **Settings → Pages**.
-2. En **Build and deployment → Source**, elige **GitHub Actions**.
-3. (Opcional, para login y datos reales) en **Settings → Secrets and variables → Actions** crea:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_VAPID_PUBLIC_KEY` (opcional, notificaciones push)
-4. Espera a que el workflow **GitHub Pages** termine en la pestaña **Actions**.
-5. Abre https://johanxinho.github.io/PRYECTO-PPI/
+2. En **Build and deployment → Source**, elige **Deploy from a branch**.
+3. Branch: **gh-pages** / **/** (root) y guarda.
+4. Abre https://johanxinho.github.io/PRYECTO-PPI/
 
-Si las claves de Supabase no están configuradas, la landing funciona y puedes explorar con el acceso de demostración. El registro, las tareas reales y los mensajes sí necesitan esas claves.
+El workflow publica el sitio en la rama `gh-pages` en cada push a `main`. Supabase ya va incluido en ese build.
+
 
 ## Descripción del proyecto
 
