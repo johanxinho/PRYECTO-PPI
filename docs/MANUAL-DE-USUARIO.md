@@ -354,6 +354,22 @@ Solo hay chat entre cuentas registradas. La demo incluye un mensaje de ejemplo y
 
 ---
 
+
+## 17b. Asistente de IA (Recórdate IA)
+
+Con tu cuenta iniciada verás un botón flotante con el ícono de robot (abajo a la derecha).
+
+1. Toca el botón para abrir el chat.
+2. Escribe una pregunta o pide ayuda (por ejemplo: “ayúdame a priorizar mis tareas de esta semana”).
+3. El asistente responde en español usando Gemini (gratis, con límite diario).
+4. Usa **Nueva** para empezar otra conversación.
+5. Cierra con la X, tocando fuera del panel o con Escape.
+
+Notas:
+- No aparece en el modo demostración.
+- No pegas claves ni contraseñas en el chat.
+- Si ves un aviso de límite o de configuración, espera un momento o avisa a quien administra el proyecto.
+
 ## 18. Perfil y configuración
 
 Ahí puedes:
