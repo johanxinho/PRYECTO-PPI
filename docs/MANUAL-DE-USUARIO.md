@@ -138,7 +138,7 @@ En la cabecera del panel: el icono de **historial** lista tus chats guardados; e
 
 ### Recórdate IA — adjuntar fotos
 
-_Captura pendiente: adjuntar fotos (llega en el siguiente commit)._
+![Adjuntar fotos en Recórdate IA](images/ia-adjuntar.jpg)
 
 Con el clip puedes adjuntar hasta **2 fotos** (JPG, PNG, WEBP o GIF, máximo 4 MB cada una) antes de enviar. También puedes mandar solo la imagen, sin texto.
 
