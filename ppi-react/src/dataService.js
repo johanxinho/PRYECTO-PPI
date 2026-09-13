@@ -398,24 +398,44 @@ export async function deleteTaskAttachment(attachment) {
 }
 
 export function subscribeToNotifications(userId, onChange) {
-  if (!supabase) return () => {};
-  const channel = supabase
-    .channel(`recordate-notifications-${userId}`)
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-      onChange,
-    )
-    .subscribe();
-  return () => supabase.removeChannel(channel);
+  if (!supabase || !userId) return () => {};
+  // Seguridad: el filtro Realtime debe coincidir con la sesión actual (RLS también aplica).
+  let active = true;
+  let channel = null;
+  supabase.auth.getUser().then(({ data }) => {
+    if (!active) return;
+    if (!data?.user?.id || data.user.id !== userId) return;
+    channel = supabase
+      .channel(`recordate-notifications-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        onChange,
+      )
+      .subscribe();
+  });
+  return () => {
+    active = false;
+    if (channel) supabase.removeChannel(channel);
+  };
 }
 
 export function subscribeToMessages(userId, onChange) {
   if (!supabase || !userId) return () => {};
-  const channel = supabase
-    .channel(`recordate-messages-${userId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `recipient_id=eq.${userId}` }, onChange)
-    .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${userId}` }, onChange)
-    .subscribe();
-  return () => supabase.removeChannel(channel);
+  // Seguridad: solo suscribir canales del usuario autenticado.
+  let active = true;
+  let channel = null;
+  supabase.auth.getUser().then(({ data }) => {
+    if (!active) return;
+    if (!data?.user?.id || data.user.id !== userId) return;
+    channel = supabase
+      .channel(`recordate-messages-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `recipient_id=eq.${userId}` }, onChange)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${userId}` }, onChange)
+      .subscribe();
+  });
+  return () => {
+    active = false;
+    if (channel) supabase.removeChannel(channel);
+  };
 }
