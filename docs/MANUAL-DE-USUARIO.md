@@ -14,7 +14,7 @@ Este manual explica **cómo usar la página publicada**, no cómo programarla.
 
 ## Capturas de la versión publicada
 
-Las imágenes siguientes corresponden a la versión lista para publicar (después de corregir el hueco vacío al final del scroll en celular).
+Las imágenes siguientes corresponden a la versión lista para publicar, incluyendo **Recórdate IA** y otras opciones recientes (mensajes, compartir, perfil con rol y foto).
 
 ### Portada
 
@@ -69,6 +69,66 @@ Escribes el correo de un usuario registrado, eliges la tarea y compartes. Las pe
 ![Perfil con rol y foto](images/perfil.jpg)
 
 En **Perfil** ves nombre, correo, rol (Estudiante, Padre, Madre, Profesor o Trabajador) y puedes cambiar el rol o subir una **foto de perfil**. La foto aparece en el encabezado, en mensajes y en agendas compartidas.
+
+### Inicio (demostración)
+
+![Inicio en modo demostración](images/panel-inicio.jpg)
+
+Tras entrar a la demo ves **Hoy**: saludo, métricas del día, progreso y las actividades importantes.
+
+### Mis tareas
+
+![Lista de Mis tareas](images/mis-tareas.jpg)
+
+En **Mis tareas** ves la lista completa con búsqueda y filtros por prioridad, estado y fecha. Desde aquí creas, editas o completas actividades.
+
+### Calendario
+
+![Calendario con actividades del mes](images/calendario.jpg)
+
+El **Calendario** muestra el mes con las tareas en su día. Al elegir un día ves el detalle de esa fecha.
+
+### Recordatorios
+
+![Sección Recordatorios](images/recordatorios.jpg)
+
+**Recordatorios** lista las actividades que tienen aviso configurado, para revisar qué suena o se muestra cerca de la hora.
+
+### Prioridades
+
+![Sección Prioridades](images/prioridades.jpg)
+
+**Prioridades** agrupa las tareas en Alta, Media y Baja para ver primero lo urgente.
+
+### Modo enfoque
+
+![Modo enfoque con una tarea](images/modo-enfoque.jpg)
+
+En **Modo enfoque** una sola tarea ocupa la pantalla: título, materia, hora y descripción. Puedes marcarla como completada (si eres el dueño) o salir del modo.
+
+### Recórdate IA — botón del robot
+
+_Captura pendiente: botón flotante del robot (cuenta real)._
+
+Con **cuenta real** (no en la demostración) aparece abajo a la derecha el botón flotante del robot. Tócalo para abrir el asistente.
+
+### Recórdate IA — chat abierto
+
+_Captura pendiente: panel de chat abierto._
+
+Se abre el panel **Recórdate IA**: mensaje de bienvenida, historial de mensajes, campo para escribir, clip para adjuntar fotos y botón de enviar. Puedes cerrar con la X, tocando fuera o con Escape.
+
+### Recórdate IA — historial y chat nuevo
+
+_Captura pendiente: historial de chats._
+
+En la cabecera del panel: el icono de **historial** lista tus chats guardados; el **+** inicia una conversación nueva; la **X** cierra el asistente.
+
+### Recórdate IA — adjuntar fotos
+
+_Captura pendiente: adjuntar fotos._
+
+Con el clip puedes adjuntar hasta **2 fotos** (JPG, PNG, WEBP o GIF, máximo 4 MB cada una) antes de enviar. También puedes mandar solo la imagen, sin texto.
 
 ---
 
@@ -358,20 +418,21 @@ Solo hay chat entre cuentas registradas. La demo incluye un mensaje de ejemplo y
 
 ## 17b. Asistente de IA (Recórdate IA)
 
-Con tu cuenta iniciada verás un botón flotante con el ícono de robot (abajo a la derecha).
+Con tu cuenta iniciada (cuenta real, no demostración) verás un botón flotante con el ícono de robot **abajo a la derecha**.
 
-1. Toca el botón para abrir el chat.
-2. Escribe una pregunta o pide ayuda (por ejemplo: “ayúdame a priorizar mis tareas de esta semana”).
-3. Usa el clip para adjuntar hasta 2 fotos (JPG/PNG/WEBP/GIF, máx. 4 MB). Puedes enviar solo la foto.
-4. El ícono de historial abre tus chats guardados; tócalo para reabrir uno.
-5. El botón + inicia una conversación nueva.
-6. Cierra con la X, tocando fuera del panel o con Escape.
+1. Toca el botón del robot para abrir el panel **Recórdate IA**.
+2. Lee el mensaje de bienvenida: el asistente puede ayudarte a organizar tareas y a leer fotos de horarios o apuntes.
+3. Escribe en el campo (placeholder *Escribe o adjunta una foto…*) o pide ayuda, por ejemplo: “ayúdame a priorizar mis tareas de esta semana”.
+4. Usa el **clip** para adjuntar hasta **2 fotos** (JPG, PNG, WEBP o GIF; máximo **4 MB** cada una). Puedes enviar solo la foto, sin texto.
+5. El ícono de **historial** abre **Chats guardados**; toca uno para reabrirlo.
+6. El botón **+** inicia una conversación nueva.
+7. Cierra con la **X**, tocando fuera del panel o con **Escape** (si el historial está abierto, Escape lo cierra primero).
 
 Notas:
-- No aparece en el modo demostración.
-- No pegas claves ni contraseñas en el chat.
+- **No aparece** en el modo demostración: necesitas iniciar sesión con correo.
+- No pegues claves ni contraseñas en el chat.
 - Límites: **40 mensajes por hora** por cuenta, texto hasta **4000** caracteres, **2 fotos** por mensaje (máx. 4 MB cada una).
-- Si ves aviso de límite, espera unos minutos. Si el robot no responde, recarga; si sigue, avisa al administrador.
+- Mientras responde verás “Pensando…”. Si ves aviso de límite, espera unos minutos. Si el robot no responde, recarga; si sigue, avisa al administrador.
 
 ## 18. Perfil y configuración
 
