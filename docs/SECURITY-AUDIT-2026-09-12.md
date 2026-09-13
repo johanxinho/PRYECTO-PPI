@@ -72,3 +72,12 @@ Pendiente de ejecución en CI/local (`@Codigo Y Infrastructura`): Cloud Agents n
 ## Nivel de seguridad final estimado
 
 **Bueno / Alto-medio (≈ 8/10)** para un PPI escolar con Supabase + Pages, tras el hardening. Antes: medio (~5.5/10) por superficie `anon` + policies duplicadas.
+
+
+## Seguimiento (2026-09-13) — `security_tighten_grants_storage`
+
+Aplicado en vivo por el agente Supabase y documentado en:
+
+- `supabase/migrations/20260913000220_security_tighten_grants_storage.sql`
+
+Incluye: trigger `protect_task_owner` (no reasignar `tasks.user_id`), UPDATE de mensajes solo `read_at`, policies Storage de adjuntos por carpeta `{uid}/…`, límites mime/tamaño (adjuntos 5 MB imagen; `ai-chat` 4 MB; avatars 2 MB). Edge Function `ai-chat` v5 en el proyecto (JWT, CORS Pages, rechazo de `conversation_id` ajeno).
