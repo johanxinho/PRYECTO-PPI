@@ -106,27 +106,39 @@ El **Calendario** muestra el mes con las tareas en su día. Al elegir un día ve
 
 En **Modo enfoque** una sola tarea ocupa la pantalla: título, materia, hora y descripción. Puedes marcarla como completada (si eres el dueño) o salir del modo.
 
+### Nueva actividad
+
+![Formulario de Nueva actividad](images/nueva-actividad.jpg)
+
+Desde **+ Nueva actividad** (o Mis tareas) abres el formulario: título, materia, fecha, hora, prioridad, recordatorio, descripción y opción de adjuntar imagen. Al guardar, la tarea aparece en tu agenda.
+
+### Configuración
+
+![Pantalla de Configuración](images/configuracion.jpg)
+
+En **Configuración** ves tus datos de perfil, el rol, y los interruptores de recordatorios, notificaciones, alarmas y ocultar tareas completadas. También puedes **Cerrar sesión**.
+
 ### Recórdate IA — botón del robot
 
-_Captura pendiente: botón flotante del robot (cuenta real)._
+![Botón flotante de Recórdate IA](images/ia-boton.jpg)
 
 Con **cuenta real** (no en la demostración) aparece abajo a la derecha el botón flotante del robot. Tócalo para abrir el asistente.
 
 ### Recórdate IA — chat abierto
 
-_Captura pendiente: panel de chat abierto._
+![Chat de Recórdate IA abierto](images/ia-chat.jpg)
 
 Se abre el panel **Recórdate IA**: mensaje de bienvenida, historial de mensajes, campo para escribir, clip para adjuntar fotos y botón de enviar. Puedes cerrar con la X, tocando fuera o con Escape.
 
 ### Recórdate IA — historial y chat nuevo
 
-_Captura pendiente: historial de chats._
+![Historial de chats de Recórdate IA](images/ia-historial.jpg)
 
 En la cabecera del panel: el icono de **historial** lista tus chats guardados; el **+** inicia una conversación nueva; la **X** cierra el asistente.
 
 ### Recórdate IA — adjuntar fotos
 
-_Captura pendiente: adjuntar fotos._
+_Captura pendiente: adjuntar fotos (llega en el siguiente commit)._
 
 Con el clip puedes adjuntar hasta **2 fotos** (JPG, PNG, WEBP o GIF, máximo 4 MB cada una) antes de enviar. También puedes mandar solo la imagen, sin texto.
 
