@@ -1,3 +1,4 @@
+// Renderiza la sección informativa de la comunidad PPI Conecta.
 function AcercaDe() {
     const usuarios = [
         { inicial: "01", nombre: "Encuentra tu espacio", descripcion: "Un lugar para mostrar lo que sabes hacer y hacia dónde quieres crecer." },

@@ -1,3 +1,4 @@
+// Renderiza el formulario visual heredado para iniciar sesión.
 function InicioSesion(){
 
 return(

@@ -10,6 +10,7 @@ const initialLanguageState = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Gestiona el formulario de perfil estudiantil y sus validaciones.
 function App() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -36,6 +37,7 @@ function App() {
     }
   }, [photoPreview])
 
+  // Actualiza el correo y valida su formato mientras se escribe.
   const handleEmailChange = (event) => {
     const value = event.target.value
     setEmail(value)
@@ -47,6 +49,7 @@ function App() {
     }
   }
 
+  // Actualiza la edad y comprueba que sea un valor positivo.
   const handleAgeChange = (event) => {
     const value = event.target.value
     setAge(value)
@@ -58,11 +61,13 @@ function App() {
     }
   }
 
+  // Cambia la selección de un lenguaje en el formulario.
   const handleLanguageChange = (event) => {
     const { name, checked } = event.target
     setLanguages((prev) => ({ ...prev, [name]: checked }))
   }
 
+  // Guarda la foto seleccionada y genera su vista previa temporal.
   const handlePhotoChange = (event) => {
     const selectedFile = event.target.files?.[0] || null
     setPhotoFile(selectedFile)
@@ -77,6 +82,7 @@ function App() {
     }
   }
 
+  // Valida y guarda los datos enviados por el estudiante.
   const handleSubmit = (event) => {
     event.preventDefault()
 

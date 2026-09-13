@@ -3,6 +3,11 @@ import { supabase } from '../supabaseClient';
 import { listSharedTasks, revokeSharedTask, shareTask } from '../dataService';
 
 export const sharedAgendaService = {
+<<<<<<< HEAD
+=======
+  // Share agenda with another user
+  // Comparte las actividades del usuario con otro perfil registrado.
+>>>>>>> 181bdc7 (carpe diem)
   async shareAgenda(userId, targetEmail, tasks = []) {
     try {
       if (!tasks.length) throw new Error('No hay actividades para compartir');
@@ -15,6 +20,11 @@ export const sharedAgendaService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  // Get shared agendas for current user
+  // Recupera las agendas activas compartidas con el usuario.
+>>>>>>> 181bdc7 (carpe diem)
   async getSharedAgendas(userId) {
     try {
       if (userId) {
@@ -33,6 +43,11 @@ export const sharedAgendaService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  // Revoke shared agenda
+  // Revoca una agenda compartida mediante su identificador.
+>>>>>>> 181bdc7 (carpe diem)
   async revokeSharedAgenda(agendaId) {
     try {
       await revokeSharedTask(agendaId);

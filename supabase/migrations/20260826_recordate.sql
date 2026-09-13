@@ -280,6 +280,7 @@ begin
 end;
 $$;
 
+-- Comparte una tarea con un usuario identificado por su correo electrónico.
 create or replace function public.share_task_by_email(requested_task_id uuid, recipient_email text)
 returns public.task_shares language plpgsql security definer set search_path = public
 as $$
@@ -302,6 +303,7 @@ begin
 end;
 $$;
 
+<<<<<<< HEAD
 create or replace function public.list_task_shares()
 returns table (
   id uuid,
@@ -331,6 +333,9 @@ $$;
 revoke all on function public.list_task_shares() from public;
 grant execute on function public.list_task_shares() to authenticated;
 
+=======
+-- Crea o actualiza el perfil cuando se registra un usuario en Auth.
+>>>>>>> 181bdc7 (carpe diem)
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public
 as $$
@@ -345,6 +350,7 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
 
+-- Impide que un usuario cambie su propio rol desde el cliente.
 create or replace function public.prevent_profile_role_change()
 returns trigger language plpgsql
 as $$

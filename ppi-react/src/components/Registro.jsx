@@ -1,3 +1,4 @@
+// Renderiza el formulario visual heredado para registrar un usuario.
 function Registro(){
 
 return(

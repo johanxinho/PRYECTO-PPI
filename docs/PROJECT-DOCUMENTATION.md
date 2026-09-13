@@ -184,9 +184,12 @@ La autenticación utiliza:
 - `supabase.auth.onAuthStateChange()` para cambios de sesión.
 - `supabase.auth.signInWithPassword()` para entrar.
 - `supabase.auth.signUp()` para registrar.
+- `supabase.auth.verifyOtp()` para confirmar el código de 6 dígitos enviado al registrarse.
 - `supabase.auth.signOut()` para cerrar sesión.
 
 La migración reproducible está en [`../supabase/migrations/20260826_recordate.sql`](../supabase/migrations/20260826_recordate.sql). Debe ejecutarse en el SQL Editor del proyecto antes de probar el registro o las tareas. Nunca se usa `service_role` en el frontend.
+
+En Supabase, activa `Authentication > Providers > Email` y la confirmación de correo. Para mostrar el código, la plantilla de confirmación debe incluir `{{ .Token }}`. En Vercel, agrega `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `Project Settings > Environment Variables` para los entornos necesarios y vuelve a desplegar. Estas variables no se pueden agregar al `vercel.json` de forma segura.
 
 ## 8. Archivo de datos del PPI
 

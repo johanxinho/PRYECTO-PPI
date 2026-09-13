@@ -80,6 +80,7 @@ const navItems = [
   "Compartir agendas",
   "Mensajes",
 ];
+<<<<<<< HEAD
 const navIcons = [House, ListTodo, CalendarDays, Bell, Flag, Focus, Share2, MessageCircle];
 const routeViews = {
   "/dashboard": "Inicio",
@@ -123,6 +124,10 @@ const reminderOptions = [
   ["24 horas antes", 24 * 60 * 60 * 1000],
   ["1 día antes", 24 * 60 * 60 * 1000],
 ];
+=======
+const today = new Date().toISOString().slice(0, 10);
+// Formatea una fecha ISO para mostrarla de forma breve en la interfaz.
+>>>>>>> 181bdc7 (carpe diem)
 const formatDate = (date) =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
@@ -141,6 +146,7 @@ const supabaseErrorMessage = (error, fallback) => {
   return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
 };
 
+<<<<<<< HEAD
 const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
   const initial = (name || "?").charAt(0).toUpperCase();
   const sizeClass = size === "lg" ? "profile-avatar" : size === "sm" ? "small-avatar" : "avatar";
@@ -158,6 +164,18 @@ const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
 };
 
 /* Portada pública: hero, características y FAQ. */
+=======
+// Renderiza la marca visual reutilizable de RECORDATE.
+function Brand() {
+  return (
+    <div className="brand">
+      <span className="brand-mark">R</span>
+      <span>RECORDATE</span>
+    </div>
+  );
+}
+// Renderiza la página inicial y permite abrir la autenticación.
+>>>>>>> 181bdc7 (carpe diem)
 function Landing({ onStart }) {
   const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
@@ -283,7 +301,59 @@ function Landing({ onStart }) {
     </div>
   );
 }
+<<<<<<< HEAD
 
+=======
+// Muestra una vista ilustrativa del panel principal.
+function DashboardPreview() {
+  return (
+    <div className="dashboard-preview">
+      <div className="preview-top">
+        <span className="mini-mark">R</span>
+        <span>Mi agenda</span>
+        <span className="preview-avatar">A</span>
+      </div>
+      <div className="preview-body">
+        <div className="preview-sidebar">
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        <div className="preview-main">
+          <span className="preview-kicker">HOY · MARTES 25</span>
+          <strong>Buenos días, Andrea</strong>
+          <div className="preview-stats">
+            <span>
+              <b>4</b>Pendientes
+            </span>
+            <span>
+              <b>2</b>Para hoy
+            </span>
+          </div>
+          <div className="preview-task">
+            <span className="task-dot green" />
+            <div>
+              <b>Entrega de taller</b>
+              <small>Matemáticas · 4:00 PM</small>
+            </div>
+            <em>Alta</em>
+          </div>
+          <div className="preview-task">
+            <span className="task-dot gold" />
+            <div>
+              <b>Lectura de ciencias</b>
+              <small>Ciencias sociales · Sáb 10:00 AM</small>
+            </div>
+            <em>Media</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// Gestiona el formulario controlado para crear o editar una actividad.
+>>>>>>> 181bdc7 (carpe diem)
 function TaskForm({ task, onSave, onCancel }) {
   const [form, setForm] = useState(
     task || {
@@ -297,9 +367,16 @@ function TaskForm({ task, onSave, onCancel }) {
     },
   );
   const [error, setError] = useState("");
+<<<<<<< HEAD
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+=======
+  // Actualiza un campo específico del formulario sin perder los demás valores.
+  const update = (field, value) =>
+    setForm((current) => ({ ...current, [field]: value }));
+  // Valida y entrega la actividad al componente que guarda los datos.
+>>>>>>> 181bdc7 (carpe diem)
   const submit = (event) => {
     event.preventDefault();
     if (!form.title.trim() || !form.subject.trim() || !form.date || !form.time) {
@@ -376,10 +453,15 @@ function TaskForm({ task, onSave, onCancel }) {
     </form>
   );
 }
+<<<<<<< HEAD
 
+=======
+// Renderiza una etiqueta visual para la prioridad de una actividad.
+>>>>>>> 181bdc7 (carpe diem)
 function PriorityBadge({ priority }) {
   return <span className={`priority priority-${priority.toLowerCase()}`}>{priority}</span>;
 }
+<<<<<<< HEAD
 
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
   const canManage = task.userId === userId;
@@ -393,6 +475,10 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       setAttachmentError(supabaseErrorMessage(error, "No fue posible abrir la imagen."));
     }
   };
+=======
+// Renderiza una actividad con acciones de estado, edición, eliminación y enfoque.
+function TaskCard({ task, onToggle, onEdit, onDelete, onFocus }) {
+>>>>>>> 181bdc7 (carpe diem)
   return (
     <article className={`task-card ${task.completed ? "is-complete" : ""}`}>
       <button
@@ -448,6 +534,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
   );
 }
 
+// Coordina la sesión, la navegación y las vistas principales de RECORDATE.
 function App() {
   /* Sesión, vista actual y datos de la agenda. */
   const [session, setSession] = useState(null);
@@ -508,6 +595,7 @@ function App() {
     window.addEventListener("popstate", handleRoute);
     return () => window.removeEventListener("popstate", handleRoute);
   }, [session]);
+  // Carga el perfil y las actividades asociadas a la sesión actual.
   const loadUserData = async (current) => {
     if (!current) {
       setProfile(null);
@@ -644,7 +732,11 @@ function App() {
     high: pending.filter((task) => task.priority === "Alta").length,
     done: tasks.filter((task) => task.completed).length,
   };
+<<<<<<< HEAD
   const progress = tasks.length ? Math.round((stats.done / tasks.length) * 100) : 0;
+=======
+  // Persiste una actividad nueva o actualiza una existente.
+>>>>>>> 181bdc7 (carpe diem)
   const saveTask = async (task) => {
     try {
       const saved = demo
@@ -672,6 +764,7 @@ function App() {
       return false;
     }
   };
+  // Confirma y elimina una actividad del backend y del estado local.
   const removeTask = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar esta tarea?")) return;
     try {
@@ -683,6 +776,7 @@ function App() {
       setNotice(supabaseErrorMessage(error, "No fue posible eliminar la actividad."));
     }
   };
+  // Invierte el estado completado de una actividad y sincroniza la vista.
   const toggleTask = async (id) => {
     const task = tasks.find((item) => item.id === id);
     if (!task) return;
@@ -713,6 +807,7 @@ function App() {
       setNotice(supabaseErrorMessage(error, "No fue posible eliminar la imagen."));
     }
   };
+  // Cierra la sesión y restablece el estado de la aplicación.
   const logout = async () => {
     if (supabase && !demo) await supabase.auth.signOut();
     setSession(null);
@@ -745,6 +840,7 @@ function App() {
       setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
     }
   };
+  // Cambia de sección, actualiza la URL y cierra menús temporales.
   const navigate = (nextView) => {
     setView(nextView);
     const route = viewRoutes[nextView];
@@ -793,7 +889,11 @@ function App() {
         onBack={() => setScreen("landing")}
       />
     );
+<<<<<<< HEAD
   }
+=======
+  // Selecciona y renderiza el contenido correspondiente a la vista activa.
+>>>>>>> 181bdc7 (carpe diem)
   const renderMain = () => {
     if (focusTask) {
       return (
@@ -1184,7 +1284,11 @@ function App() {
     </main>
   );
 }
+<<<<<<< HEAD
 
+=======
+// Renderiza las métricas resumidas de las actividades del usuario.
+>>>>>>> 181bdc7 (carpe diem)
 function Stats({ stats }) {
   return (
     <section className="stats-grid">
@@ -1203,7 +1307,11 @@ function Stats({ stats }) {
     </section>
   );
 }
+<<<<<<< HEAD
 
+=======
+// Renderiza una lista de actividades o su estado vacío.
+>>>>>>> 181bdc7 (carpe diem)
 function TaskList({
   title,
   subtitle,
@@ -1264,7 +1372,11 @@ function TaskList({
     </section>
   );
 }
+<<<<<<< HEAD
 
+=======
+// Renderiza el calendario y las actividades del día seleccionado.
+>>>>>>> 181bdc7 (carpe diem)
 function Calendar({ tasks, onSelect }) {
   const [selected, setSelected] = useState(today);
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -1331,6 +1443,7 @@ function Calendar({ tasks, onSelect }) {
     </section>
   );
 }
+<<<<<<< HEAD
 
 function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke, onOpenAttachment }) {
   const [sharingTaskId, setSharingTaskId] = useState(null);
@@ -1346,6 +1459,10 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
       setSharingTaskId(null);
     }
   };
+=======
+// Permite seleccionar una actividad y compartirla con otro usuario.
+function SharePanel({ tasks, email, setEmail, shared, onShare }) {
+>>>>>>> 181bdc7 (carpe diem)
   return (
     <section className="panel-view">
       <span className="eyebrow accent-label">Coordina con tu equipo</span>
@@ -1441,8 +1558,13 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
     </section>
   );
 }
+<<<<<<< HEAD
 
 function Chat({ message, setMessage, userId, demo = false }) {
+=======
+// Renderiza el chat y mantiene sus mensajes sincronizados en tiempo real.
+function Chat({ message, setMessage, userId }) {
+>>>>>>> 181bdc7 (carpe diem)
   const [messages, setMessages] = useState([]);
   const [tab, setTab] = useState("recibidos");
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -1489,6 +1611,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
       mounted = false;
       unsubscribe();
     };
+<<<<<<< HEAD
   }, [userId, demo]);
 
   const inbox = messages.filter((item) => item.recipient_id === userId);
@@ -1559,6 +1682,10 @@ function Chat({ message, setMessage, userId, demo = false }) {
     }
   };
 
+=======
+  }, []);
+  // Envía el mensaje escrito y limpia el campo de entrada.
+>>>>>>> 181bdc7 (carpe diem)
   const send = async (event) => {
     event.preventDefault();
     if (!message.trim()) return;
@@ -1726,6 +1853,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
     </section>
   );
 }
+<<<<<<< HEAD
 
 function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -1741,6 +1869,10 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
       setUploadingAvatar(false);
     }
   };
+=======
+// Renderiza el perfil y las preferencias de configuración del usuario.
+function Profile({ view, userName, email, profile, onSettingsChange, onLogout }) {
+>>>>>>> 181bdc7 (carpe diem)
   return (
     <section className="panel-view profile-view">
       <span className="eyebrow accent-label">Tu cuenta</span>
