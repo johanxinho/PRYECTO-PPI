@@ -36,20 +36,11 @@ function translateAuthError(error) {
 }
 
 export const authService = {
-<<<<<<< HEAD
   async signup(email, password, fullName, role = 'estudiante') {
     if (!supabase) return missingBackend();
     try {
       const allowed = ['estudiante', 'padre', 'madre', 'profesor', 'trabajador'];
       const safeRole = allowed.includes(role) ? role : 'estudiante';
-=======
-  // Signup - Crear cuenta
-  // Registra un usuario nuevo y devuelve un resultado uniforme.
-  async signup(email, password, fullName) {
-    try {
-      if (!supabase) throw new Error('Supabase no está configurado');
-      // Registrar usuario en Supabase Auth
->>>>>>> 181bdc7 (carpe diem)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -69,15 +60,9 @@ export const authService = {
     }
   },
 
-<<<<<<< HEAD
-=======
-  // Login - Iniciar sesión
-  // Inicia sesión con correo y contraseña mediante Supabase Auth.
->>>>>>> 181bdc7 (carpe diem)
   async login(email, password) {
     if (!supabase) return missingBackend();
     try {
-      if (!supabase) throw new Error('Supabase no está configurado');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -90,15 +75,9 @@ export const authService = {
     }
   },
 
-<<<<<<< HEAD
-=======
-  // Logout - Cerrar sesión
-  // Cierra la sesión activa en Supabase.
->>>>>>> 181bdc7 (carpe diem)
   async logout() {
     if (!supabase) return missingBackend();
     try {
-      if (!supabase) throw new Error('Supabase no está configurado');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       return { success: true };
@@ -107,15 +86,9 @@ export const authService = {
     }
   },
 
-<<<<<<< HEAD
-=======
-  // Get current session
-  // Obtiene la sesión persistida del usuario actual.
->>>>>>> 181bdc7 (carpe diem)
   async getSession() {
     if (!supabase) return null;
     try {
-      if (!supabase) return null;
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
       return data.session;
@@ -125,15 +98,9 @@ export const authService = {
     }
   },
 
-<<<<<<< HEAD
-=======
-  // Get user profile
-  // Consulta el perfil asociado a un identificador de usuario.
->>>>>>> 181bdc7 (carpe diem)
   async getUserProfile(userId) {
     if (!supabase) return null;
     try {
-      if (!supabase) return null;
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -148,11 +115,6 @@ export const authService = {
     }
   },
 
-<<<<<<< HEAD
-=======
-  // Subscribe to auth state changes
-  // Suscribe un callback a los cambios de autenticación.
->>>>>>> 181bdc7 (carpe diem)
   onAuthStateChange(callback) {
     if (!supabase) return { data: { subscription: { unsubscribe() {} } } };
     return supabase.auth.onAuthStateChange(callback);

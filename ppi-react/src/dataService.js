@@ -35,12 +35,10 @@ export function roleLabel(role) {
   return "Estudiante";
 }
 
-// Verifica que Supabase esté disponible antes de acceder al backend.
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
 }
 
-// Convierte una fila de Supabase al modelo de actividad usado por React.
 function mapTask(task) {
   return {
     id: task.id,
@@ -57,7 +55,6 @@ function mapTask(task) {
   };
 }
 
-// Obtiene los datos del perfil autenticado desde Supabase.
 export async function getProfile(user) {
   ensureBackend();
   const { data, error } = await supabase
@@ -69,7 +66,6 @@ export async function getProfile(user) {
   return data;
 }
 
-// Crea o completa el perfil del usuario autenticado.
 export async function ensureProfile(user, fullName = "") {
   ensureBackend();
   const metaRole = user.user_metadata?.role;
@@ -90,7 +86,6 @@ export async function ensureProfile(user, fullName = "") {
   return data;
 }
 
-// Actualiza las preferencias persistentes del perfil actual.
 export async function updateProfileSettings(settings) {
   ensureBackend();
   const payload = {};
@@ -126,7 +121,6 @@ export async function updateProfileSettings(settings) {
   return data;
 }
 
-<<<<<<< HEAD
 export async function uploadAvatar(file) {
   ensureBackend();
   if (!file || !file.type.startsWith("image/")) {
@@ -150,21 +144,21 @@ export async function uploadAvatar(file) {
   return updateProfileSettings({ avatar_url: avatarUrl });
 }
 
-=======
-// Lista las actividades ordenadas por fecha y hora.
->>>>>>> 181bdc7 (carpe diem)
 export async function listTasks() {
   ensureBackend();
-  const { data, error } = await supabase
-    .from("tasks")
-    .select(taskColumns)
-    .order("date", { ascending: true })
-    .order("time", { ascending: true });
-  if (error) throw error;
-  return data.map(mapTask);
+  const query = (columns) =>
+    supabase.from("tasks").select(columns).order("date", { ascending: true }).order("time", { ascending: true });
+  let { data, error } = await query(taskColumns);
+  if (error) {
+    const fallback = await query(
+      "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at",
+    );
+    if (fallback.error) throw fallback.error;
+    data = (fallback.data || []).map((task) => ({ ...task, task_attachments: [] }));
+  }
+  return (data || []).map(mapTask);
 }
 
-// Inserta una actividad nueva y devuelve su modelo normalizado.
 export async function createTask(task) {
   ensureBackend();
   const { data, error } = await supabase
@@ -185,7 +179,6 @@ export async function createTask(task) {
   return mapTask(data);
 }
 
-// Actualiza una actividad existente y devuelve el resultado normalizado.
 export async function updateTask(task) {
   ensureBackend();
   const { data, error } = await supabase
@@ -207,14 +200,12 @@ export async function updateTask(task) {
   return mapTask(data);
 }
 
-// Elimina una actividad mediante su identificador.
 export async function deleteTask(id) {
   ensureBackend();
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) throw error;
 }
 
-// Solicita al backend compartir una actividad con otro correo.
 export async function shareTask(taskId, email) {
   ensureBackend();
   const { data, error } = await supabase.rpc("share_task_by_email", {
@@ -225,38 +216,33 @@ export async function shareTask(taskId, email) {
   return data;
 }
 
-<<<<<<< HEAD
 export async function listSharedTasks() {
-=======
-// Recupera los mensajes del canal de comunicación.
-export async function listMessages() {
->>>>>>> 181bdc7 (carpe diem)
   ensureBackend();
-  const { data, error } = await supabase.rpc("list_task_shares");
-  if (error) throw error;
-  return (data || []).map((share) => ({
-    ...share,
-    task: share.task_title || "Tarea compartida",
-    taskDetails: {
-      id: share.task_id,
-      title: share.task_title,
-      description: share.task_description || "",
-      subject: share.task_subject,
-      date: share.task_date,
-      time: share.task_time,
-      priority: share.task_priority,
-      reminder: share.task_reminder,
-      completed: share.task_completed,
-    },
-  }));
+  try {
+    const { data, error } = await supabase.rpc("list_task_shares");
+    if (error) throw error;
+    return (data || []).map((share) => ({
+      ...share,
+      task: share.task_title || "Tarea compartida",
+      taskDetails: {
+        id: share.task_id,
+        title: share.task_title,
+        description: share.task_description || "",
+        subject: share.task_subject,
+        date: share.task_date,
+        time: share.task_time,
+        priority: share.task_priority,
+        reminder: share.task_reminder,
+        completed: share.task_completed,
+      },
+    }));
+  } catch (error) {
+    console.warn("RECORDATE: no se pudieron cargar las agendas compartidas", error);
+    return [];
+  }
 }
 
-<<<<<<< HEAD
 export async function revokeSharedTask(shareId) {
-=======
-// Publica un mensaje y devuelve el registro creado.
-export async function sendMessage(body) {
->>>>>>> 181bdc7 (carpe diem)
   ensureBackend();
   const { error } = await supabase.from("task_shares").delete().eq("id", shareId);
   if (error) throw error;
@@ -303,7 +289,6 @@ export async function sendMessage(body, recipientId) {
   return data;
 }
 
-<<<<<<< HEAD
 export async function markMessagesRead(messageIds = null) {
   ensureBackend();
   const { data, error } = await supabase.rpc("mark_messages_read", {
@@ -328,13 +313,18 @@ export async function markMessagesRead(messageIds = null) {
 
 export async function listNotifications() {
   ensureBackend();
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("id,task_id,type,title,body,read_at,created_at")
-    .order("created_at", { ascending: false })
-    .limit(30);
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id,task_id,type,title,body,read_at,created_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.warn("RECORDATE: no se pudieron cargar las notificaciones", error);
+    return [];
+  }
 }
 
 export async function markNotificationRead(id) {
@@ -462,18 +452,4 @@ export function subscribeToMessages(userId, onChange) {
     active = false;
     if (channel) supabase.removeChannel(channel);
   };
-=======
-// Suscribe cambios de mensajes y devuelve la función de cancelación.
-export function subscribeToMessages(onChange) {
-  if (!supabase) return () => {};
-  const channel = supabase
-    .channel("recordate-messages")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "messages" },
-      onChange,
-    )
-    .subscribe();
-  return () => supabase.removeChannel(channel);
->>>>>>> 181bdc7 (carpe diem)
 }

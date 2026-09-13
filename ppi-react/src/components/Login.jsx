@@ -6,7 +6,6 @@ import { DiaTextReveal } from "./ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
 import { appBase } from "../paths";
 
-<<<<<<< HEAD
 /** Validación simple de correo para formularios de acceso. */
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
@@ -28,19 +27,6 @@ function isErrorMessage(text) {
  * Mensajes claros en español para el registro.
  * Evita jerga técnica (SQL, triggers) orientada a administradores.
  */
-=======
-// Renderiza la marca reutilizable en la pantalla de autenticación.
-function Brand() {
-  return (
-    <div className="brand brand-light">
-      <span className="brand-mark">R</span>
-      <span>RECORDATE</span>
-    </div>
-  );
-}
-
-// Traduce errores técnicos del registro a mensajes comprensibles.
->>>>>>> 181bdc7 (carpe diem)
 function signupErrorMessage(error) {
   const details = errorDetails(error);
   if (details.includes("already registered") || details.includes("already been registered") || details.includes("user_already_exists")) {
@@ -67,7 +53,6 @@ function signupErrorMessage(error) {
   return "No fue posible crear la cuenta. Revisa los datos e inténtalo de nuevo.";
 }
 
-<<<<<<< HEAD
 /** Errores del inicio de sesión traducidos a español. */
 function loginErrorMessage(error) {
   const details = errorDetails(error);
@@ -136,17 +121,12 @@ function appUrl(path) {
  * Recibe callbacks del padre (App) para entrar, volver o abrir el modo demo.
  */
 function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
-=======
-// Gestiona el inicio de sesión, registro y verificación de cuentas.
-function Login({ onLogin, onBack }) {
->>>>>>> 181bdc7 (carpe diem)
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRecovery, setIsRecovery] = useState(recovery);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
-<<<<<<< HEAD
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -256,50 +236,11 @@ function Login({ onLogin, onBack }) {
     }
   };
 
-=======
-  const [verificationCode, setVerificationCode] = useState("");
-  const [awaitingVerification, setAwaitingVerification] = useState(false);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  // Valida el formulario y ejecuta el flujo de autenticación correspondiente.
->>>>>>> 181bdc7 (carpe diem)
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
     if (!hasSupabaseConfig) {
       setMessage("La autenticación requiere configurar Supabase. Puedes explorar la demostración mientras tanto.");
-      return;
-    }
-    if (awaitingVerification) {
-      if (!/^\d{6}$/.test(verificationCode)) {
-        setMessage("Escribe el código de 6 dígitos que recibiste por correo.");
-        return;
-      }
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          email: email.trim(),
-          token: verificationCode,
-          type: "signup",
-        });
-        if (error) throw error;
-        if (data.session) {
-          onLogin(data.session);
-        } else {
-          setIsSignUp(false);
-          setMessage("Código verificado. Ya puedes iniciar sesión.");
-        }
-        setAwaitingVerification(false);
-        setVerificationCode("");
-      } catch (error) {
-        setMessage(
-          error.message?.toLowerCase().includes("expired")
-            ? "El código expiró. Regístrate de nuevo para recibir otro."
-            : "El código no es válido. Revisa el correo e inténtalo de nuevo.",
-        );
-      } finally {
-        setLoading(false);
-      }
       return;
     }
     if (isSignUp && !fullName.trim()) {
@@ -333,7 +274,6 @@ function Login({ onLogin, onBack }) {
             email: email.trim(),
             password,
           });
-<<<<<<< HEAD
       if (result.error) {
         setMessage(isSignUp ? signupErrorMessage(result.error) : loginErrorMessage(result.error));
       } else if (result.data.session) {
@@ -346,14 +286,6 @@ function Login({ onLogin, onBack }) {
       } else {
         setMessage("No se pudo abrir la sesión. Inténtalo de nuevo.");
       }
-=======
-      if (result.error) setMessage(isSignUp ? signupErrorMessage(result.error) : result.error.message.toLowerCase().includes("not confirmed") ? "Confirma tu correo con el código recibido antes de iniciar sesión." : "El correo o la contraseña son incorrectos.");
-      else if (result.data.session) onLogin(result.data.session);
-      else if (isSignUp) {
-        setAwaitingVerification(true);
-        setMessage("Te enviamos un código de 6 dígitos a tu correo.");
-      } else setMessage("Revisa tu correo para confirmar la cuenta.");
->>>>>>> 181bdc7 (carpe diem)
     } catch {
       setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
     } finally {
@@ -412,7 +344,6 @@ function Login({ onLogin, onBack }) {
                 ? "Organiza tus actividades académicas desde el primer día."
                 : "Tus tareas y recordatorios te están esperando."}
         </p>
-<<<<<<< HEAD
         {needsVerification ? (
           <>
             <form onSubmit={verifyCode} noValidate>
@@ -454,41 +385,6 @@ function Login({ onLogin, onBack }) {
           <form onSubmit={updatePassword} noValidate>
             <label>
               Nueva contraseña
-=======
-        <form onSubmit={handleSubmit} noValidate>
-          {isSignUp && !awaitingVerification && (
-            <label>
-              Nombre
-              <input
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                required
-              />
-            </label>
-          )}
-          {!awaitingVerification && <label>
-            Correo electrónico
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </label>}
-          <label>
-            Contraseña
-            <input
-              type="password"
-              minLength="6"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </label>
-          {isSignUp && (
-            <label>
-              Confirmar contraseña
->>>>>>> 181bdc7 (carpe diem)
               <input
                 type="password"
                 minLength="6"
@@ -498,7 +394,6 @@ function Login({ onLogin, onBack }) {
                 required
               />
             </label>
-<<<<<<< HEAD
             <label>
               Confirmar nueva contraseña
               <input
@@ -599,27 +494,6 @@ function Login({ onLogin, onBack }) {
           </form>
         )}
         {!needsVerification && !isRecovery && !isSignUp && (
-=======
-          )}
-          {awaitingVerification && (
-            <label>
-              Código de verificación
-              <input
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength="6"
-                value={verificationCode}
-                onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ""))}
-                required
-              />
-            </label>
-          )}
-          {message && (
-            <p className="auth-message" role="alert">
-              {message}
-            </p>
-          )}
->>>>>>> 181bdc7 (carpe diem)
           <button
             className="switch-button"
             type="button"
@@ -628,7 +502,6 @@ function Login({ onLogin, onBack }) {
               setMessage("");
             }}
           >
-<<<<<<< HEAD
             ¿Olvidaste tu contraseña?
           </button>
         )}
@@ -663,33 +536,6 @@ function Login({ onLogin, onBack }) {
             ? "No guardamos contraseñas en este navegador. El acceso lo gestiona Supabase de forma segura."
             : "Supabase no está configurado en este entorno. La demostración guarda datos solo en este dispositivo."}
         </p>
-=======
-            {loading
-              ? "Conectando..."
-              : awaitingVerification
-                ? "Verificar código"
-                : isSignUp
-                ? "Crear mi cuenta"
-                : "Iniciar sesión"}
-            <span>→</span>
-          </button>
-        </form>
-        <button
-          className="switch-button"
-          type="button"
-          onClick={() => {
-            setIsSignUp((current) => !current);
-            setAwaitingVerification(false);
-            setVerificationCode("");
-            setMessage("");
-          }}
-        >
-          {isSignUp
-            ? "¿Ya tienes cuenta? Inicia sesión"
-            : "¿No tienes cuenta? Regístrate"}
-        </button>
-        <p className="auth-note">No guardamos contraseñas en este navegador.</p>
->>>>>>> 181bdc7 (carpe diem)
       </section>
     </main>
   );
