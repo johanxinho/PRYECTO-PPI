@@ -14,6 +14,10 @@ const hasRealSupabaseConfig = (value) => Boolean(value && !placeholderValues.has
 
 export const hasSupabaseConfig = hasRealSupabaseConfig(supabaseUrl) && hasRealSupabaseConfig(supabaseAnonKey);
 
+/**
+ * Fetch sin cookies de supabase.co (terceros). Chrome las bloquea y eso
+ * rompe el registro de compañeros. credentials: "omit" evita depender de ellas.
+ */
 async function supabaseFetch(input, init = {}) {
   const options = { ...init, credentials: "omit" };
   try {
@@ -30,6 +34,43 @@ async function supabaseFetch(input, init = {}) {
   }
 }
 
+/**
+ * Sesión en localStorage de ESTA página (first-party).
+ * Si el navegador bloquea almacenamiento, usa memoria de la pestaña.
+ */
+function firstPartyStorage() {
+  const memory = {};
+  return {
+    getItem(key) {
+      try {
+        if (typeof window !== "undefined") return window.localStorage.getItem(key);
+      } catch {
+        /* storage bloqueado */
+      }
+      return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null;
+    },
+    setItem(key, value) {
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(key, value);
+          return;
+        }
+      } catch {
+        /* storage bloqueado */
+      }
+      memory[key] = String(value);
+    },
+    removeItem(key) {
+      try {
+        if (typeof window !== "undefined") window.localStorage.removeItem(key);
+      } catch {
+        /* storage bloqueado */
+      }
+      delete memory[key];
+    },
+  };
+}
+
 export const supabase = hasSupabaseConfig
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -37,6 +78,8 @@ export const supabase = hasSupabaseConfig
         autoRefreshToken: true,
         detectSessionInUrl: true,
         flowType: "pkce",
+        storage: firstPartyStorage(),
+        storageKey: "recordate-auth",
       },
       global: {
         fetch: supabaseFetch,

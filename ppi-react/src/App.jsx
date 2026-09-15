@@ -582,20 +582,40 @@ function App() {
   };
   useEffect(() => {
     if (!hasSupabaseConfig) return undefined;
-    supabase.auth.getSession().then(({ data: { session: current } }) => {
+    let cancelled = false;
+    const clearAuthParams = () => {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("code") && !url.hash.includes("access_token")) return;
+      url.searchParams.delete("code");
+      url.searchParams.delete("type");
+      url.hash = "";
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+    };
+    supabase.auth.getSession().then(({ data: { session: current }, error }) => {
+      if (cancelled) return;
+      if (error) {
+        setNotice("No se pudo recuperar la sesión. Vuelve a iniciar sesión.");
+        return;
+      }
+      clearAuthParams();
       setSession(current);
       loadUserData(current);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event, current) => {
+      if (cancelled) return;
       setSession(current);
       if (event === "PASSWORD_RECOVERY") {
         setPasswordRecovery(true);
         setScreen("auth");
         return;
       }
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") clearAuthParams();
       loadUserData(current);
     });
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
   }, []);
   useEffect(() => {
     if (!session || demo) return undefined;

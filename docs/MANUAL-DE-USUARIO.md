@@ -226,6 +226,10 @@ Sirve para guardar tus tareas en Supabase y recuperarlas en otro dispositivo.
 
 Al verificar, entras al panel. En otro dispositivo inicia sesión con el mismo correo.
 
+### Si el navegador habla de cookies
+RECORDATE **no usa cookies de supabase.co** para la sesión. La guarda en este sitio (`johanxinho.github.io`). Si Chrome avisa que bloqueó cookies de terceros, el registro igual debe funcionar. Sí debes permitir datos de **este** sitio.
+
+
 ### Mensajes que puedes ver al registrarte
 
 | Situación | Qué significa |
