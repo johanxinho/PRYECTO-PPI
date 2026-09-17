@@ -1,5 +1,12 @@
--- RECORDATE: deja operativa la cuenta dueña y completa columnas/funciones de roles.
--- Se puede ejecutar varias veces. Cuenta dueña: restrepojohan225@gmail.com
+-- RECORDATE: instala administrador, profesor y bajas.
+-- Ejecuta TODO este archivo de una vez en el SQL Editor.
+-- Cuenta dueña: restrepojohan225@gmail.com
+--
+-- El error "Solo un administrador puede cambiar roles" salía porque un
+-- trigger bloqueaba el UPDATE. Aquí se quita el trigger ANTES de asignar
+-- el rol, y luego se vuelve a crear.
+
+drop trigger if exists trg_protect_profile_fields on public.profiles;
 
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles
@@ -258,6 +265,46 @@ begin
   return new;
 end;
 $$;
+
+create or replace function public.protect_profile_fields()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    return new;
+  end if;
+  if new.id is distinct from old.id then
+    raise exception 'No se puede cambiar el id del perfil';
+  end if;
+  if new.email is distinct from old.email then
+    new.email := old.email;
+  end if;
+  if new.status is distinct from old.status and not public.is_admin() then
+    new.status := old.status;
+    new.disabled_at := old.disabled_at;
+    new.disabled_by := old.disabled_by;
+  end if;
+  if new.role is distinct from old.role then
+    if new.role not in ('estudiante', 'padre', 'madre', 'profesor', 'trabajador', 'administrador') then
+      raise exception 'Rol no permitido';
+    end if;
+    if not public.is_admin() then
+      if new.role in ('profesor', 'administrador') then
+        raise exception 'Solo un administrador puede asignar ese rol';
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_protect_profile_fields on public.profiles;
+create trigger trg_protect_profile_fields
+before update on public.profiles
+for each row execute function public.protect_profile_fields();
 
 revoke all on function public.is_admin() from public, anon;
 revoke all on function public.is_staff() from public, anon;
