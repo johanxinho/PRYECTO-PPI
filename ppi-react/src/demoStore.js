@@ -47,7 +47,13 @@ function seed() { // Datos de ejemplo para que la agenda no arranque vacía
       show_completed: true, // Mostrar tareas ya hechas
       browser_notifications_enabled: false, // Push del navegador apagado
       alarms_enabled: true, // Alarmas locales encendidas
+      status: "activo",
     },
+    users: [
+      { id: "demo-carlos", full_name: "Carlos Pérez", email: "carlos@recordate.local", role: "profesor", status: "activo", avatar_url: null, created_at: "2026-03-01T12:00:00.000Z" },
+      { id: "demo-lucia", full_name: "Lucía Gómez", email: "lucia@recordate.local", role: "estudiante", status: "activo", avatar_url: null, created_at: "2026-03-08T12:00:00.000Z" },
+      { id: "demo-mateo", full_name: "Mateo Herrera", email: "mateo@recordate.local", role: "estudiante", status: "activo", avatar_url: null, created_at: "2026-03-10T12:00:00.000Z" },
+    ],
     tasks: [ // Cuatro tareas de ejemplo (colegio)
       { // Tarea 1: para hoy
         id: "demo-1", // Id local
@@ -60,6 +66,7 @@ function seed() { // Datos de ejemplo para que la agenda no arranque vacía
         description: "Resolver los ejercicios 4 a 9 y adjuntar el procedimiento.", // Detalle
         reminder: "1 hora antes", // Aviso
         completed: false, // Pendiente
+        assignedBy: null,
         attachments: [], // Sin imágenes
       },
       { // Tarea 2: mañana
@@ -177,7 +184,12 @@ function seed() { // Datos de ejemplo para que la agenda no arranque vacía
 function read() { // Carga el estado persistido
   try { // JSON.parse puede fallar si el texto está corrupto
     const raw = localStorage.getItem(KEY); // Texto guardado o null
-    if (raw) return JSON.parse(raw); // Convierte el texto a objeto
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed.users)) parsed.users = seed().users;
+      if (!parsed.profile?.status) parsed.profile = { ...parsed.profile, status: "activo" };
+      return parsed;
+    }
   } catch { // Si el JSON es inválido se ignora
     /* ignore */
   }
@@ -362,5 +374,46 @@ export const demoApi = { // Mini API local que imita a dataService
     const state = read(); // Estado actual
     state.notifications = state.notifications.map((item) => (item.id === id ? { ...item, read_at: new Date().toISOString() } : item)); // Solo cambia la coincidencia
     write(state); // Persiste
+  },
+  listUsers() {
+    return read().users || [];
+  },
+  setUserStatus(userId, status) {
+    const state = read();
+    state.users = (state.users || []).map((item) =>
+      item.id === userId
+        ? { ...item, status, disabled_at: status === "baja" ? new Date().toISOString() : null }
+        : item,
+    );
+    write(state);
+    return state.users.find((item) => item.id === userId);
+  },
+  setUserRole(userId, role) {
+    const state = read();
+    state.users = (state.users || []).map((item) => (item.id === userId ? { ...item, role } : item));
+    write(state);
+    return state.users.find((item) => item.id === userId);
+  },
+  assignTask(userId, task) {
+    const state = read();
+    const recipient = (state.users || []).find((item) => item.id === userId);
+    const created = {
+      ...task,
+      id: crypto.randomUUID(),
+      userId,
+      assignedBy: DEMO_SESSION.user.id,
+      completed: false,
+      attachments: [],
+      assigneeName: recipient?.full_name,
+    };
+    state.tasks = [created, ...state.tasks];
+    write(state);
+    return created;
+  },
+  claimAdmin() {
+    const state = read();
+    state.profile = { ...state.profile, role: "administrador", status: "activo" };
+    write(state);
+    return state.profile;
   },
 };

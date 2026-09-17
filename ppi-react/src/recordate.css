@@ -1710,3 +1710,110 @@ p { text-wrap: pretty }
   height: 42px;
   align-self: center;
 }
+
+.profile-role-editor {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.assign-banner {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(177, 140, 255, 0.14);
+  color: var(--ink);
+  font-size: 14px;
+}
+.directory-filters {
+  align-items: center;
+}
+.directory-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 180px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.directory-search input {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  color: inherit;
+  padding: 10px 0;
+}
+.directory-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.directory-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.directory-card.is-disabled { opacity: 0.72; }
+.directory-copy { display: grid; gap: 2px; min-width: 0; }
+.directory-copy strong { font-size: 16px; }
+.directory-copy small {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.directory-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.status-tag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.status-tag.is-activo {
+  background: rgba(61, 214, 163, 0.16);
+  color: var(--success);
+}
+.status-tag.is-baja {
+  background: rgba(255, 107, 122, 0.16);
+  color: var(--danger);
+}
+.directory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.directory-role select { min-height: 40px; }
+.danger-outline {
+  color: var(--danger);
+  border-color: rgba(255, 107, 122, 0.4);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+@media (max-width: 720px) {
+  .directory-card { grid-template-columns: auto 1fr; }
+  .directory-actions { grid-column: 1 / -1; }
+}

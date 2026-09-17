@@ -454,8 +454,9 @@ Notas:
 
 Ahí puedes:
 
-- Ver nombre, correo y **rol** con etiqueta en español: Estudiante, Padre, Madre, Profesor o Trabajador.
-- **Cambiar el rol** desde Perfil o Configuración.
+- Ver nombre, correo y **rol** con etiqueta en español: Estudiante, Padre, Madre, Profesor, Trabajador o Administrador.
+- **Cambiar el rol** a estudiante, padre, madre o trabajador. Profesor y administrador los asigna un administrador.
+- El **primer** usuario puede pulsar **Convertir esta cuenta en administrador** (solo si todavía no hay uno).
 - Subir o cambiar tu **foto de perfil** (se muestra en el encabezado, mensajes y agendas compartidas).
 - Activar o desactivar **recordatorios**.
 - Activar o desactivar **alarmas**.
@@ -472,6 +473,28 @@ Si actualizas la base de datos, ejecuta en el SQL Editor el archivo:
 `supabase/migrations/20260912_roles_avatar_messages_shared.sql`
 
 Eso crea/actualiza roles, columna `avatar_url`, bucket público `avatars`, funciones de mensajes y el detalle de agendas compartidas.
+
+Para el directorio, dar de baja y asignar tareas, ejecuta también:
+
+`supabase/migrations/20260917_admin_teacher_directory.sql`
+
+---
+
+## 18b. Administrador y profesor
+
+### Administrador
+- En **Perfil**, si aún no hay administrador, pulsa **Convertir esta cuenta en administrador**.
+- Aparece el menú **Usuarios**.
+- Puedes ver todas las cuentas, cambiarles el rol y **dar de baja** o **reactivar**.
+- Una cuenta dada de baja no puede entrar hasta que la reactives.
+- No puedes darte de baja a ti mismo.
+
+### Profesor
+- El administrador te asigna el rol **Profesor**.
+- Ves **Usuarios** con las cuentas activas.
+- En cada persona pulsas **Asignar tarea**, completas título, materia, fecha y hora, y la actividad aparece en **su** agenda (tablas `tasks` y, si existe, `actividades` del modelo PPI).
+
+En la demostración local también puedes reclamar administrador y probar el directorio con usuarios de ejemplo.
 
 ---
 

@@ -14,10 +14,10 @@ const PROFILE_UPDATABLE = [
 ];
 
 const profileColumns =
-  "id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
+  "id,full_name,email,role,status,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled,disabled_at";
 
 const taskColumns =
-  "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+  "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
 export const ROLE_OPTIONS = [
   { value: "estudiante", label: "Estudiante" },
@@ -25,14 +25,27 @@ export const ROLE_OPTIONS = [
   { value: "madre", label: "Madre" },
   { value: "profesor", label: "Profesor" },
   { value: "trabajador", label: "Trabajador" },
+  { value: "administrador", label: "Administrador" },
 ];
+
+export const SELF_ROLE_OPTIONS = ROLE_OPTIONS.filter(
+  (item) => !["profesor", "administrador"].includes(item.value),
+);
 
 export function roleLabel(role) {
   const found = ROLE_OPTIONS.find((item) => item.value === role);
   if (found) return found.label;
   if (role === "student") return "Estudiante";
-  if (role === "admin") return "Profesor";
+  if (role === "admin") return "Administrador";
   return "Estudiante";
+}
+
+export function isStaffRole(role) {
+  return role === "profesor" || role === "administrador";
+}
+
+export function isAdminRole(role) {
+  return role === "administrador";
 }
 
 function ensureBackend() {
@@ -43,6 +56,7 @@ function mapTask(task) {
   return {
     id: task.id,
     userId: task.user_id,
+    assignedBy: task.assigned_by || null,
     title: task.title,
     description: task.description || "",
     subject: task.subject,
@@ -57,11 +71,21 @@ function mapTask(task) {
 
 export async function getProfile(user) {
   ensureBackend();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("profiles")
     .select(profileColumns)
     .eq("id", user.id)
     .single();
+  if (error && /status|assigned_by|column/i.test(`${error.message} ${error.hint || ""}`)) {
+    const fallback = await supabase
+      .from("profiles")
+      .select("id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled")
+      .eq("id", user.id)
+      .single();
+    if (fallback.error) throw fallback.error;
+    data = { ...fallback.data, status: "activo", disabled_at: null };
+    error = null;
+  }
   if (error) throw error;
   return data;
 }
@@ -94,8 +118,8 @@ export async function updateProfileSettings(settings) {
       payload[key] = settings[key];
     }
   }
-  if (payload.role && !ROLE_OPTIONS.some((item) => item.value === payload.role)) {
-    throw new Error("Rol no válido.");
+  if (payload.role && !SELF_ROLE_OPTIONS.some((item) => item.value === payload.role)) {
+    throw new Error("Ese rol solo lo asigna el administrador.");
   }
   if (!Object.keys(payload).length) {
     throw new Error("No hay cambios para guardar.");
@@ -154,7 +178,7 @@ export async function listTasks() {
       "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at",
     );
     if (fallback.error) throw fallback.error;
-    data = (fallback.data || []).map((task) => ({ ...task, task_attachments: [] }));
+    data = (fallback.data || []).map((task) => ({ ...task, assigned_by: null, task_attachments: [] }));
   }
   return (data || []).map(mapTask);
 }
@@ -452,4 +476,59 @@ export function subscribeToMessages(userId, onChange) {
     active = false;
     if (channel) supabase.removeChannel(channel);
   };
+}
+
+export async function listManagedUsers() {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("list_managed_users");
+  if (error) throw error;
+  return data || [];
+}
+
+export async function claimAdminRole() {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("claim_admin_role");
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] : data;
+}
+
+export async function setUserStatus(userId, status) {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("set_user_status", {
+    target_id: userId,
+    next_status: status,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] : data;
+}
+
+export async function setUserRole(userId, role) {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("set_user_role", {
+    target_id: userId,
+    next_role: role,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] : data;
+}
+
+export async function assignTaskToUser(recipientId, task) {
+  ensureBackend();
+  const { data, error } = await supabase.rpc("assign_task_to_user", {
+    recipient_id: recipientId,
+    task_title: task.title.trim(),
+    task_subject: task.subject.trim(),
+    task_date: task.date,
+    task_time: task.time,
+    task_description: task.description?.trim() || null,
+    task_priority: task.priority || "Media",
+    task_reminder: task.reminder || "30 minutos antes",
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return mapTask({ ...row, task_attachments: [] });
+}
+
+export function isAccountDisabled(profile) {
+  return profile?.status === "baja";
 }

@@ -29,9 +29,12 @@ import {
   Inbox,
   Send,
   Reply,
+  Users,
+  Shield,
 } from "lucide-react";
 import Login from "./components/Login";
 import AiChat from "./components/AiChat";
+import UsersDirectory from "./components/UsersDirectory";
 import { Brand } from "./Brand";
 import WebGLBackground from "./components/WebGLBackground";
 import AsciiEffect from "./components/AsciiEffect";
@@ -65,7 +68,16 @@ import {
   uploadAvatar,
   markMessagesRead,
   ROLE_OPTIONS,
+  SELF_ROLE_OPTIONS,
   roleLabel,
+  isStaffRole,
+  isAdminRole,
+  isAccountDisabled,
+  listManagedUsers,
+  setUserStatus,
+  setUserRole,
+  assignTaskToUser,
+  claimAdminRole,
 } from "./dataService";
 import "./recordate.css";
 
@@ -90,6 +102,7 @@ const routeViews = {
   "/enfoque": "Modo enfoque",
   "/compartir": "Compartir agendas",
   "/mensajes": "Mensajes",
+  "/usuarios": "Usuarios",
   "/perfil": "Perfil",
   "/configuracion": "Configuración",
 };
@@ -102,6 +115,7 @@ const viewRoutes = {
   "Modo enfoque": "/enfoque",
   "Compartir agendas": "/compartir",
   Mensajes: "/mensajes",
+  Usuarios: "/usuarios",
   Perfil: "/perfil",
   Configuración: "/configuracion",
 };
@@ -284,7 +298,7 @@ function Landing({ onStart }) {
   );
 }
 
-function TaskForm({ task, onSave, onCancel }) {
+function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
   const [form, setForm] = useState(
     task || {
       title: "",
@@ -316,6 +330,11 @@ function TaskForm({ task, onSave, onCancel }) {
   };
   return (
     <form className="task-form" onSubmit={submit} noValidate>
+      {assignTarget && (
+        <p className="assign-banner">
+          Se asignará a <b>{assignTarget.full_name}</b> · {assignTarget.email}
+        </p>
+      )}
       <div className="form-grid">
         <label>
           Título
@@ -369,7 +388,7 @@ function TaskForm({ task, onSave, onCancel }) {
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={saving}>
-          {saving ? "Guardando..." : task ? "Guardar cambios" : "Crear tarea"}
+          {saving ? "Guardando..." : task ? "Guardar cambios" : assignTarget ? "Asignar tarea" : "Crear tarea"}
         </button>
         <button className="text-button" type="button" onClick={onCancel}>Cancelar</button>
       </div>
@@ -382,7 +401,7 @@ function PriorityBadge({ priority }) {
 }
 
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
-  const canManage = task.userId === userId;
+  const canManage = task.userId === userId || task.assignedBy === userId;
   const [attachmentError, setAttachmentError] = useState("");
   const openAttachment = async (attachment) => {
     try {
@@ -408,6 +427,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
           <h3>{task.title}</h3>
           <div className="task-heading-badges">
             {!canManage && <span className="shared-badge">Compartida</span>}
+            {task.assignedBy && <span className="shared-badge">Asignada</span>}
             <PriorityBadge priority={task.priority} />
           </div>
         </div>
@@ -471,8 +491,13 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [alarmTask, setAlarmTask] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
+  const [directory, setDirectory] = useState([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
+  const [assignTarget, setAssignTarget] = useState(null);
+  const [busyUserId, setBusyUserId] = useState(null);
   const alarmedTasks = useRef(new Set());
   const demo = isDemoSession(session);
+  const staff = isStaffRole(profile?.role);
   const enablePushNotifications = async () => {
     if (demo) {
       setNotice("Las notificaciones push no están disponibles en la demostración local.");
@@ -543,6 +568,13 @@ function App() {
         setNotice("Tu agenda se cargó, pero algunas secciones extra no respondieron. Puedes seguir usando RECORDATE.");
       }
       setProfile(currentProfile);
+      if (isAccountDisabled(currentProfile)) {
+        if (!isDemoSession(current) && supabase) await supabase.auth.signOut();
+        setSession(null);
+        setScreen("auth");
+        setNotice("Tu cuenta está dada de baja. Habla con el administrador de RECORDATE.");
+        return;
+      }
       setTasks(currentTasks);
       setShared(
         currentShares.map((share) => {
@@ -677,12 +709,19 @@ function App() {
   const progress = tasks.length ? Math.round((stats.done / tasks.length) * 100) : 0;
   const saveTask = async (task) => {
     try {
-      const saved = demo
-        ? demoApi.saveTask({ ...task, id: editingTask?.id })
-        : editingTask?.id
-          ? await updateTask(task)
-          : await createTask(task);
-      const attachment = !demo && task.attachmentFile
+      let saved;
+      if (assignTarget && !editingTask?.id) {
+        saved = demo
+          ? demoApi.assignTask(assignTarget.id, task)
+          : await assignTaskToUser(assignTarget.id, task);
+      } else {
+        saved = demo
+          ? demoApi.saveTask({ ...task, id: editingTask?.id })
+          : editingTask?.id
+            ? await updateTask(task)
+            : await createTask(task);
+      }
+      const attachment = !demo && !assignTarget && task.attachmentFile
         ? await uploadTaskAttachment(saved.id, task.attachmentFile)
         : null;
       const savedTask = attachment
@@ -695,7 +734,8 @@ function App() {
       );
       setShowForm(false);
       setEditingTask(null);
-      setNotice("Actividad guardada correctamente.");
+      setAssignTarget(null);
+      setNotice(assignTarget ? `Actividad asignada a ${assignTarget.full_name}.` : "Actividad guardada correctamente.");
       return true;
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible guardar la actividad."));
@@ -784,12 +824,31 @@ function App() {
   };
   const openNewTask = () => {
     setEditingTask(null);
+    setAssignTarget(null);
     setShowForm(true);
   };
+  const loadDirectory = async () => {
+    if (!isStaffRole(profile?.role)) return;
+    setDirectoryLoading(true);
+    try {
+      const rows = demo ? demoApi.listUsers() : await listManagedUsers();
+      setDirectory(rows);
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible cargar el directorio de usuarios."));
+    } finally {
+      setDirectoryLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (view === "Usuarios" && isStaffRole(profile?.role)) {
+      loadDirectory();
+    }
+  }, [view, profile?.role, demo]);
   const taskHandlers = {
     userId: session?.user?.id,
     onToggle: toggleTask,
     onEdit: (task) => {
+      setAssignTarget(null);
       setEditingTask(task);
       setShowForm(true);
     },
@@ -972,6 +1031,48 @@ function App() {
     if (view === "Mensajes") {
       return <Chat message={message} setMessage={setMessage} userId={session.user.id} demo={demo} />;
     }
+    if (view === "Usuarios" && staff) {
+      return (
+        <UsersDirectory
+          profile={profile}
+          users={directory}
+          loading={directoryLoading}
+          busyId={busyUserId}
+          onAssign={(user) => {
+            setAssignTarget(user);
+            setEditingTask(null);
+            setShowForm(true);
+          }}
+          onSetRole={async (user, role) => {
+            if (!window.confirm(`¿Cambiar el rol de ${user.full_name} a ${roleLabel(role)}?`)) return;
+            setBusyUserId(user.id);
+            try {
+              const updated = demo ? demoApi.setUserRole(user.id, role) : await setUserRole(user.id, role);
+              setDirectory((current) => current.map((item) => (item.id === user.id ? { ...item, ...updated, role } : item)));
+              setNotice(`${user.full_name} ahora es ${roleLabel(role).toLowerCase()}.`);
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible cambiar el rol."));
+            } finally {
+              setBusyUserId(null);
+            }
+          }}
+          onSetStatus={async (user, status) => {
+            const label = status === "baja" ? "dar de baja" : "reactivar";
+            if (!window.confirm(`¿Seguro que quieres ${label} a ${user.full_name}?`)) return;
+            setBusyUserId(user.id);
+            try {
+              const updated = demo ? demoApi.setUserStatus(user.id, status) : await setUserStatus(user.id, status);
+              setDirectory((current) => current.map((item) => (item.id === user.id ? { ...item, ...updated, status } : item)));
+              setNotice(status === "baja" ? `${user.full_name} quedó dada de baja.` : `${user.full_name} volvió a estar activa.`);
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible actualizar el estado de la cuenta."));
+            } finally {
+              setBusyUserId(null);
+            }
+          }}
+        />
+      );
+    }
     if (view === "Perfil" || view === "Configuración") {
       return (
         <Profile
@@ -1009,6 +1110,17 @@ function App() {
               setNotice("Configuración guardada correctamente.");
             } catch (error) {
               setNotice(supabaseErrorMessage(error, "No fue posible guardar la configuración."));
+            }
+          }}
+          onClaimAdmin={async () => {
+            if (!window.confirm("¿Quieres convertir esta cuenta en la administradora de RECORDATE? Solo funciona si todavía no hay un administrador activo.")) return;
+            try {
+              const updatedProfile = demo ? demoApi.claimAdmin() : await claimAdminRole();
+              setProfile(updatedProfile);
+              setNotice("Esta cuenta ahora es administradora. En Usuarios puedes dar de baja y asignar roles.");
+              navigate("Usuarios");
+            } catch (error) {
+              setNotice(supabaseErrorMessage(error, "No fue posible reclamar el perfil de administrador."));
             }
           }}
           onLogout={logout}
@@ -1110,6 +1222,11 @@ function App() {
               </button>
             );
           })}
+          {staff && (
+            <button className={view === "Usuarios" ? "nav-item active" : "nav-item"} onClick={() => navigate("Usuarios")}>
+              <span className="nav-symbol"><Users size={16} /></span> Usuarios
+            </button>
+          )}
         </nav>
         <div className="sidebar-bottom">
           <button className={view === "Perfil" ? "nav-item active" : "nav-item"} onClick={() => navigate("Perfil")}>
@@ -1188,11 +1305,17 @@ function App() {
             <div className="modal-header">
               <div>
                 <span className="eyebrow accent-label">Agenda académica</span>
-                <h2 id="task-modal-title">{editingTask ? "Editar actividad" : "Nueva actividad"}</h2>
+                <h2 id="task-modal-title">{editingTask ? "Editar actividad" : assignTarget ? "Asignar actividad" : "Nueva actividad"}</h2>
               </div>
-              <button className="icon-button" onClick={() => setShowForm(false)} aria-label="Cerrar formulario"><X size={16} /></button>
+              <button className="icon-button" onClick={() => { setShowForm(false); setAssignTarget(null); }} aria-label="Cerrar formulario"><X size={16} /></button>
             </div>
-            <TaskForm key={editingTask?.id || "new-task"} task={editingTask} onSave={saveTask} onCancel={() => setShowForm(false)} />
+            <TaskForm
+              key={editingTask?.id || assignTarget?.id || "new-task"}
+              task={editingTask}
+              assignTarget={assignTarget}
+              onSave={saveTask}
+              onCancel={() => { setShowForm(false); setAssignTarget(null); }}
+            />
           </section>
         </div>
       )}
@@ -1757,7 +1880,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
   );
 }
 
-function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload, onClaimAdmin }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -1802,14 +1925,15 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <label className="settings-role">
             <span>
               <b>Rol en RECORDATE</b>
-              <small>Indica si eres estudiante, padre, madre, profesor o trabajador.</small>
+              <small>Estudiante, padre, madre o trabajador. Profesor y administrador los asigna un administrador.</small>
             </span>
             <select
-              value={ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : "estudiante"}
+              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
               aria-label="Seleccionar rol"
+              disabled={isStaffRole(profile?.role)}
             >
-              {ROLE_OPTIONS.map((option) => (
+              {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
@@ -1856,15 +1980,21 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <div className="profile-role-editor">
             <span>Cambiar rol</span>
             <select
-              value={ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : "estudiante"}
+              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
               aria-label="Cambiar rol del perfil"
+              disabled={isStaffRole(profile?.role)}
             >
-              {ROLE_OPTIONS.map((option) => (
+              {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </div>
+          {!isAdminRole(profile?.role) && (
+            <button type="button" className="outline-button" onClick={onClaimAdmin}>
+              <Shield size={14} /> Convertir esta cuenta en administrador
+            </button>
+          )}
         </div>
       )}
       <button className="outline-button logout-profile" onClick={onLogout}>Cerrar sesión</button>
