@@ -13,11 +13,18 @@ const PROFILE_UPDATABLE = [
   "alarms_enabled",
 ];
 
-const profileColumns =
+const profileColumnsFull =
   "id,full_name,email,role,status,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled,disabled_at";
+const profileColumnsSafe =
+  "id,full_name,email,role,status,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
+const profileColumnsBase =
+  "id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
+const profileColumnsMin = "id,full_name,email,role,created_at";
 
 const taskColumns =
   "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+
+export const PRIMARY_ADMIN_EMAIL = "restrepojohan225@gmail.com";
 
 export const ROLE_OPTIONS = [
   { value: "estudiante", label: "Estudiante" },
@@ -32,6 +39,10 @@ export const SELF_ROLE_OPTIONS = ROLE_OPTIONS.filter(
   (item) => !["profesor", "administrador"].includes(item.value),
 );
 
+export const STAFF_ASSIGN_ROLES = ROLE_OPTIONS.filter((item) =>
+  ["estudiante", "profesor", "administrador", "padre", "madre", "trabajador"].includes(item.value),
+);
+
 export function roleLabel(role) {
   const found = ROLE_OPTIONS.find((item) => item.value === role);
   if (found) return found.label;
@@ -40,16 +51,36 @@ export function roleLabel(role) {
   return "Estudiante";
 }
 
-export function isStaffRole(role) {
-  return role === "profesor" || role === "administrador";
+export function isPrimaryAdminEmail(email) {
+  return String(email || "").trim().toLowerCase() === PRIMARY_ADMIN_EMAIL;
 }
 
-export function isAdminRole(role) {
-  return role === "administrador";
+export function isAdminRole(role, email) {
+  return role === "administrador" || isPrimaryAdminEmail(email);
+}
+
+export function isStaffRole(role, email) {
+  return role === "profesor" || isAdminRole(role, email);
+}
+
+function withActiveDefaults(row) {
+  if (!row) return row;
+  return { ...row, status: row.status || "activo", disabled_at: row.disabled_at || null };
 }
 
 function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
+}
+
+async function readProfileById(id) {
+  const attempts = [profileColumnsFull, profileColumnsSafe, profileColumnsBase, profileColumnsMin];
+  let lastError = null;
+  for (const columns of attempts) {
+    const { data, error } = await supabase.from("profiles").select(columns).eq("id", id).single();
+    if (!error && data) return withActiveDefaults(data);
+    lastError = error;
+  }
+  throw lastError;
 }
 
 function mapTask(task) {
@@ -71,23 +102,7 @@ function mapTask(task) {
 
 export async function getProfile(user) {
   ensureBackend();
-  let { data, error } = await supabase
-    .from("profiles")
-    .select(profileColumns)
-    .eq("id", user.id)
-    .single();
-  if (error && /status|assigned_by|column/i.test(`${error.message} ${error.hint || ""}`)) {
-    const fallback = await supabase
-      .from("profiles")
-      .select("id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled")
-      .eq("id", user.id)
-      .single();
-    if (fallback.error) throw fallback.error;
-    data = { ...fallback.data, status: "activo", disabled_at: null };
-    error = null;
-  }
-  if (error) throw error;
-  return data;
+  return readProfileById(user.id);
 }
 
 export async function ensureProfile(user, fullName = "") {
@@ -98,16 +113,16 @@ export async function ensureProfile(user, fullName = "") {
     full_name: fullName || user.user_metadata?.full_name || user.email.split("@")[0],
     email: user.email,
   };
-  if (ROLE_OPTIONS.some((item) => item.value === metaRole)) {
+  if (SELF_ROLE_OPTIONS.some((item) => item.value === metaRole)) {
     profile.role = metaRole;
   }
-  const { data, error } = await supabase
-    .from("profiles")
-    .upsert(profile, { onConflict: "id" })
-    .select(profileColumns)
-    .single();
-  if (error) throw error;
-  return data;
+  const { error } = await supabase.from("profiles").upsert(profile, { onConflict: "id" });
+  if (error && !/duplicate|conflict/i.test(error.message || "")) {
+    const existing = await readProfileById(user.id).catch(() => null);
+    if (!existing) throw error;
+    return existing;
+  }
+  return readProfileById(user.id);
 }
 
 export async function updateProfileSettings(settings) {
@@ -126,12 +141,10 @@ export async function updateProfileSettings(settings) {
   }
   const { data: authData } = await supabase.auth.getUser();
   if (!authData?.user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("profiles")
     .update(payload)
-    .eq("id", authData.user.id)
-    .select(profileColumns)
-    .single();
+    .eq("id", authData.user.id);
   if (error) throw error;
   if (payload.role || payload.full_name) {
     await supabase.auth.updateUser({
@@ -142,7 +155,7 @@ export async function updateProfileSettings(settings) {
       },
     });
   }
-  return data;
+  return readProfileById(authData.user.id);
 }
 
 export async function uploadAvatar(file) {

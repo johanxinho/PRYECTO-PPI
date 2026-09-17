@@ -13,6 +13,8 @@ function UserAvatar({ name = "?", url }) {
 
 export default function UsersDirectory({
   profile,
+  sessionEmail,
+  mode = "teacher",
   users,
   loading,
   onAssign,
@@ -22,7 +24,7 @@ export default function UsersDirectory({
 }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const admin = isAdminRole(profile?.role);
+  const admin = mode === "admin" || isAdminRole(profile?.role, sessionEmail);
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return (users || []).filter((user) => {
@@ -34,12 +36,12 @@ export default function UsersDirectory({
 
   return (
     <section className="panel-view directory-view">
-      <span className="eyebrow accent-label">{admin ? "Administración" : "Docente"}</span>
-      <h2>Usuarios</h2>
+      <span className="eyebrow accent-label">{admin && mode === "admin" ? "Cuenta administradora" : "Cuenta de profesor"}</span>
+      <h2>{mode === "admin" ? "Administración" : "Asignar tareas"}</h2>
       <p className="panel-intro">
-        {admin
-          ? "Ves todas las cuentas de RECORDATE. Puedes cambiar el rol y dar de baja a cualquier persona."
-          : "Ves las cuentas activas. Elige un estudiante y asígnale una actividad; le aparece en su agenda."}
+        {mode === "admin"
+          ? "Desde aquí asignas el rol de profesor o de administrador, y puedes dar de baja cualquier cuenta."
+          : "Elige un estudiante y asígnale una actividad. Le aparece en su agenda con la etiqueta Asignada."}
       </p>
       <div className="search-wrap directory-filters" aria-label="Filtros de usuarios">
         <label className="directory-search">
@@ -82,12 +84,12 @@ export default function UsersDirectory({
                   </span>
                 </div>
                 <div className="directory-actions">
-                  {!disabled && (
+                  {mode === "teacher" && !disabled && (
                     <button type="button" className="primary-button" disabled={working} onClick={() => onAssign(user)}>
                       <UserPlus size={14} /> Asignar tarea
                     </button>
                   )}
-                  {admin && (
+                  {mode === "admin" && (
                     <>
                       <label className="directory-role">
                         <span className="sr-only">Rol de {user.full_name}</span>

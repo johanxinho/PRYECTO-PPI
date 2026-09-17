@@ -483,18 +483,20 @@ Para el directorio, dar de baja y asignar tareas, ejecuta también:
 ## 18b. Administrador y profesor
 
 ### Administrador
-- En **Perfil**, si aún no hay administrador, pulsa **Convertir esta cuenta en administrador**.
-- Aparece el menú **Usuarios**.
-- Puedes ver todas las cuentas, cambiarles el rol y **dar de baja** o **reactivar**.
-- Una cuenta dada de baja no puede entrar hasta que la reactives.
-- No puedes darte de baja a ti mismo.
+La cuenta **restrepojohan225@gmail.com** es la administradora principal. Al entrar verás el menú **Administración**.
+
+Desde ahí puedes:
+- Ver todas las cuentas
+- Asignar el rol **Profesor** o **Administrador** (u otro)
+- Dar de baja o reactivar una cuenta
+
+Una cuenta dada de baja no puede entrar hasta que la reactives. No puedes darte de baja a ti mismo.
 
 ### Profesor
-- El administrador te asigna el rol **Profesor**.
-- Ves **Usuarios** con las cuentas activas.
-- En cada persona pulsas **Asignar tarea**, completas título, materia, fecha y hora, y la actividad aparece en **su** agenda (tablas `tasks` y, si existe, `actividades` del modelo PPI).
+Cuando el administrador te asigna el rol **Profesor**, aparece el menú **Asignar tareas**.
+Ahí ves las cuentas activas y puedes crearles una actividad; les llega a su agenda.
 
-En la demostración local también puedes reclamar administrador y probar el directorio con usuarios de ejemplo.
+El administrador también ve **Asignar tareas**, además de **Administración**.
 
 ---
 

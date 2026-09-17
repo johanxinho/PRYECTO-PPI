@@ -77,7 +77,7 @@ import {
   setUserStatus,
   setUserRole,
   assignTaskToUser,
-  claimAdminRole,
+  isPrimaryAdminEmail,
 } from "./dataService";
 import "./recordate.css";
 
@@ -102,7 +102,8 @@ const routeViews = {
   "/enfoque": "Modo enfoque",
   "/compartir": "Compartir agendas",
   "/mensajes": "Mensajes",
-  "/usuarios": "Usuarios",
+  "/administracion": "Administración",
+  "/asignar": "Asignar tareas",
   "/perfil": "Perfil",
   "/configuracion": "Configuración",
 };
@@ -115,7 +116,8 @@ const viewRoutes = {
   "Modo enfoque": "/enfoque",
   "Compartir agendas": "/compartir",
   Mensajes: "/mensajes",
-  Usuarios: "/usuarios",
+  Administración: "/administracion",
+  "Asignar tareas": "/asignar",
   Perfil: "/perfil",
   Configuración: "/configuracion",
 };
@@ -151,8 +153,12 @@ const greeting = () => {
 };
 const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
 const supabaseErrorMessage = (error, fallback) => {
-  const details = [error?.code && `Código: ${error.code}`, error?.message, error?.details && `Detalles: ${error.details}`, error?.hint && `Sugerencia: ${error.hint}`].filter(Boolean);
-  return details.length ? `${fallback} ${details.join(" | ")}` : fallback;
+  const raw = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""}`;
+  if (/disabled_at|PGRST202|schema cache|does not exist|claim_admin_role/i.test(raw)) {
+    return fallback;
+  }
+  const details = [error?.message].filter(Boolean);
+  return details.length ? `${fallback} ${details.join(" ")}` : fallback;
 };
 
 const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
@@ -497,7 +503,10 @@ function App() {
   const [busyUserId, setBusyUserId] = useState(null);
   const alarmedTasks = useRef(new Set());
   const demo = isDemoSession(session);
-  const staff = isStaffRole(profile?.role);
+  const sessionEmail = session?.user?.email || profile?.email;
+  const admin = isAdminRole(profile?.role, sessionEmail);
+  const teacher = profile?.role === "profesor" || admin;
+  const staff = isStaffRole(profile?.role, sessionEmail);
   const enablePushNotifications = async () => {
     if (demo) {
       setNotice("Las notificaciones push no están disponibles en la demostración local.");
@@ -567,7 +576,11 @@ function App() {
       if (settled[2].status === "rejected" || settled[3].status === "rejected") {
         setNotice("Tu agenda se cargó, pero algunas secciones extra no respondieron. Puedes seguir usando RECORDATE.");
       }
-      setProfile(currentProfile);
+      setProfile(
+        currentProfile && isAdminRole(currentProfile.role, current.user.email)
+          ? { ...currentProfile, role: isPrimaryAdminEmail(current.user.email) ? "administrador" : currentProfile.role }
+          : currentProfile,
+      );
       if (isAccountDisabled(currentProfile)) {
         if (!isDemoSession(current) && supabase) await supabase.auth.signOut();
         setSession(null);
@@ -828,22 +841,22 @@ function App() {
     setShowForm(true);
   };
   const loadDirectory = async () => {
-    if (!isStaffRole(profile?.role)) return;
+    if (!isStaffRole(profile?.role, sessionEmail)) return;
     setDirectoryLoading(true);
     try {
       const rows = demo ? demoApi.listUsers() : await listManagedUsers();
       setDirectory(rows);
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible cargar el directorio de usuarios."));
+      setNotice(supabaseErrorMessage(error, "Aún no se puede abrir el directorio. Pide que ejecuten el SQL de roles en Supabase o recarga en unos minutos."));
     } finally {
       setDirectoryLoading(false);
     }
   };
   useEffect(() => {
-    if (view === "Usuarios" && isStaffRole(profile?.role)) {
+    if ((view === "Administración" || view === "Asignar tareas") && isStaffRole(profile?.role, sessionEmail)) {
       loadDirectory();
     }
-  }, [view, profile?.role, demo]);
+  }, [view, profile?.role, demo, sessionEmail]);
   const taskHandlers = {
     userId: session?.user?.id,
     onToggle: toggleTask,
@@ -1031,10 +1044,12 @@ function App() {
     if (view === "Mensajes") {
       return <Chat message={message} setMessage={setMessage} userId={session.user.id} demo={demo} />;
     }
-    if (view === "Usuarios" && staff) {
+    if ((view === "Administración" && admin) || (view === "Asignar tareas" && teacher)) {
       return (
         <UsersDirectory
+          mode={view === "Administración" ? "admin" : "teacher"}
           profile={profile}
+          sessionEmail={sessionEmail}
           users={directory}
           loading={directoryLoading}
           busyId={busyUserId}
@@ -1110,17 +1125,6 @@ function App() {
               setNotice("Configuración guardada correctamente.");
             } catch (error) {
               setNotice(supabaseErrorMessage(error, "No fue posible guardar la configuración."));
-            }
-          }}
-          onClaimAdmin={async () => {
-            if (!window.confirm("¿Quieres convertir esta cuenta en la administradora de RECORDATE? Solo funciona si todavía no hay un administrador activo.")) return;
-            try {
-              const updatedProfile = demo ? demoApi.claimAdmin() : await claimAdminRole();
-              setProfile(updatedProfile);
-              setNotice("Esta cuenta ahora es administradora. En Usuarios puedes dar de baja y asignar roles.");
-              navigate("Usuarios");
-            } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible reclamar el perfil de administrador."));
             }
           }}
           onLogout={logout}
@@ -1222,9 +1226,14 @@ function App() {
               </button>
             );
           })}
-          {staff && (
-            <button className={view === "Usuarios" ? "nav-item active" : "nav-item"} onClick={() => navigate("Usuarios")}>
-              <span className="nav-symbol"><Users size={16} /></span> Usuarios
+          {admin && (
+            <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}>
+              <span className="nav-symbol"><Shield size={16} /></span> Administración
+            </button>
+          )}
+          {teacher && (
+            <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}>
+              <span className="nav-symbol"><Users size={16} /></span> Asignar tareas
             </button>
           )}
         </nav>
@@ -1880,7 +1889,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
   );
 }
 
-function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload, onClaimAdmin }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -1917,7 +1926,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <h3>{userName}</h3>
           <p>{email}</p>
           <span className="demo-tag">{email?.includes("recordate.local") || demo ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
-          <p className="profile-role-line">{roleLabel(profile?.role)}</p>
+          <p className="profile-role-line">{roleLabel(isAdminRole(profile?.role, email) ? "administrador" : profile?.role)}</p>
         </div>
       </div>
       {view === "Configuración" ? (
@@ -1928,12 +1937,12 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
               <small>Estudiante, padre, madre o trabajador. Profesor y administrador los asigna un administrador.</small>
             </span>
             <select
-              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
+              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
               aria-label="Seleccionar rol"
-              disabled={isStaffRole(profile?.role)}
+              disabled={isStaffRole(profile?.role, email)}
             >
-              {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
+              {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
@@ -1972,7 +1981,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <span>Institución</span>
           <b>IE La Candelaria · Medellín</b>
           <span>Rol</span>
-          <b>{roleLabel(profile?.role)}</b>
+          <b>{roleLabel(isAdminRole(profile?.role, email) ? "administrador" : profile?.role)}</b>
           <span>Fecha de registro</span>
           <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b>
           <span>Proyecto</span>
@@ -1980,21 +1989,16 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <div className="profile-role-editor">
             <span>Cambiar rol</span>
             <select
-              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
+              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
               aria-label="Cambiar rol del perfil"
-              disabled={isStaffRole(profile?.role)}
+              disabled={isStaffRole(profile?.role, email)}
             >
-              {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
+              {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </div>
-          {!isAdminRole(profile?.role) && (
-            <button type="button" className="outline-button" onClick={onClaimAdmin}>
-              <Shield size={14} /> Convertir esta cuenta en administrador
-            </button>
-          )}
         </div>
       )}
       <button className="outline-button logout-profile" onClick={onLogout}>Cerrar sesión</button>
