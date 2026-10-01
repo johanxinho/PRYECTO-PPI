@@ -136,9 +136,21 @@ p { text-wrap: pretty }
   background: #fff;
   color: #0b1026;
 }
-/* Oculta la barra superior que Google Translate inserta al activarse. */
-body > .skiptranslate { display: none !important; }
+/* Oculta la barra/estilos que Google Translate inserta y conserva el tema oscuro original. */
+body > .skiptranslate,
+.goog-te-banner-frame.skiptranslate,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
 body { top: 0 !important; }
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
+html.translated-ltr body,
+html.translated-rtl body {
+  background: var(--navy) !important;
+  color: var(--ink) !important;
+  top: 0 !important;
+}
 
 .webgl-stack {
   position: fixed;
