@@ -35,6 +35,7 @@ import {
 import Login from "./components/Login";
 import AiChat from "./components/AiChat";
 import UsersDirectory from "./components/UsersDirectory";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { Brand } from "./Brand";
 import WebGLBackground from "./components/WebGLBackground";
 import AsciiEffect from "./components/AsciiEffect";
@@ -872,6 +873,7 @@ function App() {
   const frame = (node) => (
     <div className="recordate-root">
       <WebGLBackground />
+      <LanguageSwitcher />
       <div className="recordate-ui">{node}</div>
     </div>
   );

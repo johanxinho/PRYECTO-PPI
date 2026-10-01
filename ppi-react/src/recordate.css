@@ -104,6 +104,42 @@ p { text-wrap: pretty }
   overflow-x: clip;
 }
 .recordate-ui { position: relative; z-index: 1; min-height: 100% }
+
+/* Botón flotante para alternar el idioma (español/inglés) vía Google Translate. */
+.language-switcher {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 60;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(11, 16, 38, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.lang-option {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.lang-option:hover { color: #fff; }
+.lang-option.active {
+  background: #fff;
+  color: #0b1026;
+}
+/* Oculta la barra superior que Google Translate inserta al activarse. */
+body > .skiptranslate { display: none !important; }
+body { top: 0 !important; }
+
 .webgl-stack {
   position: fixed;
   inset: 0;
