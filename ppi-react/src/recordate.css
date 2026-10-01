@@ -105,19 +105,15 @@ p { text-wrap: pretty }
 }
 .recordate-ui { position: relative; z-index: 1; min-height: 100% }
 
-/* Botón flotante para alternar el idioma (español/inglés) vía Google Translate. */
+/* Selector de idioma (español/inglés) vía Google Translate: vive dentro del header de cada pantalla, no flota encima de otros controles. */
 .language-switcher {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 60;
   display: flex;
   gap: 2px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(11, 16, 38, 0.65);
-  backdrop-filter: blur(8px);
+  background: rgba(11, 16, 38, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.18);
+  flex: 0 0 auto;
 }
 .lang-option {
   border: none;
@@ -136,6 +132,9 @@ p { text-wrap: pretty }
   background: #fff;
   color: #0b1026;
 }
+.landing-header-actions { display: flex; align-items: center; gap: 12px }
+.auth-aside-top { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.header-user .language-switcher { background: rgba(255, 255, 255, 0.06) }
 /* Oculta la barra/estilos que Google Translate inserta y conserva el tema oscuro original. */
 body > .skiptranslate,
 .goog-te-banner-frame.skiptranslate,
@@ -151,6 +150,7 @@ html.translated-rtl body {
   color: var(--ink) !important;
   top: 0 !important;
 }
+
 
 .webgl-stack {
   position: fixed;
@@ -601,7 +601,7 @@ html.translated-rtl body {
   border: 1px solid var(--line);
   backdrop-filter: blur(18px);
 }
-.mobile-auth-brand { display: none; margin-bottom: 24px }
+.mobile-auth-brand { display: none; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px }
 .auth-panel h2 { margin: 12px 0 10px; font-size: clamp(32px, 4vw, 44px) }
 .auth-subtitle, .auth-note { color: var(--muted); font-size: 14px; line-height: 1.6 }
 .auth-panel form, .task-form { display: grid; gap: 16px; margin-top: 28px }
@@ -1289,7 +1289,7 @@ html.translated-rtl body {
   .workspace-header { padding: 14px 16px }
   .auth-aside { display: none }
   .auth-page { grid-template-columns: 1fr }
-  .mobile-auth-brand { display: block }
+  .mobile-auth-brand { display: flex }
   .hero { min-height: 0; padding: 24px 0 40px }
   .hero-visual { min-height: 0 }
 }

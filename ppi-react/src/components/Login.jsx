@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Brand, LogoMark } from "../Brand";
 import { DiaTextReveal } from "./ui/dia-text-reveal";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
 import { appBase } from "../paths";
 
@@ -120,7 +121,7 @@ function appUrl(path) {
  * Pantalla de autenticación: login, registro, verificación OTP y recuperación.
  * Recibe callbacks del padre (App) para entrar, volver o abrir el modo demo.
  */
-function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
+function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang = "es", onLangChange }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRecovery, setIsRecovery] = useState(recovery);
   const [email, setEmail] = useState("");
@@ -301,9 +302,12 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
     <main className="auth-page">
       {/* Columna visual + formulario (login, registro, OTP o recuperación). */}
       <div className="auth-aside">
-        <button className="back-link" type="button" onClick={onBack}>
-          <ArrowLeft size={16} /> Volver al inicio
-        </button>
+        <div className="auth-aside-top">
+          <button className="back-link" type="button" onClick={onBack}>
+            <ArrowLeft size={16} /> Volver al inicio
+          </button>
+          <LanguageSwitcher lang={lang} onChange={onLangChange} />
+        </div>
         <Brand light />
         <LogoMark />
         <div className="auth-quote">
@@ -318,6 +322,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
       <section className="auth-panel" aria-busy={loading}>
         <div className="mobile-auth-brand">
           <Brand size="lg" />
+          <LanguageSwitcher lang={lang} onChange={onLangChange} />
         </div>
         <span className="eyebrow accent-label">
           {needsVerification ? "Confirma tu correo" : isRecovery ? "Recupera tu acceso" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}

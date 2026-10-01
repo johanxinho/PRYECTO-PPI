@@ -183,7 +183,7 @@ const HERO_MORPH_TEXTS = {
   es: ["Recuerda.", "Organiza.", "Prioriza.", "Avanza."],
   en: ["Remember.", "Organize.", "Prioritize.", "Advance."],
 };
-function Landing({ onStart, lang = "es" }) {
+function Landing({ onStart, lang = "es", onLangChange }) {
   const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
     <div className="landing">
@@ -195,9 +195,12 @@ function Landing({ onStart, lang = "es" }) {
           <a href="#beneficios">Beneficios</a>
           <a href="#preguntas">Preguntas</a>
         </nav>
-        <button className="outline-button" onClick={onStart}>
-          Iniciar sesión
-        </button>
+        <div className="landing-header-actions">
+          <LanguageSwitcher lang={lang} onChange={onLangChange} />
+          <button className="outline-button" onClick={onStart}>
+            Iniciar sesión
+          </button>
+        </div>
       </header>
       <section className="hero" id="inicio">
         <div className="hero-copy">
@@ -885,16 +888,17 @@ function App() {
   const frame = (node) => (
     <div className="recordate-root">
       <WebGLBackground />
-      <LanguageSwitcher lang={lang} onChange={setLang} />
       <div className="recordate-ui">{node}</div>
     </div>
   );
   /* Landing → login/demo → panel. */
-  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} lang={lang} />);
+  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} lang={lang} onLangChange={setLang} />);
   if (!session || passwordRecovery) {
     return frame(
       <Login
         recovery={passwordRecovery}
+        lang={lang}
+        onLangChange={setLang}
         onDemo={() => {
           setSession(DEMO_SESSION);
           setPasswordRecovery(false);
@@ -1227,6 +1231,7 @@ function App() {
       <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
         <div className="sidebar-head">
           <Brand light size="sm" />
+          <LanguageSwitcher lang={lang} onChange={setLang} />
           <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><X size={18} /></button>
         </div>
         <p className="sidebar-caption">Tu agenda académica</p>
