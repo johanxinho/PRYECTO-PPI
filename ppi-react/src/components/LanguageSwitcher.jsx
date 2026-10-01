@@ -1,5 +1,5 @@
 // Alterna el idioma de toda la página entre español e inglés usando Google Translate.
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const SCRIPT_ID = "google-translate-script";
 const SCRIPT_SRC = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
@@ -20,9 +20,7 @@ function applyLanguage(lang) {
   }, 200);
 }
 
-function LanguageSwitcher() {
-  const [lang, setLang] = useState("es");
-
+function LanguageSwitcher({ lang = "es", onChange }) {
   useEffect(() => {
     window.googleTranslateElementInit = () => {
       if (!window.google?.translate) return;
@@ -44,7 +42,7 @@ function LanguageSwitcher() {
   }, []);
 
   const changeLanguage = (next) => {
-    setLang(next);
+    onChange?.(next);
     applyLanguage(next);
   };
 
@@ -72,3 +70,4 @@ function LanguageSwitcher() {
 }
 
 export default LanguageSwitcher;
+

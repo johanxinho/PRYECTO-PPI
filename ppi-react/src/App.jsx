@@ -179,7 +179,11 @@ const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
 };
 
 /* Portada pública: hero, características y FAQ. */
-function Landing({ onStart }) {
+const HERO_MORPH_TEXTS = {
+  es: ["Recuerda.", "Organiza.", "Prioriza.", "Avanza."],
+  en: ["Remember.", "Organize.", "Prioritize.", "Advance."],
+};
+function Landing({ onStart, lang = "es" }) {
   const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
     <div className="landing">
@@ -202,8 +206,9 @@ function Landing({ onStart }) {
           </span>
           <h1 className="hero-static">Tu día académico.</h1>
           <MorphingText
-            className="hero-morph"
-            texts={["Recuerda.", "Organiza.", "Prioriza.", "Avanza."]}
+            className="hero-morph notranslate"
+            translate="no"
+            texts={HERO_MORPH_TEXTS[lang] || HERO_MORPH_TEXTS.es}
           />
           <p>
             RECORDATE es la agenda académica para estudiantes que quieren claridad:
@@ -481,6 +486,7 @@ function App() {
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [profile, setProfile] = useState(null);
   const [screen, setScreen] = useState("landing");
+  const [lang, setLang] = useState("es");
   const [view, setView] = useState("Inicio");
   const [tasks, setTasks] = useState([]);
   const [query, setQuery] = useState("");
@@ -873,12 +879,12 @@ function App() {
   const frame = (node) => (
     <div className="recordate-root">
       <WebGLBackground />
-      <LanguageSwitcher />
+      <LanguageSwitcher lang={lang} onChange={setLang} />
       <div className="recordate-ui">{node}</div>
     </div>
   );
   /* Landing → login/demo → panel. */
-  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} />);
+  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} lang={lang} />);
   if (!session || passwordRecovery) {
     return frame(
       <Login
