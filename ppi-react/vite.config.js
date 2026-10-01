@@ -20,4 +20,17 @@ export default defineConfig({ // Configuración que Vite lee al hacer npm run de
       "@": fileURLToPath(new URL("./src", import.meta.url)), // @ apunta a la carpeta src/.
     }, // Fin del mapa de alias.
   }, // Fin de resolve.
+  build: { // Separa dependencias pesadas en su propio chunk para acelerar la carga inicial.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("/react/") || id.includes("/react-dom/")) return "vendor";
+          if (id.includes("/motion/")) return "motion";
+          if (id.includes("/lucide-react/")) return "icons";
+          if (id.includes("/@supabase/")) return "supabase";
+        },
+      },
+    },
+  }, // Fin de build.
 }); // Fin de la configuración de Vite.

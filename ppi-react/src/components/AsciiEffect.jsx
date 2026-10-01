@@ -301,10 +301,12 @@ export default function AsciiEffect({  // Abre AsciiEffect.
 
     let raf = 0; // Id de requestAnimationFrame para cancelarlo.
     let running = true; // Bandera: el loop sigue vivo.
+    let visible = true; // false si el canvas sale del viewport (ahorra CPU al hacer scroll).
     let image = null; // HTMLImageElement cuando carga.
     let grid = null; // Resultado de sampleImage.
     let start = performance.now(); // Marca de tiempo inicial (ms).
     let frames = 0; // Contador de frames (útil en tests automatizados).
+    let lastPaint = 0; // Timestamp del último frame pintado (limita a ~30 fps).
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches; // Respeta accesibilidad.
     const automated = Boolean(navigator.webdriver); // Detecta bots/CI para no animar de más.
 
@@ -358,10 +360,13 @@ export default function AsciiEffect({  // Abre AsciiEffect.
       if (anyPost) applyPost(ctx, canvas.width, canvas.height, settings.pfx, t); // Aplica grano/viñeta/glitch.
     }; // Fin de el bloque.
 
-    const loop = (now) => { // Bucle de animación por frames.
+    const loop = (now) => { // Bucle de animación por frames, limitado a ~30 fps.
       if (!running) return; // Si se desmontó, no sigue.
-      paint(now); // Pinta este frame.
-      frames += 1; // Cuenta el frame.
+      if (visible && now - lastPaint >= 32) { // Solo pinta si es visible y pasaron ~32 ms.
+        lastPaint = now; // Marca este paint.
+        paint(now); // Pinta este frame.
+        frames += 1; // Cuenta el frame.
+      } // Fin de el bloque.
       if (!reduced && settings.animated && !(automated && frames > 4)) raf = requestAnimationFrame(loop); // Pide el siguiente frame.
     }; // Fin de el bloque.
 
@@ -394,12 +399,17 @@ export default function AsciiEffect({  // Abre AsciiEffect.
       paint(performance.now()); // Repinta con el nuevo tamaño.
     }); // Cierra la llamada y el bloque.
     observer.observe(canvas); // Observa el canvas.
+    const intersection = new IntersectionObserver(([entry]) => { // Pausa el loop si el canvas sale de pantalla.
+      visible = entry.isIntersecting; // Solo pinta mientras sea visible.
+    }); // Cierra la llamada.
+    intersection.observe(canvas); // Empieza a observar el canvas.
     document.addEventListener("visibilitychange", onVis); // Escucha pestaña visible/oculta.
 
     return () => { // Cleanup al desmontar o cambiar deps.
       running = false; // Para el loop.
       cancelAnimationFrame(raf); // Cancela RAF.
       observer.disconnect(); // Deja de observar el tamaño.
+      intersection.disconnect(); // Deja de observar la visibilidad.
       document.removeEventListener("visibilitychange", onVis); // Quita el listener de visibilidad.
     }; // Fin de el bloque.
     // Sampling is rebuilt from src/cellSize; animation uniforms are read live.

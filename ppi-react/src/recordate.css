@@ -545,6 +545,9 @@ html.translated-rtl body {
   font-size: 12px;
 }
 .landing-footer .brand { margin-right: auto }
+.footer-credit { white-space: nowrap }
+.footer-credit a { color: var(--lilac); text-decoration: underline; text-underline-offset: 2px }
+.footer-credit a:hover { color: #fff }
 
 .auth-page {
   min-height: 100svh;

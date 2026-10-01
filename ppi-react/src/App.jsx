@@ -1,6 +1,6 @@
 // @ts-nocheck
 // RECORDATE: portada, acceso y panel (tareas, mensajes, perfil).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import {
   House,
   ListTodo,
@@ -33,7 +33,7 @@ import {
   Shield,
 } from "lucide-react";
 import Login from "./components/Login";
-import AiChat from "./components/AiChat";
+const AiChat = lazy(() => import("./components/AiChat")); // Carga diferida: solo pesa cuando hay sesión real.
 import UsersDirectory from "./components/UsersDirectory";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { Brand } from "./Brand";
@@ -304,6 +304,12 @@ function Landing({ onStart, lang = "es" }) {
       <footer className="landing-footer">
         <Brand light />
         <p>Sistema de recordatorio de actividades académicas · Medellín, Antioquia</p>
+        <p className="footer-credit">
+          Creado por{" "}
+          <a href="https://northboundbrothers.netlify.app/" target="_blank" rel="noopener noreferrer">
+            Northbound Brothers
+          </a>
+        </p>
         <span>© 2026 PPI</span>
       </footer>
     </div>
@@ -1336,7 +1342,11 @@ function App() {
           </section>
         </div>
       )}
-      {!demo && hasSupabaseConfig && <AiChat enabled />}
+      {!demo && hasSupabaseConfig && (
+        <Suspense fallback={null}>
+          <AiChat enabled />
+        </Suspense>
+      )}
       {alarmTask && (
         <div className="modal-backdrop">
           <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
