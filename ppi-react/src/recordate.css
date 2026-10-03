@@ -535,6 +535,37 @@ html.translated-rtl body {
 .faq-grid h3 { font-size: 20px; margin-bottom: 8px }
 .faq-grid p { color: var(--muted); line-height: 1.6 }
 
+.manuals-section {
+  width: min(1180px, calc(100% - 40px));
+  margin: auto;
+  padding: 72px 0 24px;
+}
+.manuals-list { margin-top: 24px; border-top: 1px solid var(--line) }
+.manual-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.manual-item h3 { margin-bottom: 6px; font-size: 20px }
+.manual-item p { color: var(--muted); line-height: 1.5 }
+.manual-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background var(--motion-quick) var(--ease), border-color var(--motion-quick) var(--ease);
+}
+.manual-download:hover { background: var(--surface-2); border-color: var(--lilac) }
+
 .landing-footer {
   min-height: 0;
   display: flex;

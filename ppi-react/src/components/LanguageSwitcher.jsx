@@ -24,7 +24,6 @@ function LanguageSwitcher({ lang = "es", onChange }) {
   useEffect(() => {
     window.googleTranslateElementInit = () => {
       if (!window.google?.translate) return;
-      // eslint-disable-next-line no-new
       new window.google.translate.TranslateElement(
         { pageLanguage: "es", includedLanguages: "es,en", autoDisplay: false },
         "google_translate_element",

@@ -63,7 +63,6 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
     const mouse = { x: 0, y: 0, presence: 0, target: 0 }; // Cursor NDC y suavizado de presencia.
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)"); // Media query de accesibilidad.
     const automated = Boolean(navigator.webdriver); // true en Puppeteer/CI: un solo frame.
-    let frames = 0; // Contador de frames dibujados.
     let lastDraw = 0; // Timestamp del último draw (para limitar a ~30 fps).
 
     try { // Cualquier fallo de shader deja el fallback CSS.
@@ -142,7 +141,6 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
       } // Fin de el bloque.
       lastDraw = now; // Marca este draw.
       draw(now); // Pinta el frame.
-      frames += 1; // Cuenta el frame.
       if (frozen || reduced.matches || automated) return; // Congelado o bot: no continúa el loop.
       raf = requestAnimationFrame(loop); // Pide el siguiente frame.
     }; // Fin de el bloque.
@@ -178,7 +176,7 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
     }; // Fin de el bloque.
 
     resize(); // Primer ajuste de tamaño.
-    setOk(true); // Marca WebGL como disponible (quita el fallback visual).
+    const readyRaf = requestAnimationFrame(() => setOk(true)); // Quita el fallback después de inicializar WebGL.
     frozen = reduced.matches; // Estado inicial de reduced-motion.
     draw(performance.now()); // Primer frame inmediato.
     if (!frozen && !automated) raf = requestAnimationFrame(loop); // Arranca el loop si se puede animar.
@@ -194,6 +192,7 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
     return () => { // Limpieza al desmontar el componente.
       running = false; // Para el loop.
       cancelAnimationFrame(raf); // Cancela RAF.
+      cancelAnimationFrame(readyRaf); // Cancela el cambio visual pendiente.
       window.removeEventListener("resize", resize); // Quita resize.
       window.removeEventListener("pointermove", onPointer); // Quita pointermove.
       window.removeEventListener("pointerleave", onLeave); // Quita pointerleave.
@@ -202,8 +201,6 @@ export default function WebGLBackground() {  // Abre WebGLBackground.
       observer.disconnect(); // Deja de observar el documento.
       if (buffer) gl.deleteBuffer(buffer); // Libera el VBO.
       if (program) gl.deleteProgram(program); // Libera el programa GPU.
-      const lose = gl.getExtension("WEBGL_lose_context"); // Extensión para soltar el contexto.
-      lose?.loseContext(); // Fuerza la pérdida del contexto (libera GPU).
     }; // Fin de el bloque.
   }, []); // Sin dependencias: se configura una vez.
 

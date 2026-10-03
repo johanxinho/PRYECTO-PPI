@@ -1,6 +1,6 @@
 // @ts-nocheck
 // RECORDATE: portada, acceso y panel (tareas, mensajes, perfil).
-import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import {
   House,
   ListTodo,
@@ -10,6 +10,7 @@ import {
   Focus,
   Share2,
   MessageCircle,
+  Download,
   User,
   Settings,
   LogOut,
@@ -194,6 +195,7 @@ function Landing({ onStart, lang = "es", onLangChange }) {
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#beneficios">Beneficios</a>
           <a href="#preguntas">Preguntas</a>
+          <a href="#manuales">Manuales</a>
         </nav>
         <div className="landing-header-actions">
           <LanguageSwitcher lang={lang} onChange={onLangChange} />
@@ -302,6 +304,30 @@ function Landing({ onStart, lang = "es", onLangChange }) {
             <h3>¿Hay recordatorios?</h3>
             <p>Configura avisos por actividad. Las alarmas suenan mientras RECORDATE está abierto.</p>
           </div>
+        </div>
+      </section>
+      <section className="manuals-section" id="manuales">
+        <div className="section-heading">
+          <span className="eyebrow accent-label">Documentación RECORDATE</span>
+          <h2>Manuales para consultar y descargar.</h2>
+        </div>
+        <div className="manuals-list">
+          {[
+            ["MANUAL-DE-USUARIO.md", "Manual de usuario", "Guía para crear una cuenta, organizar actividades y usar las funciones de RECORDATE."],
+            ["EXPLICACION-EQUIPO-RECORDATE.md", "Manual técnico del equipo", "Arquitectura, flujos de trabajo, Supabase y despliegue del proyecto."],
+            ["PROJECT-DOCUMENTATION.md", "Documentación del proyecto", "Referencia técnica del repositorio y el estado de sus funciones."],
+          ].map(([fileName, title, description]) => (
+            <article className="manual-item" key={fileName}>
+              <div>
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </div>
+              <a className="manual-download" href={`${import.meta.env.BASE_URL}docs/${fileName}`} download>
+                <Download size={16} aria-hidden="true" />
+                Descargar .md
+              </a>
+            </article>
+          ))}
         </div>
       </section>
       <footer className="landing-footer">
@@ -522,7 +548,6 @@ function App() {
   const sessionEmail = session?.user?.email || profile?.email;
   const admin = isAdminRole(profile?.role, sessionEmail);
   const teacher = profile?.role === "profesor" || admin;
-  const staff = isStaffRole(profile?.role, sessionEmail);
   const enablePushNotifications = async () => {
     if (demo) {
       setNotice("Las notificaciones push no están disponibles en la demostración local.");
@@ -856,7 +881,7 @@ function App() {
     setAssignTarget(null);
     setShowForm(true);
   };
-  const loadDirectory = async () => {
+  const loadDirectory = useCallback(async () => {
     if (!isStaffRole(profile?.role, sessionEmail)) return;
     setDirectoryLoading(true);
     try {
@@ -867,12 +892,13 @@ function App() {
     } finally {
       setDirectoryLoading(false);
     }
-  };
+  }, [demo, profile?.role, sessionEmail]);
   useEffect(() => {
     if ((view === "Administración" || view === "Asignar tareas") && isStaffRole(profile?.role, sessionEmail)) {
-      loadDirectory();
+      const timer = window.setTimeout(() => { void loadDirectory(); }, 0);
+      return () => window.clearTimeout(timer);
     }
-  }, [view, profile?.role, demo, sessionEmail]);
+  }, [view, loadDirectory, profile?.role, sessionEmail]);
   const taskHandlers = {
     userId: session?.user?.id,
     onToggle: toggleTask,
@@ -1637,26 +1663,20 @@ function Chat({ message, setMessage, userId, demo = false }) {
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [sending, setSending] = useState(false);
 
-  const refreshMessages = async () => {
-    const data = demo ? demoApi.listMessages() : await listMessages();
-    setMessages(data);
-    return data;
-  };
-
   useEffect(() => {
     let mounted = true;
-    refreshMessages()
-      .then((data) => {
-        if (!mounted) return;
-        setMessages(data);
-      })
-      .catch(() => {
+    const loadMessages = async () => {
+      try {
+        const data = await Promise.resolve().then(() => demo ? demoApi.listMessages() : listMessages());
+        if (mounted) setMessages(data);
+      } catch {
         if (mounted) setChatError("No fue posible cargar tus mensajes.");
-      })
-      .finally(() => {
+      } finally {
         if (mounted) setLoadingMessages(false);
-      });
-    if (demo) return () => { mounted = false; };
+      }
+    };
+    const loadTimer = window.setTimeout(() => { void loadMessages(); }, 0);
+    if (demo) return () => { mounted = false; window.clearTimeout(loadTimer); };
     const unsubscribe = subscribeToMessages(userId, async (payload) => {
       if (payload.eventType === "INSERT" && (payload.new.sender_id === userId || payload.new.recipient_id === userId)) {
         try {
@@ -1672,6 +1692,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
     });
     return () => {
       mounted = false;
+      window.clearTimeout(loadTimer);
       unsubscribe();
     };
   }, [userId, demo]);
