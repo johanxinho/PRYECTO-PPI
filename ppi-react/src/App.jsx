@@ -322,7 +322,11 @@ function Landing({ onStart, lang = "es", onLangChange }) {
                 <h3>{title}</h3>
                 <p>{description}</p>
               </div>
-              <a className="manual-download" href={`${import.meta.env.BASE_URL}docs/${fileName}`} download>
+              <a
+                className="manual-download"
+                href={`${import.meta.env.BASE_URL}docs/${fileName}?v=${import.meta.env.VITE_DOCS_VERSION || "dev"}`}
+                download
+              >
                 <Download size={16} aria-hidden="true" />
                 Descargar .md
               </a>

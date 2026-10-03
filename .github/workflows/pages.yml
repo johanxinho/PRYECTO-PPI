@@ -35,6 +35,7 @@ jobs: # Lista de trabajos.
       - run: npm run build # Genera la carpeta dist/ con el JS/CSS de producción.
         env: # Variables visibles para Vite durante el build.
           VITE_BASE: /PRYECTO-PPI/ # Prefijo de rutas de GitHub Pages (nombre del repo).
+          VITE_DOCS_VERSION: ${{ github.sha }} # Evita reutilizar una respuesta 404 cacheada al publicar manuales.
       - uses: peaceiris/actions-gh-pages@v4 # Publica dist/ en la rama gh-pages.
         with: # Opciones del action de Pages.
           github_token: ${{ secrets.GITHUB_TOKEN }} # Token del workflow para hacer push.
