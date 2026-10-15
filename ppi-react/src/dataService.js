@@ -13,16 +13,71 @@ const PROFILE_UPDATABLE = [
   "alarms_enabled",
 ];
 
-const profileColumnsFull =
-  "id,full_name,email,role,status,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled,disabled_at";
-const profileColumnsSafe =
-  "id,full_name,email,role,status,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
-const profileColumnsBase =
-  "id,full_name,email,role,avatar_url,created_at,reminders_enabled,show_completed,browser_notifications_enabled,alarms_enabled";
-const profileColumnsMin = "id,full_name,email,role,created_at";
+// Base columns for profiles - used by most queries
+const PROFILE_BASE_COLUMNS = [
+  "id",
+  "full_name",
+  "email",
+  "role",
+  "avatar_url",
+  "created_at",
+  "reminders_enabled",
+  "show_completed",
+  "browser_notifications_enabled",
+  "alarms_enabled",
+].join(",");
+
+// Extended columns with status
+const PROFILE_SAFE_COLUMNS = [...PROFILE_BASE_COLUMNS.split(","), "status"].join(",");
+
+// Full columns including disabled_at
+const PROFILE_FULL_COLUMNS = [...PROFILE_SAFE_COLUMNS.split(","), "disabled_at"].join(",");
+
+// Minimum columns for basic profile info
+const PROFILE_MIN_COLUMNS = "id,full_name,email,role,created_at";
 
 const taskColumns =
   "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+
+// Utility function to get profile columns based on detail level
+export function getProfileColumns(level = 'base') {
+  const levels = {
+    full: PROFILE_FULL_COLUMNS,
+    safe: PROFILE_SAFE_COLUMNS,
+    base: PROFILE_BASE_COLUMNS,
+    min: PROFILE_MIN_COLUMNS,
+  };
+  return levels[level] || levels.min;
+}
+
+// Email validation - stricter regex
+export function validateEmail(email) {
+  if (!email) return false;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(String(email).trim().toLowerCase());
+}
+
+// Task validation
+export function isValidTask(task) {
+  if (!task) return false;
+  
+  const requiredFields = ['title', 'subject', 'date', 'time', 'priority', 'reminder'];
+  for (const field of requiredFields) {
+    if (!task[field] && task[field] !== 0 && task[field] !== false) {
+      return false;
+    }
+  }
+  
+  // Validate title and subject have content after trim
+  if (String(task.title || '').trim().length === 0) return false;
+  if (String(task.subject || '').trim().length === 0) return false;
+  
+  // Validate priority
+  const validPriorities = ['Alta', 'Media', 'Baja'];
+  if (!validPriorities.includes(task.priority)) return false;
+  
+  return true;
+}
 
 export const PRIMARY_ADMIN_EMAIL = "restrepojohan225@gmail.com";
 
@@ -72,18 +127,33 @@ function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
 }
 
+// Single, secure profile fetch - uses base columns by default
 async function readProfileById(id) {
-  const attempts = [profileColumnsFull, profileColumnsSafe, profileColumnsBase, profileColumnsMin];
-  let lastError = null;
-  for (const columns of attempts) {
-    const { data, error } = await supabase.from("profiles").select(columns).eq("id", id).single();
-    if (!error && data) return withActiveDefaults(data);
-    lastError = error;
-  }
-  throw lastError;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(PROFILE_BASE_COLUMNS)
+    .eq("id", id)
+    .single();
+  
+  if (!error && data) return withActiveDefaults(data);
+  
+  // If base columns fail, try with safe columns (includes status)
+  const { data: safeData, error: safeError } = await supabase
+    .from("profiles")
+    .select(PROFILE_SAFE_COLUMNS)
+    .eq("id", id)
+    .single();
+  
+  if (!safeError && safeData) return withActiveDefaults(safeData);
+  
+  // If still failing, throw the last error
+  throw error || safeError || new Error("No se pudo obtener el perfil");
 }
 
-function mapTask(task) {
+// Map database task to frontend format
+export function mapTask(task) {
+  if (!task) return null;
+  
   return {
     id: task.id,
     userId: task.user_id,
@@ -183,16 +253,14 @@ export async function uploadAvatar(file) {
 
 export async function listTasks() {
   ensureBackend();
-  const query = (columns) =>
-    supabase.from("tasks").select(columns).order("date", { ascending: true }).order("time", { ascending: true });
-  let { data, error } = await query(taskColumns);
-  if (error) {
-    const fallback = await query(
-      "id,user_id,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at",
-    );
-    if (fallback.error) throw fallback.error;
-    data = (fallback.data || []).map((task) => ({ ...task, assigned_by: null, task_attachments: [] }));
-  }
+  // Single query with all needed columns - no fallback to avoid security issues
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(taskColumns)
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
+  
+  if (error) throw error;
   return (data || []).map(mapTask);
 }
 

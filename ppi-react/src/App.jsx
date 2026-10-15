@@ -1,38 +1,7 @@
 // @ts-nocheck
 // RECORDATE: portada, acceso y panel (tareas, mensajes, perfil).
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
-import {
-  House,
-  ListTodo,
-  CalendarDays,
-  Bell,
-  Flag,
-  Focus,
-  Share2,
-  MessageCircle,
-  Download,
-  User,
-  Settings,
-  LogOut,
-  Plus,
-  Search,
-  Menu,
-  X,
-  Check,
-  Pencil,
-  Trash2,
-  ArrowRight,
-  ArrowDown,
-  ChevronLeft,
-  ChevronRight,
-  Paperclip,
-  Camera,
-  Inbox,
-  Send,
-  Reply,
-  Users,
-  Shield,
-} from "lucide-react";
+import * as Icons from "lucide-react";
 import Login from "./components/Login";
 const AiChat = lazy(() => import("./components/AiChat")); // Carga diferida: solo pesa cuando hay sesión real.
 import UsersDirectory from "./components/UsersDirectory";
@@ -94,7 +63,7 @@ const navItems = [
   "Compartir agendas",
   "Mensajes",
 ];
-const navIcons = [House, ListTodo, CalendarDays, Bell, Flag, Focus, Share2, MessageCircle];
+const navIcons = [Icons.House, Icons.ListTodo, Icons.CalendarDays, Icons.Bell, Icons.Flag, Icons.Focus, Icons.Share2, Icons.MessageCircle];
 const routeViews = {
   "/dashboard": "Inicio",
   "/tareas": "Mis tareas",
@@ -221,10 +190,10 @@ function Landing({ onStart, lang = "es", onLangChange }) {
           </p>
           <div className="hero-actions">
             <button className="primary-button" onClick={onStart}>
-              Comenzar ahora <ArrowRight size={16} />
+              Comenzar ahora <Icons.ArrowRight size={16} />
             </button>
             <a className="text-button" href="#como-funciona">
-              Conocer más <ArrowDown size={16} />
+              Conocer más <Icons.ArrowDown size={16} />
             </a>
           </div>
           <p className="demo-note">Puedes explorar la experiencia con el acceso de demostración.</p>
@@ -282,7 +251,7 @@ function Landing({ onStart, lang = "es", onLangChange }) {
           <h2>Claridad para estudiar. Tranquilidad para avanzar.</h2>
         </div>
         <button className="primary-button" onClick={onStart}>
-          Abrir RECORDATE <ArrowRight size={16} />
+          Abrir RECORDATE <Icons.ArrowRight size={16} />
         </button>
       </section>
       <section className="landing-faq" id="preguntas">
@@ -327,7 +296,7 @@ function Landing({ onStart, lang = "es", onLangChange }) {
                 href={`${import.meta.env.BASE_URL}docs/${fileName}?v=${import.meta.env.VITE_DOCS_VERSION || "dev"}`}
                 download
               >
-                <Download size={16} aria-hidden="true" />
+                <Icons.Download size={16} aria-hidden="true" />
                 Descargar .md
               </a>
             </article>
@@ -471,7 +440,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
         aria-label={task.completed ? "Marcar como pendiente" : "Marcar como completada"}
         onClick={() => onToggle(task.id)}
       >
-        {task.completed ? <Check size={12} /> : ""}
+        {task.completed ? <Icons.Check size={12} /> : ""}
       </button>
       <div className="task-content">
         <div className="task-heading">
@@ -489,11 +458,11 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
         {task.attachments?.map((attachment) => (
           <span className="task-attachment" key={attachment.id}>
             <button className="text-button" onClick={() => openAttachment(attachment)}>
-              <Paperclip size={14} /> Ver imagen
+              <Icons.Paperclip size={14} /> Ver imagen
             </button>
             {canManage && (
               <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>
-                <X size={14} />
+                <Icons.X size={14} />
               </button>
             )}
           </span>
@@ -502,16 +471,16 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       </div>
       <div className="task-actions">
         <button className="icon-button" aria-label="Abrir modo enfoque" title="Modo enfoque" onClick={() => onFocus(task)}>
-          <Focus size={16} />
+          <Icons.Focus size={16} />
         </button>
         {canManage && (
           <button className="icon-button" aria-label="Editar tarea" title="Editar tarea" onClick={() => onEdit(task)}>
-            <Pencil size={16} />
+            <Icons.Pencil size={16} />
           </button>
         )}
         {canManage && (
           <button className="icon-button danger" aria-label="Eliminar tarea" title="Eliminar tarea" onClick={() => onDelete(task.id)}>
-            <Trash2 size={16} />
+            <Icons.Trash2 size={16} />
           </button>
         )}
       </div>
@@ -948,7 +917,7 @@ function App() {
     if (focusTask) {
       return (
         <section className="focus-panel">
-          <div className="focus-orbit"><Focus size={28} /></div>
+          <div className="focus-orbit"><Icons.Focus size={28} /></div>
           <span className="eyebrow accent-label">Modo enfoque</span>
           <h2>{focusTask.title}</h2>
           <p className="task-meta">{focusTask.subject} · {formatDate(focusTask.date)} · {focusTask.time}</p>
@@ -972,7 +941,7 @@ function App() {
               <span className="eyebrow">Tu agenda completa</span>
               <h2>Mis tareas</h2>
             </div>
-            <button className="primary-button" onClick={openNewTask}><Plus size={16} /> Nueva actividad</button>
+            <button className="primary-button" onClick={openNewTask}><Icons.Plus size={16} /> Nueva actividad</button>
           </section>
           <div className="search-wrap" aria-label="Filtros de tareas">
             <select aria-label="Filtrar por prioridad" value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}>
@@ -1193,7 +1162,7 @@ function App() {
             </p>
           </div>
           <button className="primary-button add-task-button" onClick={openNewTask}>
-            <Plus size={16} /> Nueva actividad
+            <Icons.Plus size={16} /> Nueva actividad
           </button>
         </section>
         <Stats stats={stats} />
@@ -1210,10 +1179,10 @@ function App() {
                 <span className="eyebrow">Tu agenda</span>
                 <h2>{query ? "Resultados de búsqueda" : "Tareas importantes"}</h2>
               </div>
-              <button className="text-button" onClick={() => navigate("Mis tareas")}>Ver todas <ArrowRight size={14} /></button>
+              <button className="text-button" onClick={() => navigate("Mis tareas")}>Ver todas <Icons.ArrowRight size={14} /></button>
             </section>
             <div className="search-wrap">
-              <Search size={16} />
+              <Icons.Search size={16} />
               <input aria-label="Buscar por título o materia" placeholder="Buscar por título o materia" value={query} onChange={(event) => setQuery(event.target.value)} />
             </div>
             <TaskList {...taskHandlers} tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)} empty="No tienes tareas pendientes." compact />
@@ -1231,23 +1200,23 @@ function App() {
               </button>
             )) : <p className="empty-copy">Nada programado para hoy.</p>}
             <button className="text-button calendar-link" onClick={() => navigate("Calendario")}>
-              Abrir calendario <ArrowRight size={14} />
+              Abrir calendario <Icons.ArrowRight size={14} />
             </button>
           </aside>
         </div>
         <div className="quick-actions">
           <button className="quick-action" onClick={openNewTask}>
-            <Plus size={18} />
+            <Icons.Plus size={18} />
             <b>Crear tarea</b>
             <small>Registra una entrega en segundos.</small>
           </button>
           <button className="quick-action" onClick={() => navigate("Modo enfoque")}>
-            <Focus size={18} />
+            <Icons.Focus size={18} />
             <b>Modo enfoque</b>
             <small>Una sola actividad en pantalla.</small>
           </button>
           <button className="quick-action" onClick={() => navigate("Mensajes")}>
-            <MessageCircle size={18} />
+            <Icons.MessageCircle size={18} />
             <b>Escribir</b>
             <small>Coordina con un compañero.</small>
           </button>
@@ -1262,7 +1231,7 @@ function App() {
         <div className="sidebar-head">
           <Brand light size="sm" />
           <LanguageSwitcher lang={lang} onChange={setLang} />
-          <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><X size={18} /></button>
+          <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><Icons.X size={18} /></button>
         </div>
         <p className="sidebar-caption">Tu agenda académica</p>
         <nav aria-label="Navegación principal">
@@ -1277,24 +1246,24 @@ function App() {
           })}
           {admin && (
             <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}>
-              <span className="nav-symbol"><Shield size={16} /></span> Administración
+              <span className="nav-symbol"><Icons.Shield size={16} /></span> Administración
             </button>
           )}
           {teacher && (
             <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}>
-              <span className="nav-symbol"><Users size={16} /></span> Asignar tareas
+              <span className="nav-symbol"><Icons.Users size={16} /></span> Asignar tareas
             </button>
           )}
         </nav>
         <div className="sidebar-bottom">
           <button className={view === "Perfil" ? "nav-item active" : "nav-item"} onClick={() => navigate("Perfil")}>
-            <span className="nav-symbol"><User size={16} /></span> Perfil
+            <span className="nav-symbol"><Icons.User size={16} /></span> Perfil
           </button>
           <button className={view === "Configuración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Configuración")}>
-            <span className="nav-symbol"><Settings size={16} /></span> Configuración
+            <span className="nav-symbol"><Icons.Settings size={16} /></span> Configuración
           </button>
           <button className="nav-item logout" onClick={logout}>
-            <span className="nav-symbol"><LogOut size={16} /></span> Cerrar sesión
+            <span className="nav-symbol"><Icons.LogOut size={16} /></span> Cerrar sesión
           </button>
         </div>
       </aside>
@@ -1302,14 +1271,14 @@ function App() {
       <section className="workspace">
         {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
-          <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Menu size={18} /></button>
+          <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Icons.Menu size={18} /></button>
           <div>
             <p className="eyebrow">IE La Candelaria · PPI grado 11{demo ? " · Demo" : ""}</p>
             <h1>{view === "Inicio" ? "Hoy" : view}</h1>
           </div>
           <div className="header-user">
             <button className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}>
-              <Bell size={16} />
+              <Icons.Bell size={16} />
               {notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
             </button>
             {notificationsOpen && (
@@ -1330,7 +1299,7 @@ function App() {
         {notice && (
           <div className="notice" role="status">
             {notice}
-            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}><X size={16} /></button>
+            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}><Icons.X size={16} /></button>
           </div>
         )}
         <div className="content-area">
@@ -1345,11 +1314,11 @@ function App() {
       </section>
       <nav className="bottom-nav" aria-label="Navegación móvil">
         {[
-          ["Inicio", House],
-          ["Mis tareas", ListTodo],
-          ["Calendario", CalendarDays],
-          ["Mensajes", MessageCircle],
-          ["Perfil", User],
+          ["Inicio", Icons.House],
+          ["Mis tareas", Icons.ListTodo],
+          ["Calendario", Icons.CalendarDays],
+          ["Mensajes", Icons.MessageCircle],
+          ["Perfil", Icons.User],
         ].map(([item, Icon]) => (
           <button key={item} className={view === item ? "active" : ""} onClick={() => navigate(item)}>
             <Icon size={18} />
@@ -1365,7 +1334,7 @@ function App() {
                 <span className="eyebrow accent-label">Agenda académica</span>
                 <h2 id="task-modal-title">{editingTask ? "Editar actividad" : assignTarget ? "Asignar actividad" : "Nueva actividad"}</h2>
               </div>
-              <button className="icon-button" onClick={() => { setShowForm(false); setAssignTarget(null); }} aria-label="Cerrar formulario"><X size={16} /></button>
+              <button className="icon-button" onClick={() => { setShowForm(false); setAssignTarget(null); }} aria-label="Cerrar formulario"><Icons.X size={16} /></button>
             </div>
             <TaskForm
               key={editingTask?.id || assignTarget?.id || "new-task"}
@@ -1448,7 +1417,7 @@ function TaskList({
           {tasks.map((task) =>
             focusOnly ? (
               <button className="focus-choice" key={task.id} onClick={() => onFocus(task)}>
-                <span className="focus-choice-icon"><Focus size={18} /></span>
+                <span className="focus-choice-icon"><Icons.Focus size={18} /></span>
                 <span>
                   <b>{task.title}</b>
                   <small>{task.subject} · {formatDate(task.date)} · {task.time}</small>
@@ -1471,7 +1440,7 @@ function TaskList({
         </div>
       ) : (
         <div className="empty-state">
-          <ListTodo size={28} />
+          <Icons.ListTodo size={28} />
           <h3>{empty}</h3>
           <p>Las actividades que agregues aparecerán aquí.</p>
         </div>
@@ -1504,11 +1473,11 @@ function Calendar({ tasks, onSelect }) {
           <h2>Calendario académico</h2>
         </div>
         <div className="calendar-controls">
-          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior"><ChevronLeft size={16} /></button>
+          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior"><Icons.ChevronLeft size={16} /></button>
           <span className="calendar-month">
             {new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(firstDay)}
           </span>
-          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente"><ChevronRight size={16} /></button>
+          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente"><Icons.ChevronRight size={16} /></button>
         </div>
       </div>
       <div className="calendar-layout">
@@ -1643,7 +1612,7 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
                   <div className="shared-attachments">
                     {details.attachments.map((attachment) => (
                       <button className="text-button" key={attachment.id} type="button" onClick={() => onOpenAttachment?.(attachment)}>
-                        <Paperclip size={14} /> Ver imagen: {attachment.file_name || "adjunto"}
+                        <Icons.Paperclip size={14} /> Ver imagen: {attachment.file_name || "adjunto"}
                       </button>
                     ))}
                   </div>
@@ -1843,10 +1812,10 @@ function Chat({ message, setMessage, userId, demo = false }) {
       <p className="panel-intro">Revisa tu bandeja de entrada, consulta lo que enviaste y responde a tus compañeros desde RECORDATE.</p>
       <div className="message-tabs" role="tablist" aria-label="Bandejas de mensajes">
         <button type="button" role="tab" aria-selected={tab === "recibidos"} className={tab === "recibidos" ? "message-tab active" : "message-tab"} onClick={() => { setTab("recibidos"); setActivePeerId(null); }}>
-          <Inbox size={16} /> Recibidos ({inbox.length})
+          <Icons.Inbox size={16} /> Recibidos ({inbox.length})
         </button>
         <button type="button" role="tab" aria-selected={tab === "enviados"} className={tab === "enviados" ? "message-tab active" : "message-tab"} onClick={() => { setTab("enviados"); setActivePeerId(null); }}>
-          <Send size={16} /> Enviados ({sent.length})
+          <Icons.Send size={16} /> Enviados ({sent.length})
         </button>
       </div>
       <div className="chat-layout">
@@ -1887,7 +1856,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
               </small>
             </span>
             {activePeerId && tab === "recibidos" && (
-              <span className="reply-hint"><Reply size={14} /> Responder</span>
+              <span className="reply-hint"><Icons.Reply size={14} /> Responder</span>
             )}
           </div>
           {!recipient && (
@@ -1965,7 +1934,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
             disabled={uploadingAvatar}
             onClick={() => fileRef.current?.click()}
           >
-            <Camera size={14} />
+            <Icons.Camera size={14} />
             {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickAvatar} />
