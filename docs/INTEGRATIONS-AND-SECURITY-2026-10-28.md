@@ -56,7 +56,7 @@ En iPhone/iPad, las notificaciones web requieren agregar RECORDATE a la pantalla
 
 ## Estado de Google Classroom en producción
 
-El bundle público verificado el 2026-10-28 no contiene un Client ID OAuth de Google y `.env.production` no lo define. La pantalla ahora informa el requisito y da acceso directo desde Configuración, pero la conexión real a Classroom queda bloqueada hasta crear/configurar el Client ID web, activar Classroom API, configurar el consentimiento y autorizar `https://johanxinho.github.io` como origen en Google Cloud. El Client ID no es secreto; nunca debe exponerse un client secret en el frontend.
+La versión publicada en GitHub Pages tras el commit `e06a9c3` contiene un Client ID OAuth web (verificado por patrón sin exponer su valor). La página, el manifiesto y el Service Worker responden correctamente. Para completar una conexión real, el proyecto de Google Cloud debe mantener habilitada Classroom API, consentimiento OAuth válido y el origen autorizado `https://johanxinho.github.io`; también se requiere que la cuenta otorgue permisos de lectura. El Client ID no es secreto; nunca debe exponerse un client secret en el frontend.
 
 
 ## Corrección funcional de alarmas y Classroom — 2026-10-28
@@ -67,7 +67,7 @@ El bundle público verificado el 2026-10-28 no contiene un Client ID OAuth de Go
 - Las notificaciones del sistema solicitan persistencia y vibración cuando la plataforma las admite. Eso no fuerza banners superpuestos ni el sonido del sistema operativo. **RECORDATE aún no tiene un emisor Web Push en Supabase**; la suscripción/Service Worker receptora no basta para avisar cuando la página está cerrada. Para eso falta configurar la clave privada VAPID y desplegar un emisor/scheduler backend seguro.
 - Se añadió un manifiesto PWA para facilitar la instalación en móviles. En iPhone, además, hay que agregar el sitio a la pantalla de inicio y habilitar notificaciones desde Ajustes de iOS; el comportamiento final sigue sujeto a iOS.
 
-Verificación local de esta revisión: `npm run lint` correcto, `npm test -- --run` correcto (4 archivos / 29 pruebas), `npm run build` correcto y `git diff --check` limpio. Las pruebas simulan Web Audio; no sustituyen una prueba acústica en cada modelo de teléfono o configuración de volumen del sistema.
+Verificación local y de CI: lint correcto, `npm test -- --run` correcto (**5 archivos / 32 pruebas**), build correcto y `git diff --check` limpio. El workflow de GitHub Pages para `e06a9c3` terminó exitosamente; las pruebas simulan Web Audio y no sustituyen una prueba acústica en cada modelo de teléfono o configuración de volumen del sistema.
 
 
 Verificación final actualizada tras añadir pruebas de notificaciones: **5 archivos de prueba y 32 pruebas aprobadas**. También se compiló con `VITE_BASE=/PRYECTO-PPI/` y se comprobó que el manifiesto queda bajo `/PRYECTO-PPI/`, con alcance correcto para GitHub Pages.
