@@ -88,16 +88,7 @@ export function DiaTextReveal({
   const texts = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
   const isMulti = texts.length > 1;
   const prefersReducedMotion = useReducedMotion();
-  const deviceMemory = typeof navigator === "undefined" ? 0 : Number(navigator.deviceMemory) || 0;
-  const cpuCores =
-    typeof navigator === "undefined" ? 0 : Number(navigator.hardwareConcurrency) || 0;
-  const saveData = typeof navigator !== "undefined" && Boolean(navigator.connection?.saveData);
-  const suppressMotion = Boolean(
-    prefersReducedMotion ||
-    saveData ||
-    (deviceMemory > 0 && deviceMemory <= 2) ||
-    (cpuCores > 0 && cpuCores <= 2)
-  );
+  const suppressMotion = prefersReducedMotion;
   const spanRef = useRef<HTMLSpanElement>(null);
   const optsRef = useRef({ colors, textColor, duration, delay, repeat, repeatDelay, texts });
   optsRef.current = { colors, textColor, duration, delay, repeat, repeatDelay, texts };

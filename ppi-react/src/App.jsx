@@ -1168,14 +1168,7 @@ function App() {
   };
   const frame = (node) => (
     <div className="recordate-root">
-      {screen === "landing" ? (
-        <WebGLBackground />
-      ) : (
-        <div className="webgl-stack no-webgl" aria-hidden="true">
-          <div className="webgl-fallback" />
-          <div className="webgl-ambient" />
-        </div>
-      )}
+      <WebGLBackground />
       <div className="recordate-ui">{node}</div>
     </div>
   );

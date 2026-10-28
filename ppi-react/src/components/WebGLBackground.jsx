@@ -24,21 +24,13 @@ function compile(gl, type, source) {
   return shader;
 }
 
-function isLowPowerDevice() {
-  const memory = Number(navigator.deviceMemory) || 0;
-  const cores = Number(navigator.hardwareConcurrency) || 0;
-  return Boolean(
-    navigator.connection?.saveData || (memory > 0 && memory <= 2) || (cores > 0 && cores <= 2)
-  );
-}
-
 export default function WebGLBackground() {
   const canvasRef = useRef(null);
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || isLowPowerDevice()) return undefined;
+    if (!canvas) return undefined;
 
     const gl = canvas.getContext("webgl", {
       alpha: false,
@@ -53,20 +45,18 @@ export default function WebGLBackground() {
     if (!gl) return undefined;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
     const automated = Boolean(navigator.webdriver);
-    const maxPixels = coarsePointer ? 420_000 : 850_000;
-    const frameDelay = coarsePointer ? 24 : 16;
+    const maxPixels = 1600 * 900;
     let program;
     let buffer;
     let raf = 0;
     let readyRaf = 0;
-    let timer = 0;
     let running = true;
     let contextLost = false;
     let frozen = reduced.matches;
     let hiddenAt = 0;
     let start = performance.now();
+    let lastDraw = 0;
     const mouse = { x: 0, y: 0, presence: 0, target: 0 };
 
     try {
@@ -106,9 +96,7 @@ export default function WebGLBackground() {
     COLORS.forEach((color, i) => gl.uniform3fv(loc.colors[i], color));
 
     const stopFrames = () => {
-      if (timer) window.clearTimeout(timer);
       if (raf) window.cancelAnimationFrame(raf);
-      timer = 0;
       raf = 0;
     };
     const canAnimate = () =>
@@ -118,8 +106,7 @@ export default function WebGLBackground() {
       const rect = canvas.getBoundingClientRect();
       const cssWidth = rect.width || window.innerWidth;
       const cssHeight = rect.height || window.innerHeight;
-      const maxDpr = coarsePointer ? 1.25 : 1.5;
-      let scale = Math.min(window.devicePixelRatio || 1, maxDpr);
+      let scale = Math.min(window.devicePixelRatio || 1, 2);
       const area = Math.max(1, cssWidth * cssHeight);
       scale = Math.min(scale, Math.sqrt(maxPixels / area));
       const width = Math.max(1, Math.floor(cssWidth * scale));
@@ -148,15 +135,15 @@ export default function WebGLBackground() {
     const loop = (now) => {
       raf = 0;
       if (!canAnimate()) return;
-      draw(now);
+      if (now - lastDraw >= 32) {
+        draw(now);
+        lastDraw = now;
+      }
       scheduleFrame();
     };
     const scheduleFrame = () => {
-      if (!canAnimate() || raf || timer) return;
-      timer = window.setTimeout(() => {
-        timer = 0;
-        if (canAnimate()) raf = window.requestAnimationFrame(loop);
-      }, frameDelay);
+      if (!canAnimate() || raf) return;
+      raf = window.requestAnimationFrame(loop);
     };
     const resizeAndDraw = () => {
       if (resize() && !document.hidden) draw(performance.now());
@@ -207,10 +194,8 @@ export default function WebGLBackground() {
       readyRaf = 0;
       if (!contextLost) setOk(true);
     });
-    if (!coarsePointer) {
-      window.addEventListener("pointermove", onPointer, { passive: true });
-      window.addEventListener("pointerleave", onLeave);
-    }
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerleave", onLeave);
     window.addEventListener("resize", resizeAndDraw, { passive: true });
     window.visualViewport?.addEventListener("resize", resizeAndDraw, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);

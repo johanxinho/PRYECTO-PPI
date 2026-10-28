@@ -347,25 +347,15 @@ export default function AsciiEffect({
     if (!ctx) return undefined;
 
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-    const memory = Number(navigator.deviceMemory) || 0;
-    const cores = Number(navigator.hardwareConcurrency) || 0;
-    const lowPower = Boolean(
-      navigator.connection?.saveData || (memory > 0 && memory <= 4) || (cores > 0 && cores <= 4)
-    );
     const automated = Boolean(navigator.webdriver);
-    const maxPixels = lowPower ? 320_000 : coarsePointer ? 500_000 : 850_000;
-    const maxDpr = lowPower ? 1 : coarsePointer ? 1.25 : 1.5;
-    const cellMultiplier = lowPower ? 1.6 : coarsePointer ? 1.25 : 1;
-    const frameDelay = coarsePointer ? 32 : 16;
     const hasPostEffects = Object.values(settings.pfx || {}).some((item) => item?.enabled);
 
     let raf = 0;
-    let timer = 0;
     let alive = true;
     let visible = true;
     let reducedMotion = media.matches;
     let pausedAt = document.hidden ? performance.now() : 0;
+    let lastPaint = 0;
     let image = null;
     let grid = null;
     let cellPixels = 6;
@@ -377,27 +367,20 @@ export default function AsciiEffect({
       visible &&
       !document.hidden &&
       !reducedMotion &&
-      !lowPower &&
       !automated &&
       settings.animated;
     const stopFrames = () => {
-      if (timer) window.clearTimeout(timer);
       if (raf) window.cancelAnimationFrame(raf);
-      timer = 0;
       raf = 0;
     };
     const scheduleFrame = () => {
-      if (!canAnimate() || raf || timer) return;
-      timer = window.setTimeout(() => {
-        timer = 0;
-        if (canAnimate()) raf = window.requestAnimationFrame(loop);
-      }, frameDelay);
+      if (!canAnimate() || raf) return;
+      raf = window.requestAnimationFrame(loop);
     };
     const fit = () => {
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return false;
-      let scale = Math.min(window.devicePixelRatio || 1, maxDpr);
-      scale = Math.min(scale, Math.sqrt(maxPixels / (rect.width * rect.height)));
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(64, Math.floor(rect.width * scale));
       const height = Math.max(64, Math.floor(rect.height * scale));
       const sizeChanged = canvas.width !== width || canvas.height !== height;
@@ -405,7 +388,7 @@ export default function AsciiEffect({
         canvas.width = width;
         canvas.height = height;
       }
-      const nextCellPixels = Math.max(4, Math.round(settings.cellSize * scale * cellMultiplier));
+      const nextCellPixels = Math.max(4, Math.round(settings.cellSize * scale));
       const cellChanged = nextCellPixels !== cellPixels;
       cellPixels = nextCellPixels;
       if (image && (sizeChanged || cellChanged || !grid)) {
@@ -458,7 +441,10 @@ export default function AsciiEffect({
     const loop = (now) => {
       raf = 0;
       if (!canAnimate()) return;
-      paint(now);
+      if (now - lastPaint >= 32) {
+        lastPaint = now;
+        paint(now);
+      }
       scheduleFrame();
     };
     const pause = () => {
