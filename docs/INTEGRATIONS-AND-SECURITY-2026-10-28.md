@@ -118,3 +118,6 @@ Validación local: lint correcto, **8 archivos / 46 pruebas aprobadas**, build c
 
 
 Actualización final de pruebas: se añadieron dos pruebas de regresión para el selector de idioma (no cargar Google Translate en español y revertir a español si el navegador lo bloquea). El total vigente es **9 archivos / 48 pruebas aprobadas**; esta cifra sustituye el primer pase local de 8 archivos / 46 pruebas indicado en la sección de correcciones.
+
+
+Smoke test público posterior al commit `c9c2622`: el workflow `40755121484` y el despliegue estático `40755182512` finalizaron `success`. La raíz devuelve HTTP 200 e incluye ambos metadatos PWA; el CSS actual y el alias antiguo `index-BOrMBj_F.css` responden HTTP 200 como `text/css` (42.727 bytes y contenido idéntico). La ruta de notificación `/?view=%2Ftareas` responde 200. `/dashboard` conserva la respuesta HTTP 404 propia del fallback estático de GitHub Pages, pero entrega el shell de RECORDATE con el enlace al CSS actual y monta la app. La hoja antigua que provocaba el error dejó de devolver 404.
