@@ -13,7 +13,6 @@ function UserAvatar({ name = "?", url }) {
 
 export default function UsersDirectory({
   profile,
-  sessionEmail,
   mode = "teacher",
   users,
   loading,
@@ -24,7 +23,7 @@ export default function UsersDirectory({
 }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const admin = mode === "admin" || isAdminRole(profile?.role, sessionEmail);
+  const admin = mode === "admin" || isAdminRole(profile?.role);
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return (users || []).filter((user) => {

@@ -1277,9 +1277,10 @@ html.translated-rtl body {
   .workspace { width: 100%; margin-left: 0 }
   .sidebar {
     transform: translateX(-110%);
-    transition: transform var(--motion-fast) var(--ease);
+    visibility: hidden;
+    transition: transform var(--motion-fast) var(--ease), visibility 0s linear var(--motion-fast);
   }
-  .sidebar.is-open { transform: none }
+  .sidebar.is-open { transform: none; visibility: visible; transition-delay: 0s }
   .menu-toggle, .close-nav {
     display: grid;
     place-items: center;
@@ -1748,6 +1749,7 @@ html.translated-rtl body {
 .classroom-item-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .classroom-alarm-select { display: grid; gap: 4px; color: var(--muted); font-size: 10px; line-height: 1.2; }
 .classroom-alarm-select select { min-height: 38px; max-width: 170px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--ink); background: rgba(11,16,38,0.72); }
+.classroom-warning { margin: 12px 0; padding: 12px 14px; border: 1px solid rgba(255, 205, 112, 0.38); border-radius: 12px; background: rgba(255, 205, 112, 0.09); color: var(--ink-2); line-height: 1.5; font-size: 13px; }
 .settings-action-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .settings-action-row > span, .alarm-settings label > span { display: grid; gap: 5px; }
 .settings-action-row small, .alarm-settings small { color: var(--muted); font-size: 11px; }

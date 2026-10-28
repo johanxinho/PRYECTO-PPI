@@ -59,4 +59,30 @@ describe("GoogleClassroomPanel", () => {
     expect(addButton).toBeDisabled();
     expect(onImport).not.toHaveBeenCalled();
   });
+
+  it("informa cuando algunos cursos no se pudieron consultar", async () => {
+    mockListAssignments.mockResolvedValue({
+      courses: [{ id: "biology", name: "Biología" }],
+      assignments: [assignment],
+      failedCourseCount: 1,
+      skippedCourseCount: 2,
+    });
+    render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/carga parcial/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/1 curso con error/);
+    expect(screen.getByRole("status")).toHaveTextContent(/2 fuera del límite/);
+  });
+
+  it("muestra un aviso si RECORDATE rechaza la importación", async () => {
+    const onImport = vi.fn().mockResolvedValue(false);
+    render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={onImport} />);
+    fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
+    await screen.findByText("Entrega de ecosistemas");
+    fireEvent.click(screen.getByRole("button", { name: /agregar alarma/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/no se agregó la actividad/i);
+  });
 });

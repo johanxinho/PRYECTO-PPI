@@ -21,7 +21,6 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
     ["1 hora antes", 60 * 60 * 1000],
     ["3 horas antes", 3 * 60 * 60 * 1000],
     ["12 horas antes", 12 * 60 * 60 * 1000],
-    ["24 horas antes", 24 * 60 * 60 * 1000],
     ["1 d\u00eda antes", 24 * 60 * 60 * 1000],
   ];
 

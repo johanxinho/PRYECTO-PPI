@@ -2,7 +2,7 @@
 
 ## Cambios aplicados
 
-- Se centralizaron `is_admin()`, `is_staff()`, `is_profesor()` y `current_profile_role()` en el rol persistido de `profiles`; se eliminó la excepción de privilegios por correo electrónico.
+- Se centralizaron `is_admin()`, `is_staff()`, `is_profesor()` y `current_profile_role()` en el rol persistido de `profiles`. Una auditoría posterior encontró y corrigió en producción una excepción residual de alta por correo y la aceptación de `profesor` desde metadata, mediante la migración `auth_signup_role_hardening`.
 - Se añadió `is_active_account()` y se incorporó a las políticas RLS existentes para bloquear lecturas y escrituras de cuentas con `is_active = false`, `status = 'baja'` o `disabled_at` definido.
 - Las preferencias `alarm_sound` y `alarm_volume` se guardan en `profiles` con restricciones de valores.
 - Las tareas tienen `source` y `external_id`, más un índice único para que una actividad de Google Classroom no se importe dos veces.
@@ -67,7 +67,13 @@ La versión publicada en GitHub Pages tras el commit `e06a9c3` contiene un Clien
 - Las notificaciones del sistema solicitan persistencia y vibración cuando la plataforma las admite. Eso no fuerza banners superpuestos ni el sonido del sistema operativo. **RECORDATE aún no tiene un emisor Web Push en Supabase**; la suscripción/Service Worker receptora no basta para avisar cuando la página está cerrada. Para eso falta configurar la clave privada VAPID y desplegar un emisor/scheduler backend seguro.
 - Se añadió un manifiesto PWA para facilitar la instalación en móviles. En iPhone, además, hay que agregar el sitio a la pantalla de inicio y habilitar notificaciones desde Ajustes de iOS; el comportamiento final sigue sujeto a iOS.
 
-Verificación local y de CI: lint correcto, `npm test -- --run` correcto (**5 archivos / 32 pruebas**), build correcto y `git diff --check` limpio. El workflow de GitHub Pages para `e06a9c3` terminó exitosamente; las pruebas simulan Web Audio y no sustituyen una prueba acústica en cada modelo de teléfono o configuración de volumen del sistema.
+Verificación local y de CI del commit `e06a9c3`: lint correcto, `npm test -- --run` correcto (**5 archivos / 32 pruebas**), build correcto y `git diff --check` limpio. El workflow de GitHub Pages para `e06a9c3` terminó exitosamente; las pruebas simulan Web Audio y no sustituyen una prueba acústica en cada modelo de teléfono o configuración de volumen del sistema.
 
 
-Verificación final actualizada tras añadir pruebas de notificaciones: **5 archivos de prueba y 32 pruebas aprobadas**. También se compiló con `VITE_BASE=/PRYECTO-PPI/` y se comprobó que el manifiesto queda bajo `/PRYECTO-PPI/`, con alcance correcto para GitHub Pages.
+Verificación final local de esta revisión: **6 archivos de prueba y 39 pruebas aprobadas**, lint y build correctos; `npm audit` y `npm audit --omit=dev` reportan cero vulnerabilidades tras actualizar dependencias dentro de los rangos semver existentes. También se compiló con `VITE_BASE=/PRYECTO-PPI/` y se comprobó que el manifiesto queda bajo `/PRYECTO-PPI/`, con alcance correcto para GitHub Pages.
+
+## Hallazgos de seguimiento de roles/RLS — corrección aplicada en producción
+
+Antes de la corrección, la inspección de solo lectura de Supabase confirmó que el trigger `auth.users → public.handle_new_user()` podía asignar un rol privilegiado usando una excepción por correo y aceptaba `profesor` desde `user_metadata`. Además, la política `profiles insert own row` solo comprobaba `id = auth.uid()`, sin restringir el rol de una inserción directa. Los helpers `is_admin()`, `is_staff()` y `current_profile_role()` ya autorizaban según el rol persistido y el estado activo.
+
+La migración [20261028181507_auth_signup_role_hardening.sql](../supabase/migrations/20261028181507_auth_signup_role_hardening.sql) se aplicó y quedó registrada en Supabase como versión `20261028181507`. La comprobación posterior confirmó que el trigger ya no contiene la excepción ni admite los literales de rol privilegiado; la política de INSERT exige un rol no privilegiado y cuenta activa; los cuatro RPC de roles/directorio rechazan `anon` y conservan `authenticated`. La migración no modificó filas ni el rol almacenado del administrador actual.

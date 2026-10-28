@@ -4,10 +4,21 @@ import {
   getProfileColumns, 
   validateEmail, 
   isValidTask, 
-  mapTask 
+  mapTask,
+  isAdminRole,
+  isStaffRole
 } from '../dataService';
 
 describe('dataService utilities', () => {
+  describe('role helpers', () => {
+    it('grants staff access only from the stored role, never from email', () => {
+      expect(isAdminRole('administrador')).toBe(true);
+      expect(isStaffRole('profesor')).toBe(true);
+      expect(isAdminRole('estudiante')).toBe(false);
+      expect(isStaffRole('estudiante')).toBe(false);
+    });
+  });
+
   describe('getProfileColumns', () => {
     it('should return full columns when level is full', () => {
       const columns = getProfileColumns('full');

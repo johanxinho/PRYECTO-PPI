@@ -1,8 +1,20 @@
 // @ts-nocheck
 import { describe, it, expect } from 'vitest';
-import { authService } from '../services/authService';
+import { authService, sanitizeSignupRole } from '../services/authService';
 
 describe('authService', () => {
+  describe('sanitizeSignupRole', () => {
+    it('rejects staff roles submitted by a public signup client', () => {
+      expect(sanitizeSignupRole('profesor')).toBe('estudiante');
+      expect(sanitizeSignupRole('administrador')).toBe('estudiante');
+    });
+
+    it('keeps the self-service roles supported by the signup form', () => {
+      expect(sanitizeSignupRole('madre')).toBe('madre');
+      expect(sanitizeSignupRole('estudiante')).toBe('estudiante');
+    });
+  });
+
   describe('translateAuthError', () => {
     it('should translate already registered error', () => {
       const error = { message: 'User already registered', code: 'user_already_exists' };

@@ -27,6 +27,20 @@ export default function GoogleClassroomPanel({ profile, tasks, onImport, demo = 
   const [assignments, setAssignments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState("");
+  const [partialWarning, setPartialWarning] = useState("");
+
+  const applyClassroomResult = (result) => {
+    setCourses(result.courses || []);
+    setAssignments(result.assignments || []);
+    const details = [];
+    const failed = Number(result.failedCourseCount) || 0;
+    const skipped = Number(result.skippedCourseCount) || 0;
+    if (failed) details.push(`${failed} ${failed === 1 ? "curso con error" : "cursos con error"}`);
+    if (skipped) details.push(`${skipped} fuera del límite de consulta`);
+    setPartialWarning(details.length
+      ? `Carga parcial (${details.join("; ")}): algunas actividades podrían faltar.`
+      : "");
+  };
 
   const isImported = (assignment) => tasks.some(
     (task) => task.source === "google_classroom" && task.externalId === assignment.externalId,
@@ -40,11 +54,11 @@ export default function GoogleClassroomPanel({ profile, tasks, onImport, demo = 
     }
     setLoading(true);
     setError("");
+    setPartialWarning("");
     try {
       await connectGoogleClassroom({ staff: ["profesor", "administrador"].includes(profile?.role) });
       const result = await listClassroomAssignments({ staff: ["profesor", "administrador"].includes(profile?.role) });
-      setCourses(result.courses || []);
-      setAssignments(result.assignments || []);
+      applyClassroomResult(result);
       setConnected(true);
     } catch (cause) {
       setError(cause?.message || "No se pudo conectar con Google Classroom.");
@@ -57,10 +71,10 @@ export default function GoogleClassroomPanel({ profile, tasks, onImport, demo = 
     if (!connected) return connect();
     setLoading(true);
     setError("");
+    setPartialWarning("");
     try {
       const result = await listClassroomAssignments({ staff: ["profesor", "administrador"].includes(profile?.role) });
-      setCourses(result.courses || []);
-      setAssignments(result.assignments || []);
+      applyClassroomResult(result);
     } catch (cause) {
       setError(cause?.message || "No se pudieron actualizar las actividades de Classroom.");
     } finally {
@@ -74,13 +88,17 @@ export default function GoogleClassroomPanel({ profile, tasks, onImport, demo = 
     setAssignments([]);
     setCourses([]);
     setError("");
+    setPartialWarning("");
   };
 
   const addAlarm = async (assignment) => {
     setImportingId(assignment.externalId);
     setError("");
     try {
-      await onImport(assignment, alarmOffsetFor(assignment));
+      const imported = await onImport(assignment, alarmOffsetFor(assignment));
+      if (imported === false) setError("No se agregó la actividad. Revisa el aviso de RECORDATE e inténtalo de nuevo.");
+    } catch (cause) {
+      setError(cause?.message || "No se pudo agregar la actividad a RECORDATE.");
     } finally {
       setImportingId("");
     }
@@ -118,6 +136,7 @@ export default function GoogleClassroomPanel({ profile, tasks, onImport, demo = 
         </div>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
+      {partialWarning && <p className="classroom-warning" role="status">{partialWarning}</p>}
       {connected && (
         <>
           <div className="classroom-summary">

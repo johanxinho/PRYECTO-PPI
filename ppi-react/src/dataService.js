@@ -118,11 +118,6 @@ export function roleLabel(role) {
   return "Estudiante";
 }
 
-export function isPrimaryAdminEmail(email) {
-  void email;
-  return false;
-}
-
 export function isAdminRole(role) {
   return role === "administrador";
 }
@@ -587,13 +582,6 @@ export async function listManagedUsers() {
   const { data, error } = await supabase.rpc("list_managed_users");
   if (error) throw error;
   return data || [];
-}
-
-export async function claimAdminRole() {
-  ensureBackend();
-  const { data, error } = await supabase.rpc("claim_admin_role");
-  if (error) throw error;
-  return Array.isArray(data) ? data[0] : data;
 }
 
 export async function setUserStatus(userId, status) {

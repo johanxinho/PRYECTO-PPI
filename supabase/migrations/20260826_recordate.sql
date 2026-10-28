@@ -249,7 +249,8 @@ drop policy if exists "profiles own row" on public.profiles;
 drop policy if exists "profiles insert own row" on public.profiles;
 drop policy if exists "profiles update own row" on public.profiles;
 create policy "profiles own row" on public.profiles for select using (id = auth.uid());
-create policy "profiles insert own row" on public.profiles for insert with check (id = auth.uid());
+create policy "profiles insert own row" on public.profiles for insert to authenticated
+  with check (id = auth.uid() and role in ('student', 'estudiante', 'padre', 'madre', 'trabajador'));
 create policy "profiles update own row" on public.profiles for update using (id = auth.uid()) with check (id = auth.uid());
 
 drop policy if exists "tasks owner select" on public.tasks;

@@ -10,6 +10,12 @@ const missingBackend = () => ({
   error: 'Supabase no está configurado en este entorno.',
 });
 
+const SELF_SIGNUP_ROLES = ['estudiante', 'padre', 'madre', 'trabajador'];
+
+export function sanitizeSignupRole(role) {
+  return SELF_SIGNUP_ROLES.includes(role) ? role : 'estudiante';
+}
+
 /** Traduce errores comunes de Auth a español para quien consuma el servicio. */
 export function translateAuthError(error) {
   const details = `${error?.message || ''} ${error?.code || ''}`.toLowerCase();
@@ -40,8 +46,7 @@ export const authService = {
   async signup(email, password, fullName, role = 'estudiante') {
     if (!supabase) return missingBackend();
     try {
-      const allowed = ['estudiante', 'padre', 'madre', 'profesor', 'trabajador'];
-      const safeRole = allowed.includes(role) ? role : 'estudiante';
+      const safeRole = sanitizeSignupRole(role);
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,

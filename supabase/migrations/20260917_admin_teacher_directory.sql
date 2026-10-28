@@ -230,7 +230,7 @@ $$;
 
 revoke all on function public.sync_papel_account(uuid) from public, anon, authenticated;
 
--- 5) handle_new_user: incluye administrador y sincroniza papel
+-- 5) handle_new_user: acepta únicamente roles de registro de bajo privilegio y sincroniza papel
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -240,11 +240,7 @@ as $$
 declare chosen_role text;
 begin
   chosen_role := coalesce(new.raw_user_meta_data->>'role', 'estudiante');
-  if chosen_role not in ('estudiante', 'padre', 'madre', 'profesor', 'trabajador', 'administrador') then
-    chosen_role := 'estudiante';
-  end if;
-  -- Nadie se auto-registra como administrador: el primer admin se reclama desde la app.
-  if chosen_role = 'administrador' then
+  if chosen_role not in ('estudiante', 'padre', 'madre', 'trabajador') then
     chosen_role := 'estudiante';
   end if;
 
@@ -366,34 +362,7 @@ $$;
 revoke all on function public.list_managed_users() from public, anon;
 grant execute on function public.list_managed_users() to authenticated;
 
--- 9) Primer administrador de la institución
-create or replace function public.claim_admin_role()
-returns public.profiles
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare result public.profiles;
-begin
-  if auth.uid() is null then
-    raise exception 'Debes iniciar sesión.';
-  end if;
-  if exists (select 1 from public.profiles where role = 'administrador' and status = 'activo') then
-    raise exception 'Ya existe un administrador. Pídele que te asigne el rol.';
-  end if;
-
-  update public.profiles
-  set role = 'administrador', status = 'activo', disabled_at = null, disabled_by = null
-  where id = auth.uid()
-  returning * into result;
-
-  perform public.sync_papel_account(auth.uid());
-  return result;
-end;
-$$;
-
-revoke all on function public.claim_admin_role() from public, anon;
-grant execute on function public.claim_admin_role() to authenticated;
+-- No hay RPC pública para reclamar el primer rol administrador.
 
 -- 10) Dar de baja / reactivar (solo administrador)
 create or replace function public.set_user_status(target_id uuid, next_status text)

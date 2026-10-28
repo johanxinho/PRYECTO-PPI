@@ -95,8 +95,9 @@ async function listAllPages(path, params, field) {
 
 export async function listClassroomAssignments({ staff = false } = {}) {
   const courses = await listAllPages("courses", { courseStates: "ACTIVE" }, "courses");
+  const coursesToLoad = courses.slice(0, 30);
   const settled = await Promise.allSettled(
-    courses.slice(0, 30).map(async (course) => {
+    coursesToLoad.map(async (course) => {
       const work = await listAllPages(`courses/${encodeURIComponent(course.id)}/courseWork`, {
         courseWorkStates: staff ? undefined : "PUBLISHED",
         orderBy: "dueDate asc,updateTime desc",
@@ -107,6 +108,8 @@ export async function listClassroomAssignments({ staff = false } = {}) {
   const assignments = settled.flatMap((result) => result.status === "fulfilled" ? result.value : []);
   return {
     courses,
+    failedCourseCount: settled.filter((result) => result.status === "rejected").length,
+    skippedCourseCount: Math.max(0, courses.length - coursesToLoad.length),
     assignments: assignments
       .filter((item) => item.date)
       .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),

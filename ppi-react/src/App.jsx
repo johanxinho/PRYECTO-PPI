@@ -16,6 +16,7 @@ import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
 import { currentPath, pushRoute } from "./paths";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, startAlarm, unlockAlarmAudio, normalizeAlarmVolume } from "./services/alarmService";
 import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
+import { enqueueAlarmTasks, removeAlarmTask } from "./services/alarmQueue";
 import GoogleClassroomPanel from "./components/GoogleClassroomPanel";
 import {
   createTask,
@@ -109,6 +110,10 @@ const reminderOptions = [
   ["24 horas antes", 24 * 60 * 60 * 1000],
   ["1 día antes", 24 * 60 * 60 * 1000],
 ];
+const reminderOffsets = new Map([
+  ...reminderOptions,
+  ["24 horas antes", 24 * 60 * 60 * 1000],
+]);
 const formatDate = (date) =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
@@ -124,7 +129,7 @@ const greeting = () => {
 const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
 const supabaseErrorMessage = (error, fallback) => {
   const raw = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""}`;
-  if (/disabled_at|PGRST202|schema cache|does not exist|claim_admin_role/i.test(raw)) {
+  if (/disabled_at|PGRST202|schema cache|does not exist/i.test(raw)) {
     return fallback;
   }
   const details = [error?.message].filter(Boolean);
@@ -514,18 +519,24 @@ function App() {
   const [shared, setShared] = useState([]);
   const [message, setMessage] = useState("");
   const [notifications, setNotifications] = useState([]);
-  const [alarmTask, setAlarmTask] = useState(null);
+  const [alarmQueue, setAlarmQueue] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
   const [directory, setDirectory] = useState([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
   const [assignTarget, setAssignTarget] = useState(null);
   const [busyUserId, setBusyUserId] = useState(null);
+  const alarmTask = alarmQueue[0] || null;
+  const activeAlarmTaskId = alarmTask?.id;
   const alarmedTasks = useRef(new Set());
   const snoozedUntil = useRef(new Map());
   const activeAlarm = useRef(null);
+  const alarmDialogRef = useRef(null);
+  const alarmPreviousFocus = useRef(null);
+  const sidebarRef = useRef(null);
+  const menuToggleRef = useRef(null);
+  const wasMobileNavOpen = useRef(false);
   const demo = isDemoSession(session);
-  const sessionEmail = session?.user?.email || profile?.email;
-  const admin = isAdminRole(profile?.role, sessionEmail);
+  const admin = isAdminRole(profile?.role);
   const teacher = profile?.role === "profesor" || admin;
   useEffect(() => {
     const unlockFromGesture = () => { void unlockAlarmAudio(); };
@@ -536,6 +547,39 @@ function App() {
       window.removeEventListener("keydown", unlockFromGesture);
     };
   }, []);
+  useEffect(() => {
+    if (!mobileNav || activeAlarmTaskId) return undefined;
+    const panel = sidebarRef.current;
+    const focusable = panel?.querySelectorAll(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || [];
+    focusable[0]?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileNav(false);
+        return;
+      }
+      if (event.key !== "Tab" || !focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !panel?.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !panel?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileNav, activeAlarmTaskId]);
+  useEffect(() => {
+    if (wasMobileNavOpen.current && !mobileNav) menuToggleRef.current?.focus();
+    wasMobileNavOpen.current = mobileNav;
+  }, [mobileNav]);
   const enableBrowserNotifications = async () => {
     if (demo) {
       setNotice("Las notificaciones del sistema no están disponibles en la demostración local.");
@@ -742,15 +786,16 @@ function App() {
     if (!profile?.reminders_enabled) return undefined;
     const checkReminders = () => {
       const now = Date.now();
+      const dueAlarms = [];
       tasks.filter((task) => !task.completed).forEach((task) => {
-        const offset = reminderOptions.find(([label]) => label === task.reminder)?.[1] || 0;
+        const offset = reminderOffsets.get(task.reminder) ?? 0;
         const dueAt = new Date(`${task.date}T${task.time}`).getTime();
         if (!Number.isFinite(dueAt)) return;
         const reminderAt = snoozedUntil.current.get(task.id) || (dueAt - offset);
         if (now < reminderAt || now > dueAt + 60 * 60 * 1000 || alarmedTasks.current.has(task.id)) return;
         alarmedTasks.current.add(task.id);
         snoozedUntil.current.delete(task.id);
-        if (profile.alarms_enabled) setAlarmTask(task);
+        if (profile.alarms_enabled) dueAlarms.push(task);
         if (profile.browser_notifications_enabled) {
           void showBrowserNotification({
             title: "Alarma de RECORDATE",
@@ -760,6 +805,9 @@ function App() {
           });
         }
       });
+      if (dueAlarms.length) {
+        setAlarmQueue((current) => enqueueAlarmTasks(current, dueAlarms));
+      }
     };
     const checkWhenVisible = () => {
       if (document.visibilityState === "visible") checkReminders();
@@ -774,7 +822,6 @@ function App() {
       document.removeEventListener("visibilitychange", checkWhenVisible);
     };
   }, [profile, tasks]);
-  const activeAlarmTaskId = alarmTask?.id;
   useEffect(() => {
     if (!activeAlarmTaskId || !profile?.alarms_enabled) return undefined;
     let cancelled = false;
@@ -854,6 +901,9 @@ function App() {
       if (demo) demoApi.deleteTask(id);
       else await deleteTask(id);
       setTasks((current) => current.filter((task) => task.id !== id));
+      setAlarmQueue((current) => removeAlarmTask(current, id));
+      alarmedTasks.current.delete(id);
+      snoozedUntil.current.delete(id);
       setNotice("Actividad eliminada.");
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible eliminar la actividad."));
@@ -861,22 +911,30 @@ function App() {
   };
   const toggleTask = async (id) => {
     const task = tasks.find((item) => item.id === id);
-    if (!task) return;
+    if (!task) return false;
     try {
       const updated = demo
         ? demoApi.saveTask({ ...task, completed: !task.completed })
         : await updateTask({ ...task, completed: !task.completed });
       setTasks((current) => current.map((item) => (item.id === id ? updated : item)));
       setFocusTask((current) => (current?.id === id ? updated : current));
+      if (updated.completed) {
+        setAlarmQueue((current) => removeAlarmTask(current, id));
+        snoozedUntil.current.delete(id);
+      }
+      return true;
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible actualizar la actividad."));
+      return false;
     }
   };
   const completeAlarmTask = async () => {
     activeAlarm.current?.stop();
     activeAlarm.current = null;
-    if (alarmTask) await toggleTask(alarmTask.id);
-    setAlarmTask(null);
+    if (alarmTask) {
+      const completed = await toggleTask(alarmTask.id);
+      if (completed) setAlarmQueue((current) => removeAlarmTask(current, alarmTask.id));
+    }
   };
   const snoozeAlarmTask = () => {
     if (!alarmTask) return;
@@ -884,13 +942,13 @@ function App() {
     activeAlarm.current = null;
     snoozedUntil.current.set(alarmTask.id, Date.now() + 5 * 60 * 1000);
     alarmedTasks.current.delete(alarmTask.id);
-    setAlarmTask(null);
+    setAlarmQueue((current) => removeAlarmTask(current, alarmTask.id));
     setNotice("Alarma pospuesta 5 minutos. Mantén RECORDATE abierta para que vuelva a sonar.");
   };
   const dismissAlarmTask = () => {
     activeAlarm.current?.stop();
     activeAlarm.current = null;
-    setAlarmTask(null);
+    if (alarmTask) setAlarmQueue((current) => removeAlarmTask(current, alarmTask.id));
   };
   const retryAlarmSound = async () => {
     activeAlarm.current?.stop();
@@ -903,6 +961,55 @@ function App() {
     activeAlarm.current = handle;
     setNotice("Sonido de alarma activado para este aviso.");
   };
+  useEffect(() => {
+    if (!activeAlarmTaskId) {
+      const previousFocus = alarmPreviousFocus.current;
+      alarmPreviousFocus.current = null;
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      return undefined;
+    }
+    const dialog = alarmDialogRef.current;
+    if (!alarmPreviousFocus.current) alarmPreviousFocus.current = document.activeElement;
+    const focusable = dialog?.querySelectorAll(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || [];
+    dialog?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        activeAlarm.current?.stop();
+        activeAlarm.current = null;
+        setAlarmQueue((current) => removeAlarmTask(current, activeAlarmTaskId));
+        return;
+      }
+      if (event.key !== "Tab" || !focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activeAlarmTaskId]);
+  useEffect(() => {
+    if (!showForm) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && !activeAlarmTaskId) {
+        event.preventDefault();
+        setShowForm(false);
+        setAssignTarget(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showForm, activeAlarmTaskId]);
   const previewAlarm = async (sound, volume) => {
     const played = await playAlarm(sound, volume);
     setNotice(played
@@ -955,6 +1062,12 @@ function App() {
   };
   const logout = async () => {
     if (supabase && !demo) await supabase.auth.signOut();
+    activeAlarm.current?.stop();
+    activeAlarm.current = null;
+    alarmPreviousFocus.current = null;
+    alarmedTasks.current.clear();
+    snoozedUntil.current.clear();
+    setAlarmQueue([]);
     setSession(null);
     setProfile(null);
     setTasks([]);
@@ -985,6 +1098,20 @@ function App() {
       setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
     }
   };
+  const openNotification = async (notification) => {
+    await markOneRead(notification);
+    setNotificationsOpen(false);
+    if (!notification.task_id) return;
+    const task = tasks.find((item) => item.id === notification.task_id);
+    navigate("Mis tareas");
+    if (!task) {
+      setNotice("No se encontró la tarea asociada. Actualiza tu agenda e inténtalo de nuevo.");
+      return;
+    }
+    setEditingTask(task);
+    setAssignTarget(null);
+    setShowForm(true);
+  };
   const navigate = (nextView) => {
     setView(nextView);
     const route = viewRoutes[nextView];
@@ -998,7 +1125,7 @@ function App() {
     setShowForm(true);
   };
   const loadDirectory = useCallback(async () => {
-    if (!isStaffRole(profile?.role, sessionEmail)) return;
+    if (!isStaffRole(profile?.role)) return;
     setDirectoryLoading(true);
     try {
       const rows = demo ? demoApi.listUsers() : await listManagedUsers();
@@ -1008,13 +1135,13 @@ function App() {
     } finally {
       setDirectoryLoading(false);
     }
-  }, [demo, profile?.role, sessionEmail]);
+  }, [demo, profile?.role]);
   useEffect(() => {
-    if ((view === "Administración" || view === "Asignar tareas") && isStaffRole(profile?.role, sessionEmail)) {
+    if ((view === "Administración" || view === "Asignar tareas") && isStaffRole(profile?.role)) {
       const timer = window.setTimeout(() => { void loadDirectory(); }, 0);
       return () => window.clearTimeout(timer);
     }
-  }, [view, loadDirectory, profile?.role, sessionEmail]);
+  }, [view, loadDirectory, profile?.role]);
   const taskHandlers = {
     userId: session?.user?.id,
     onToggle: toggleTask,
@@ -1212,7 +1339,6 @@ function App() {
         <UsersDirectory
           mode={view === "Administración" ? "admin" : "teacher"}
           profile={profile}
-          sessionEmail={sessionEmail}
           users={directory}
           loading={directoryLoading}
           busyId={busyUserId}
@@ -1376,7 +1502,7 @@ function App() {
   return frame(
     <main className="app-shell">
       {/* Menú lateral con grupos para que las funciones nuevas sean fáciles de encontrar. */}
-      <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
+      <aside id="app-sidebar" ref={sidebarRef} className={`sidebar ${mobileNav ? "is-open" : ""}`} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav ? "true" : undefined} aria-label="Menú principal">
         <div className="sidebar-head">
           <Brand light size="sm" />
           <LanguageSwitcher lang={lang} onChange={setLang} />
@@ -1414,11 +1540,11 @@ function App() {
           </button>
         </div>
       </aside>
-      <div className="mobile-overlay" onClick={() => setMobileNav(false)} />
-      <section className="workspace">
+      <div className="mobile-overlay" aria-hidden="true" onClick={() => setMobileNav(false)} />
+      <section className="workspace" inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
         {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
-          <button className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú"><Icons.Menu size={18} /></button>
+          <button ref={menuToggleRef} className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú" aria-expanded={mobileNav} aria-controls="app-sidebar"><Icons.Menu size={18} /></button>
           <div>
             <p className="eyebrow">IE La Candelaria · PPI grado 11{demo ? " · Demo" : ""}</p>
             <h1>{view === "Inicio" ? "Hoy" : view}</h1>
@@ -1434,7 +1560,7 @@ function App() {
                 <button className="text-button" onClick={markAllRead} disabled={notificationAction}>Marcar todas como leídas</button>
                 <p>{notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}</p>
                 {notifications.slice(0, 5).map((item) => (
-                  <button className="notification-item" key={item.id} onClick={() => markOneRead(item)}>
+                  <button className="notification-item" key={item.id} onClick={() => openNotification(item)}>
                     {item.title}<small>{item.body || ""}</small>
                   </button>
                 ))}
@@ -1459,7 +1585,7 @@ function App() {
           ) : renderMain()}
         </div>
       </section>
-      <nav className="bottom-nav" aria-label="Navegación móvil">
+      <nav className="bottom-nav" aria-label="Navegación móvil" inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
         {[
           ["Inicio", Icons.House],
           ["Mis tareas", Icons.ListTodo],
@@ -1471,7 +1597,7 @@ function App() {
             {item === "Mis tareas" ? "Tareas" : item}
           </button>
         ))}
-        <button className={!mobilePrimaryViews.includes(view) ? "active" : ""} aria-label="Abrir más secciones" aria-expanded={mobileNav} onClick={() => setMobileNav(true)}>
+        <button className={!mobilePrimaryViews.includes(view) ? "active" : ""} aria-label="Abrir más secciones" aria-expanded={mobileNav} aria-controls="app-sidebar" onClick={() => setMobileNav(true)}>
           <Icons.MoreHorizontal size={18} />
           Más
         </button>
@@ -1497,13 +1623,15 @@ function App() {
         </div>
       )}
       {!demo && hasSupabaseConfig && (
-        <Suspense fallback={null}>
-          <AiChat enabled />
-        </Suspense>
+        <div inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
+          <Suspense fallback={null}>
+            <AiChat enabled />
+          </Suspense>
+        </div>
       )}
       {alarmTask && (
         <div className="modal-backdrop">
-          <section className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
+          <section ref={alarmDialogRef} className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title" tabIndex={-1}>
             <span className="eyebrow accent-label">Alarma de RECORDATE</span>
             <h2 id="alarm-title">Es hora de realizar esta actividad</h2>
             <h3>{alarmTask.title}</h3>
@@ -2095,7 +2223,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <h3>{userName}</h3>
           <p>{email}</p>
           <span className="demo-tag">{email?.includes("recordate.local") || demo ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
-          <p className="profile-role-line">{roleLabel(isAdminRole(profile?.role, email) ? "administrador" : profile?.role)}</p>
+          <p className="profile-role-line">{roleLabel(isAdminRole(profile?.role) ? "administrador" : profile?.role)}</p>
         </div>
       </div>
       {view === "Configuración" ? (
@@ -2106,8 +2234,8 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
             <div className="settings-group-heading"><Icons.UserRound size={17} /><div><h3>Cuenta y agenda</h3><p>Personaliza tu espacio de trabajo.</p></div></div>
             <label>
               <span><b>Rol en RECORDATE</b><small>Profesor y administrador los asigna un administrador.</small></span>
-              <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label="Seleccionar rol" disabled={isStaffRole(profile?.role, email)}>
-                {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label="Seleccionar rol" disabled={isStaffRole(profile?.role)}>
+                {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
             <label>
@@ -2167,7 +2295,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <span>Institución</span>
           <b>IE La Candelaria · Medellín</b>
           <span>Rol</span>
-          <b>{roleLabel(isAdminRole(profile?.role, email) ? "administrador" : profile?.role)}</b>
+          <b>{roleLabel(isAdminRole(profile?.role) ? "administrador" : profile?.role)}</b>
           <span>Fecha de registro</span>
           <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b>
           <span>Proyecto</span>
@@ -2175,12 +2303,12 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <div className="profile-role-editor">
             <span>Cambiar rol</span>
             <select
-              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")}
+              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
               aria-label="Cambiar rol del perfil"
-              disabled={isStaffRole(profile?.role, email)}
+              disabled={isStaffRole(profile?.role)}
             >
-              {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
+              {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
