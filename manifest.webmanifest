@@ -1,0 +1,18 @@
+{
+  "name": "RECORDATE | Agenda académica",
+  "short_name": "RECORDATE",
+  "description": "Agenda académica para recordar, organizar y priorizar actividades.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B1026",
+  "theme_color": "#0B1026",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
