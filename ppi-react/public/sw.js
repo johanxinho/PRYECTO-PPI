@@ -1,5 +1,6 @@
 /* global clients */
 const fallbackTarget = () => new URL("dashboard", self.registration.scope).href;
+const alarmVibration = [500, 180, 500, 180, 900];
 
 self.addEventListener("push", (event) => {
   let data;
@@ -13,8 +14,12 @@ self.addEventListener("push", (event) => {
     tag: data.tag || "recordate-notification",
     renotify: true,
     requireInteraction: data.requireInteraction !== false,
+    silent: false,
+    vibrate: data.vibrate || alarmVibration,
+    timestamp: Date.now(),
     icon: new URL("favicon.svg", self.registration.scope).href,
     badge: new URL("favicon.svg", self.registration.scope).href,
+    actions: [{ action: "open", title: "Ver en RECORDATE" }],
     data: { taskId: data.taskId || null, url: data.url || fallbackTarget() },
   }));
 });

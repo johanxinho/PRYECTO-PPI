@@ -14,7 +14,7 @@ import { DiaTextReveal } from "./components/ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
 import { currentPath, pushRoute } from "./paths";
-import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, normalizeAlarmVolume } from "./services/alarmService";
+import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, startAlarm, unlockAlarmAudio, normalizeAlarmVolume } from "./services/alarmService";
 import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
 import GoogleClassroomPanel from "./components/GoogleClassroomPanel";
 import {
@@ -521,10 +521,21 @@ function App() {
   const [assignTarget, setAssignTarget] = useState(null);
   const [busyUserId, setBusyUserId] = useState(null);
   const alarmedTasks = useRef(new Set());
+  const snoozedUntil = useRef(new Map());
+  const activeAlarm = useRef(null);
   const demo = isDemoSession(session);
   const sessionEmail = session?.user?.email || profile?.email;
   const admin = isAdminRole(profile?.role, sessionEmail);
   const teacher = profile?.role === "profesor" || admin;
+  useEffect(() => {
+    const unlockFromGesture = () => { void unlockAlarmAudio(); };
+    window.addEventListener("pointerdown", unlockFromGesture, { once: true, passive: true });
+    window.addEventListener("keydown", unlockFromGesture, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlockFromGesture);
+      window.removeEventListener("keydown", unlockFromGesture);
+    };
+  }, []);
   const enableBrowserNotifications = async () => {
     if (demo) {
       setNotice("Las notificaciones del sistema no están disponibles en la demostración local.");
@@ -545,8 +556,10 @@ function App() {
       setNotice("El navegador no concedió permiso para mostrar notificaciones.");
       return false;
     }
+    void unlockAlarmAudio();
     try {
-      await registerRecordateServiceWorker();
+      const registration = await registerRecordateServiceWorker();
+      if (!registration) setNotice("El navegador no pudo registrar el Service Worker. Los avisos solo se intentarán mientras la pestaña esté abierta.");
     } catch {
       setNotice("El Service Worker no pudo registrarse; se intentará mostrar avisos mientras la pestaña esté abierta.");
     }
@@ -557,9 +570,10 @@ function App() {
         const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
         await savePushSubscription(subscription);
       } catch {
-        setNotice("Las notificaciones de esta página están activas; el push con la app cerrada requiere un emisor backend.");
+        setNotice("Las notificaciones nativas están activas. Para alarmas con RECORDATE cerrada aún falta un emisor Web Push en Supabase.");
       }
     }
+    setNotice("Notificaciones nativas activadas. El navegador y el teléfono deciden si aparecen como banner; con RECORDATE cerrada hace falta un emisor Web Push.");
     return true;
   };
   useEffect(() => {
@@ -730,12 +744,14 @@ function App() {
       const now = Date.now();
       tasks.filter((task) => !task.completed).forEach((task) => {
         const offset = reminderOptions.find(([label]) => label === task.reminder)?.[1] || 0;
-        const reminderAt = new Date(`${task.date}T${task.time}`).getTime() - offset;
-        if (now < reminderAt || now - reminderAt > 60 * 1000 || alarmedTasks.current.has(task.id)) return;
+        const dueAt = new Date(`${task.date}T${task.time}`).getTime();
+        if (!Number.isFinite(dueAt)) return;
+        const reminderAt = snoozedUntil.current.get(task.id) || (dueAt - offset);
+        if (now < reminderAt || now > dueAt + 60 * 60 * 1000 || alarmedTasks.current.has(task.id)) return;
         alarmedTasks.current.add(task.id);
+        snoozedUntil.current.delete(task.id);
         if (profile.alarms_enabled) setAlarmTask(task);
-        if (profile.alarms_enabled) void playAlarm(profile.alarm_sound || DEFAULT_ALARM_SOUND, profile.alarm_volume ?? DEFAULT_ALARM_VOLUME);
-        if (profile.browser_notifications_enabled && "Notification" in window && Notification.permission === "granted") {
+        if (profile.browser_notifications_enabled) {
           void showBrowserNotification({
             title: "Alarma de RECORDATE",
             body: `${task.title} · ${task.subject} · Prioridad ${task.priority}`,
@@ -745,10 +761,38 @@ function App() {
         }
       });
     };
+    const checkWhenVisible = () => {
+      if (document.visibilityState === "visible") checkReminders();
+    };
     checkReminders();
     const timer = window.setInterval(checkReminders, 15000);
-    return () => window.clearInterval(timer);
+    window.addEventListener("focus", checkReminders);
+    document.addEventListener("visibilitychange", checkWhenVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", checkReminders);
+      document.removeEventListener("visibilitychange", checkWhenVisible);
+    };
   }, [profile, tasks]);
+  const activeAlarmTaskId = alarmTask?.id;
+  useEffect(() => {
+    if (!activeAlarmTaskId || !profile?.alarms_enabled) return undefined;
+    let cancelled = false;
+    void startAlarm(profile.alarm_sound || DEFAULT_ALARM_SOUND, profile.alarm_volume ?? DEFAULT_ALARM_VOLUME)
+      .then((handle) => {
+        if (cancelled) {
+          handle?.stop();
+          return;
+        }
+        activeAlarm.current = handle;
+        if (!handle) setNotice("El navegador bloqueó el audio. Toca «Reintentar sonido» en la alarma o activa el sonido desde Configuración.");
+      });
+    return () => {
+      cancelled = true;
+      activeAlarm.current?.stop();
+      activeAlarm.current = null;
+    };
+  }, [activeAlarmTaskId, profile?.alarms_enabled, profile?.alarm_sound, profile?.alarm_volume]);
   const userName = profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
   const visibleTasks = useMemo(
     () =>
@@ -829,37 +873,71 @@ function App() {
     }
   };
   const completeAlarmTask = async () => {
+    activeAlarm.current?.stop();
+    activeAlarm.current = null;
     if (alarmTask) await toggleTask(alarmTask.id);
     setAlarmTask(null);
   };
+  const snoozeAlarmTask = () => {
+    if (!alarmTask) return;
+    activeAlarm.current?.stop();
+    activeAlarm.current = null;
+    snoozedUntil.current.set(alarmTask.id, Date.now() + 5 * 60 * 1000);
+    alarmedTasks.current.delete(alarmTask.id);
+    setAlarmTask(null);
+    setNotice("Alarma pospuesta 5 minutos. Mantén RECORDATE abierta para que vuelva a sonar.");
+  };
+  const dismissAlarmTask = () => {
+    activeAlarm.current?.stop();
+    activeAlarm.current = null;
+    setAlarmTask(null);
+  };
+  const retryAlarmSound = async () => {
+    activeAlarm.current?.stop();
+    activeAlarm.current = null;
+    const handle = await startAlarm(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME);
+    if (!handle) {
+      setNotice("No se pudo iniciar el audio. Revisa el volumen del dispositivo y prueba «Escuchar y activar sonido» en Configuración.");
+      return;
+    }
+    activeAlarm.current = handle;
+    setNotice("Sonido de alarma activado para este aviso.");
+  };
   const previewAlarm = async (sound, volume) => {
     const played = await playAlarm(sound, volume);
-    if (!played) setNotice("Este navegador no permite reproducir audio web.");
+    setNotice(played
+      ? "Vista previa reproducida; el audio quedó habilitado para esta sesión del navegador."
+      : (Number(volume) === 0 ? "El volumen está en 0%; súbelo para escuchar la alarma." : "El navegador bloqueó el audio. Toca de nuevo para activarlo y revisa el volumen del dispositivo."));
   };
   const testBrowserNotification = async () => {
     if (!(await enableBrowserNotifications())) return;
     const shown = await showBrowserNotification({
       title: "Notificación de prueba",
-      body: "RECORDATE puede avisarte aunque estés en otra pestaña del navegador.",
+      body: "Notificación de prueba. El sistema decide si aparece como banner y qué sonido reproduce.",
       tag: "recordate-test-notification",
     });
     if (!shown) setNotice("No se pudo mostrar el aviso. Revisa los permisos de notificación del navegador y del sistema.");
   };
-  const importClassroomTask = async (assignment) => {
+  const importClassroomTask = async (assignment, reminder = "30 minutos antes") => {
     if (demo) {
       setNotice("La importación de Google Classroom requiere una cuenta conectada.");
-      return;
+      return false;
     }
     if (tasks.some((task) => task.source === "google_classroom" && task.externalId === assignment.externalId)) {
       setNotice("Esta actividad de Classroom ya está en tu agenda.");
-      return;
+      return false;
     }
     try {
-      const imported = await createTask(assignment);
+      const imported = await createTask({ ...assignment, reminder });
       setTasks((current) => [imported, ...current]);
-      setNotice(`Actividad importada: ${assignment.title}.`);
+      const alarmsActive = (profile?.reminders_enabled ?? true) && (profile?.alarms_enabled ?? true);
+      setNotice(alarmsActive
+        ? `Alarma agregada: ${assignment.title}, ${reminder}.`
+        : `Actividad agregada: ${assignment.title}. Activa Recordatorios y Alarmas en Configuración para que suene.`);
+      return true;
     } catch (error) {
       setNotice(supabaseErrorMessage(error, "No fue posible importar la actividad de Classroom."));
+      return false;
     }
   };
   const removeAttachment = async (taskId, attachment) => {
@@ -1432,7 +1510,9 @@ function App() {
             <p>{alarmTask.subject} · Prioridad {alarmTask.priority}</p>
             <div className="form-actions center">
               <button className="primary-button" onClick={completeAlarmTask}>Marcar como completada</button>
-              <button className="text-button" onClick={() => setAlarmTask(null)}>Posponer</button>
+              <button className="outline-button" onClick={retryAlarmSound}><Icons.Volume2 size={15} /> Reintentar sonido</button>
+              <button className="text-button" onClick={snoozeAlarmTask}>Posponer 5 minutos</button>
+              <button className="text-button" onClick={dismissAlarmTask}>Detener alarma</button>
             </div>
           </section>
         </div>
@@ -2045,7 +2125,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <section className="settings-group">
             <div className="settings-group-heading"><Icons.Volume2 size={17} /><div><h3>Alarmas</h3><p>Elige un tono y ajusta su volumen.</p></div></div>
             <label>
-              <span><b>Alarmas sonoras</b><small>El sonido funciona mientras RECORDATE esté abierto.</small></span>
+              <span><b>Alarmas sonoras</b><small>Activa también Recordatorios automáticos. El audio necesita un toque previo y RECORDATE abierta.</small></span>
               <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
             </label>
             <div className="alarm-settings">
@@ -2057,19 +2137,20 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
                 <span><b>Volumen</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
                 <input type="range" min="0" max="1" step="0.05" value={profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME} onChange={(event) => onSettingsChange({ alarm_volume: normalizeAlarmVolume(event.target.value) })} />
               </label>
-              <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}><Icons.Play size={15} /> Escuchar sonido seleccionado</button>
+              <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}><Icons.Play size={15} /> Escuchar y activar sonido</button>
             </div>
           </section>
           <section className="settings-group">
             <div className="settings-group-heading"><Icons.BellRing size={17} /><div><h3>Notificaciones</h3><p>El navegador y el sistema operativo controlan cómo aparecen.</p></div></div>
             <label>
-              <span><b>Notificaciones del navegador</b><small>Recibe avisos del sistema con RECORDATE abierta o en segundo plano.</small></span>
+              <span><b>Notificaciones del navegador</b><small>Los avisos nativos dependen del permiso y de los banners del teléfono; con la app cerrada se requiere Web Push.</small></span>
               <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnableNotifications())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
             </label>
             <div className="settings-action-row">
               <span><b>Probar notificación</b><small>Comprueba los permisos de este dispositivo.</small></span>
               <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
             </div>
+            <p className="settings-hint">RECORDATE no puede forzar que una notificación cubra otras apps ni controlar su tono; eso depende de Android/iOS y del navegador. Para recibir alarmas con la página cerrada falta configurar un emisor Web Push seguro en Supabase.</p>
           </section>
           <section className="settings-group">
             <div className="settings-group-heading"><Icons.Plug size={17} /><div><h3>Integraciones</h3><p>Conecta tus servicios de estudio.</p></div></div>

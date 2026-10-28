@@ -1742,9 +1742,12 @@ html.translated-rtl body {
 .classroom-summary b { color: var(--ink); }
 .classroom-list { display: grid; gap: 10px; }
 .classroom-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-strong); }
+.classroom-item-details { min-width: 0; }
 .classroom-item h3 { margin-top: 5px; font-family: var(--font-ui); font-size: 16px; letter-spacing: -0.02em; }
 .classroom-item p { color: var(--muted); font-size: 13px; margin-top: 4px; }
 .classroom-item-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.classroom-alarm-select { display: grid; gap: 4px; color: var(--muted); font-size: 10px; line-height: 1.2; }
+.classroom-alarm-select select { min-height: 38px; max-width: 170px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--ink); background: rgba(11,16,38,0.72); }
 .settings-action-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .settings-action-row > span, .alarm-settings label > span { display: grid; gap: 5px; }
 .settings-action-row small, .alarm-settings small { color: var(--muted); font-size: 11px; }
@@ -1756,6 +1759,8 @@ html.translated-rtl body {
 @media (max-width: 560px) {
   .classroom-item { align-items: flex-start; flex-direction: column; }
   .classroom-item-actions { width: 100%; justify-content: flex-start; }
+  .classroom-alarm-select { width: 100%; }
+  .classroom-alarm-select select { width: 100%; max-width: none; min-height: 44px; }
   .settings-action-row { grid-template-columns: 1fr; }
   .settings-action-row .outline-button { justify-self: start; }
 }
