@@ -601,23 +601,34 @@ function App() {
       return false;
     }
     void unlockAlarmAudio();
+    let pushReady = false;
+    let pushSetupFailed = false;
+    let serviceWorkerRegistration = null;
     try {
-      const registration = await registerRecordateServiceWorker();
-      if (!registration) setNotice("El navegador no pudo registrar el Service Worker. Los avisos solo se intentarán mientras la pestaña esté abierta.");
+      serviceWorkerRegistration = await registerRecordateServiceWorker();
+      if (!serviceWorkerRegistration) setNotice("El navegador no pudo registrar el Service Worker. Los avisos solo se intentarán mientras la pestaña esté abierta.");
     } catch {
       setNotice("El Service Worker no pudo registrarse; se intentará mostrar avisos mientras la pestaña esté abierta.");
     }
-    if ("serviceWorker" in navigator && "PushManager" in window && import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+    if ("serviceWorker" in navigator && "PushManager" in window && import.meta.env.VITE_VAPID_PUBLIC_KEY && serviceWorkerRegistration) {
       try {
-        const registration = await navigator.serviceWorker.ready;
-        const existing = await registration.pushManager.getSubscription();
-        const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
+        const existing = await serviceWorkerRegistration.pushManager.getSubscription();
+        const subscription = existing || await serviceWorkerRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
         await savePushSubscription(subscription);
+        pushReady = true;
       } catch {
-        setNotice("Las notificaciones nativas están activas. Para alarmas con RECORDATE cerrada aún falta un emisor Web Push en Supabase.");
+        pushSetupFailed = true;
       }
+    } else if ("serviceWorker" in navigator && "PushManager" in window) {
+      pushSetupFailed = true;
     }
-    setNotice("Notificaciones nativas activadas. El navegador y el teléfono deciden si aparecen como banner; con RECORDATE cerrada hace falta un emisor Web Push.");
+    if (pushReady) {
+      setNotice("Notificaciones y Web Push activados en este dispositivo. El sistema decide si muestra un banner y qué tono o vibración utiliza.");
+    } else if (pushSetupFailed) {
+      setNotice("El permiso local quedó activo, pero no se pudo registrar Web Push para avisos con la página cerrada. Revisa permisos y vuelve a intentar.");
+    } else {
+      setNotice("Notificaciones locales activadas. Este navegador no admite Web Push en este dispositivo; las alertas requieren la página abierta.");
+    }
     return true;
   };
   useEffect(() => {
@@ -2278,7 +2289,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
               <span><b>Probar notificación</b><small>Comprueba los permisos de este dispositivo.</small></span>
               <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
             </div>
-            <p className="settings-hint">RECORDATE no puede forzar que una notificación cubra otras apps ni controlar su tono; eso depende de Android/iOS y del navegador. Para recibir alarmas con la página cerrada falta configurar un emisor Web Push seguro en Supabase.</p>
+            <p className="settings-hint">Web Push puede avisar con la página cerrada en dispositivos compatibles y suscritos. RECORDATE no puede forzar banners, sonido ni vibración: dependen del navegador y del sistema; en iPhone puede requerirse instalar la app en Inicio.</p>
           </section>
           <section className="settings-group">
             <div className="settings-group-heading"><Icons.Plug size={17} /><div><h3>Integraciones</h3><p>Conecta tus servicios de estudio.</p></div></div>

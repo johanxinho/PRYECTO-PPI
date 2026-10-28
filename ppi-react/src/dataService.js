@@ -42,7 +42,7 @@ const PROFILE_FULL_COLUMNS = [...PROFILE_SAFE_COLUMNS.split(","), "disabled_at"]
 const PROFILE_MIN_COLUMNS = "id,full_name,email,role,created_at";
 
 const taskColumns =
-  "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,source,external_id,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+  "id,user_id,assigned_by,title,description,subject,date,time,time_zone,priority,reminder,completed,source,external_id,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
 // Utility function to get profile columns based on detail level
 export function getProfileColumns(level = 'base') {
@@ -135,6 +135,14 @@ function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
 }
 
+function currentTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Bogota";
+  } catch {
+    return "America/Bogota";
+  }
+}
+
 // Single, secure profile fetch - includes status so accounts deactivated by staff are not trusted by the UI.
 async function readProfileById(id) {
   const { data, error } = await supabase
@@ -171,6 +179,7 @@ export function mapTask(task) {
     subject: task.subject,
     date: task.date,
     time: task.time,
+    timeZone: task.time_zone || "America/Bogota",
     priority: task.priority,
     reminder: task.reminder,
     completed: task.completed,
@@ -290,6 +299,7 @@ export async function createTask(task) {
       subject: task.subject.trim(),
       date: task.date,
       time: task.time,
+      time_zone: task.timeZone || currentTimeZone(),
       priority: task.priority,
       reminder: task.reminder,
       completed: false,
@@ -312,6 +322,7 @@ export async function updateTask(task) {
       subject: task.subject.trim(),
       date: task.date,
       time: task.time,
+      time_zone: task.timeZone || currentTimeZone(),
       priority: task.priority,
       reminder: task.reminder,
       completed: task.completed,

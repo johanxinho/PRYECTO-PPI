@@ -11,6 +11,7 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
     priority: task?.priority || "Media",
     reminder: task?.reminder || "30 minutos antes",
     completed: task?.completed || false,
+    timeZone: task?.timeZone || deviceTimeZone(),
   });
 
   const reminderOptions = [
@@ -158,4 +159,12 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
 function localDate(date = new Date()) {
   const d = date instanceof Date ? date : new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function deviceTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Bogota";
+  } catch {
+    return "America/Bogota";
+  }
 }
