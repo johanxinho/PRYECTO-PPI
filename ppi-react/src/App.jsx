@@ -13,7 +13,7 @@ import { MorphingText } from "./components/ui/morphing-text";
 import { DiaTextReveal } from "./components/ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
-import { currentPath, pushRoute } from "./paths";
+import { currentPath, pushRoute, resolveCurrentRoute } from "./paths";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, startAlarm, unlockAlarmAudio, normalizeAlarmVolume } from "./services/alarmService";
 import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
 import { enqueueAlarmTasks, removeAlarmTask } from "./services/alarmQueue";
@@ -635,8 +635,9 @@ function App() {
     const privatePaths = Object.keys(routeViews);
     const handleRoute = () => {
       const path = currentPath();
-      if (privatePaths.includes(path)) {
-        setView(routeViews[path]);
+      const routedPath = resolveCurrentRoute(privatePaths);
+      if (privatePaths.includes(routedPath)) {
+        setView(routeViews[routedPath]);
         setScreen(session ? "app" : "auth");
       }
       if (path === "/login" && session) setScreen("app");

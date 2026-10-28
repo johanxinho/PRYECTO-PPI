@@ -1,6 +1,16 @@
 /* global clients */
-const fallbackTarget = () => new URL("dashboard", self.registration.scope).href;
+const fallbackTarget = () => new URL("?view=%2Fdashboard", self.registration.scope).href;
 const alarmVibration = [500, 180, 500, 180, 900];
+
+function notificationTarget(data = {}) {
+  const scope = new URL(self.registration.scope);
+  const requested = data.taskId ? "?view=%2Ftareas" : data.url || fallbackTarget();
+  const target = new URL(requested, scope);
+  if (target.origin !== scope.origin || !target.pathname.startsWith(scope.pathname)) {
+    return fallbackTarget();
+  }
+  return target.href;
+}
 
 self.addEventListener("push", (event) => {
   let data;
@@ -26,7 +36,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   const notification = event.notification;
-  const target = notification?.data?.url || fallbackTarget();
+  const target = notificationTarget(notification?.data || {});
   notification?.close();
   event.waitUntil((async () => {
     const windows = await clients.matchAll({ type: "window", includeUncontrolled: true });

@@ -36,7 +36,8 @@ export async function showBrowserNotification({
 } = {}) {
   if (!canUseBrowserNotifications() || Notification.permission !== "granted") return false;
   try {
-    const targetUrl = new URL(assetUrl(taskId ? "/tareas" : "/dashboard"), window.location.origin).href;
+    const requestedView = encodeURIComponent(taskId ? "/tareas" : "/dashboard");
+    const targetUrl = new URL(assetUrl(`/?view=${requestedView}`), window.location.origin).href;
     let registration = null;
     try {
       registration = await navigator.serviceWorker?.ready;
@@ -71,6 +72,7 @@ export async function showBrowserNotification({
     });
     notification.onclick = () => {
       window.focus();
+      window.location.assign(targetUrl);
       notification.close();
     };
     return true;

@@ -10,6 +10,13 @@ export function currentPath() {
   return stripped.startsWith("/") ? stripped : `/${stripped}`;
 }
 
+export function resolveCurrentRoute(knownRoutes) {
+  const path = currentPath();
+  if (knownRoutes.includes(path)) return path;
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  return knownRoutes.includes(requestedView) ? requestedView : path;
+}
+
 export function pushRoute(route) {
   const next = `${appBase}${route}`;
   if (`${window.location.pathname}${window.location.search}` !== next) {
