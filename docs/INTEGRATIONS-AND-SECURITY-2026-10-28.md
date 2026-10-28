@@ -70,7 +70,7 @@ La versión publicada en GitHub Pages tras el commit `e06a9c3` contiene un Clien
 Verificación local y de CI del commit `e06a9c3`: lint correcto, `npm test -- --run` correcto (**5 archivos / 32 pruebas**), build correcto y `git diff --check` limpio. El workflow de GitHub Pages para `e06a9c3` terminó exitosamente; las pruebas simulan Web Audio y no sustituyen una prueba acústica en cada modelo de teléfono o configuración de volumen del sistema.
 
 
-Verificación local actual: **8 archivos de prueba y 46 pruebas aprobadas**, lint y build correctos; `npm audit` y `npm audit --omit=dev` reportan cero vulnerabilidades. Deno `check`, `node --check public/sw.js` y una prueba de inicialización de `web-push` en su runtime también pasaron. El chequeo global opcional `npm run format:check` sigue marcando 53 archivos del repositorio; no se reformateó toda la base para evitar un diff masivo. La versión de producción usa `VITE_BASE=/PRYECTO-PPI/`.
+Verificación local actual: **9 archivos de prueba y 48 pruebas aprobadas**, lint y build correctos; `npm audit` y `npm audit --omit=dev` reportan cero vulnerabilidades. Deno `check`, `node --check public/sw.js` y una prueba de inicialización de `web-push` en su runtime también pasaron. El chequeo global opcional `npm run format:check` sigue marcando 53 archivos del repositorio; no se reformateó toda la base para evitar un diff masivo. La versión de producción usa `VITE_BASE=/PRYECTO-PPI/`.
 
 ## Hallazgos de seguimiento de roles/RLS — corrección aplicada en producción
 
@@ -104,3 +104,17 @@ La prueba HTTP en producción confirmó que la raíz y `/?view=%2Ftareas` respon
 En Supabase se comprobó que `recordate-send-push-every-minute` está activo cada minuto y que sus tres ejecuciones más recientes terminaron `succeeded`. La prueba autenticada `dry_run` respondió HTTP 200 con `sent: 0`, `failed: 0`, `expired: 0` y `skipped: 0`; no envió notificaciones. El recuento agregado registró cero suscripciones Push y cero perfiles activos con opt-in al momento de la auditoría. Por lo tanto, el backend está listo, pero la entrega real a un teléfono no se puede probar hasta que un usuario active **Configuración → Notificaciones del navegador** y autorice el permiso en un dispositivo/navegador compatible. En iPhone/iPad debe instalarse primero la PWA desde la pantalla de inicio. El sistema operativo decide cómo presenta cada aviso y la web no puede forzar que siempre quede por encima de otras aplicaciones.
 
 La tabla `push_delivery_log` quedó con RLS habilitado: `anon` y `authenticated` no tienen `SELECT`, mientras `service_role` sí. El RPC `find_profile_by_email(text)` quedó ejecutable solo por `authenticated` y validado contra cuentas activas. No se expusieron secretos VAPID ni la clave del scheduler en el repositorio; la clave pública de VAPID es la única incluida en el build.
+
+
+## Correcciones de consola reportadas — 2026-10-28
+
+Se añadió `mobile-web-app-capable=yes` y se conservó `apple-mobile-web-app-capable=yes`, de modo que Chromium deja de advertir por la etiqueta obsoleta sin perder compatibilidad de instalación en iOS. El HTML público actualizado referencia `index-BHGpdmZd.css`, mientras que la consola del navegador solicitaba el hash anterior `index-BOrMBj_F.css`: el post-build ahora publica un alias compatible con ese hash, apuntando al mismo contenido de la hoja actual; el workflow de Pages también conserva archivos existentes de `assets/` para que una página antigua aún cacheada no provoque 404 después de próximas publicaciones.
+
+El selector de idioma cargaba Google Translate al montar la página, aunque el usuario permaneciera en español. Ahora carga el script externo solo cuando se solicita inglés. `ERR_BLOCKED_BY_CLIENT` significa que el navegador o una extensión/filtro bloqueó esa petición; no se puede eludir desde la app. Si se desea usar el cambio a inglés, hay que permitir Google Translate para el sitio; el resto de la app no depende de ese servicio.
+
+El endpoint de salud de Supabase Auth respondió HTTP 200 en 0,17 s desde el entorno de auditoría con la clave pública de producción, y el endpoint REST también respondió a la prueba de conectividad. El `ERR_CONNECTION_TIMED_OUT` observado en el navegador no se reprodujo aquí y apunta a un corte transitorio o a la red/filtro del dispositivo. No se cambió la configuración de Supabase; si persiste, probar otra red y revisar VPN, firewall o bloqueadores del navegador.
+
+Validación local: lint correcto, **8 archivos / 46 pruebas aprobadas**, build correcto; se comprobó que el CSS de compatibilidad es byte a byte igual al CSS generado, que `404.html` existe y que ambos metadatos PWA están presentes en el HTML compilado. El chequeo HTTP público se completa tras el siguiente despliegue.
+
+
+Actualización final de pruebas: se añadieron dos pruebas de regresión para el selector de idioma (no cargar Google Translate en español y revertir a español si el navegador lo bloquea). El total vigente es **9 archivos / 48 pruebas aprobadas**; esta cifra sustituye el primer pase local de 8 archivos / 46 pruebas indicado en la sección de correcciones.

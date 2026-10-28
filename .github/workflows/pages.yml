@@ -43,5 +43,6 @@ jobs: # Lista de trabajos.
       - uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0, Node 24.
         with: # Opciones del action de Pages.
           github_token: ${{ secrets.GITHUB_TOKEN }} # Token del workflow para hacer push.
+          keep_files: true # Evita 404 de bundles hasheados solicitados por HTML aún cacheado.
           publish_dir: ppi-react/dist # Carpeta ya construida que se vuelve el sitio.
           force_orphan: true # Commit huérfano: la rama gh-pages solo guarda el sitio, no el historial de fuente.
