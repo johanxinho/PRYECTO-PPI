@@ -15,7 +15,7 @@ import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
 import { currentPath, pushRoute } from "./paths";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, normalizeAlarmVolume } from "./services/alarmService";
-import { registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
+import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
 import GoogleClassroomPanel from "./components/GoogleClassroomPanel";
 import {
   createTask,
@@ -55,18 +55,12 @@ import {
 import "./recordate.css";
 
 /* Rutas y etiquetas del menú del panel autenticado. */
-const navItems = [
-  "Inicio",
-  "Mis tareas",
-  "Calendario",
-  "Recordatorios",
-  "Prioridades",
-  "Modo enfoque",
-  "Compartir agendas",
-  "Mensajes",
-  "Google Classroom",
+const navGroups = [
+  { label: "Agenda", items: [["Inicio", Icons.House], ["Mis tareas", Icons.ListTodo], ["Calendario", Icons.CalendarDays]] },
+  { label: "Seguimiento", items: [["Recordatorios", Icons.Bell], ["Prioridades", Icons.Flag], ["Modo enfoque", Icons.Focus]] },
+  { label: "Conecta", items: [["Compartir agendas", Icons.Share2], ["Mensajes", Icons.MessageCircle], ["Google Classroom", Icons.BookOpen]] },
 ];
-const navIcons = [Icons.House, Icons.ListTodo, Icons.CalendarDays, Icons.Bell, Icons.Flag, Icons.Focus, Icons.Share2, Icons.MessageCircle, Icons.BookOpen];
+const mobilePrimaryViews = ["Inicio", "Mis tareas", "Calendario", "Mensajes"];
 const routeViews = {
   "/dashboard": "Inicio",
   "/tareas": "Mis tareas",
@@ -536,11 +530,26 @@ function App() {
       setNotice("Las notificaciones del sistema no están disponibles en la demostración local.");
       return false;
     }
+    if (!canUseBrowserNotifications()) {
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      setNotice(isIos
+        ? "En iPhone/iPad, agrega RECORDATE a la pantalla de inicio y abre esa app para habilitar notificaciones."
+        : "Este navegador no admite notificaciones nativas. Prueba Safari, Chrome o Edge en una conexión HTTPS.");
+      return false;
+    }
+    if (Notification.permission === "denied") {
+      setNotice("Las notificaciones están bloqueadas para RECORDATE. Actívalas en los ajustes del navegador y vuelve a probar.");
+      return false;
+    }
     if (!(await requestBrowserNotificationPermission())) {
       setNotice("El navegador no concedió permiso para mostrar notificaciones.");
       return false;
     }
-    await registerRecordateServiceWorker();
+    try {
+      await registerRecordateServiceWorker();
+    } catch {
+      setNotice("El Service Worker no pudo registrarse; se intentará mostrar avisos mientras la pestaña esté abierta.");
+    }
     if ("serviceWorker" in navigator && "PushManager" in window && import.meta.env.VITE_VAPID_PUBLIC_KEY) {
       try {
         const registration = await navigator.serviceWorker.ready;
@@ -829,11 +838,12 @@ function App() {
   };
   const testBrowserNotification = async () => {
     if (!(await enableBrowserNotifications())) return;
-    await showBrowserNotification({
+    const shown = await showBrowserNotification({
       title: "Notificación de prueba",
       body: "RECORDATE puede avisarte aunque estés en otra pestaña del navegador.",
       tag: "recordate-test-notification",
     });
+    if (!shown) setNotice("No se pudo mostrar el aviso. Revisa los permisos de notificación del navegador y del sistema.");
   };
   const importClassroomTask = async (assignment) => {
     if (demo) {
@@ -1174,6 +1184,7 @@ function App() {
           onEnableNotifications={enableBrowserNotifications}
           onTestNotification={testBrowserNotification}
           onPreviewAlarm={previewAlarm}
+          onOpenClassroom={() => navigate("Google Classroom")}
           onAvatarUpload={async (file) => {
             try {
               if (demo) {
@@ -1286,33 +1297,31 @@ function App() {
   };
   return frame(
     <main className="app-shell">
-      {/* Menú lateral (en móvil se abre como cajón). */}
+      {/* Menú lateral con grupos para que las funciones nuevas sean fáciles de encontrar. */}
       <aside className={`sidebar ${mobileNav ? "is-open" : ""}`}>
         <div className="sidebar-head">
           <Brand light size="sm" />
           <LanguageSwitcher lang={lang} onChange={setLang} />
           <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><Icons.X size={18} /></button>
         </div>
-        <p className="sidebar-caption">Tu agenda académica</p>
         <nav aria-label="Navegación principal">
-          {navItems.map((item, index) => {
-            const Icon = navIcons[index];
-            return (
-              <button className={view === item ? "nav-item active" : "nav-item"} key={item} onClick={() => navigate(item)}>
-                <span className="nav-symbol" aria-hidden="true"><Icon size={16} /></span>
-                {item}
-              </button>
-            );
-          })}
-          {admin && (
-            <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}>
-              <span className="nav-symbol"><Icons.Shield size={16} /></span> Administración
-            </button>
-          )}
-          {teacher && (
-            <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}>
-              <span className="nav-symbol"><Icons.Users size={16} /></span> Asignar tareas
-            </button>
+          {navGroups.map((group) => (
+            <div className="nav-group" key={group.label}>
+              <p className="sidebar-caption">{group.label}</p>
+              {group.items.map(([item, Icon]) => (
+                <button className={view === item ? "nav-item active" : "nav-item"} key={item} onClick={() => navigate(item)}>
+                  <span className="nav-symbol" aria-hidden="true"><Icon size={16} /></span>
+                  {item}
+                </button>
+              ))}
+            </div>
+          ))}
+          {(admin || teacher) && (
+            <div className="nav-group">
+              <p className="sidebar-caption">Gestión</p>
+              {admin && <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}><span className="nav-symbol"><Icons.Shield size={16} /></span> Administración</button>}
+              {teacher && <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}><span className="nav-symbol"><Icons.Users size={16} /></span> Asignar tareas</button>}
+            </div>
           )}
         </nav>
         <div className="sidebar-bottom">
@@ -1378,13 +1387,16 @@ function App() {
           ["Mis tareas", Icons.ListTodo],
           ["Calendario", Icons.CalendarDays],
           ["Mensajes", Icons.MessageCircle],
-          ["Perfil", Icons.User],
         ].map(([item, Icon]) => (
           <button key={item} className={view === item ? "active" : ""} onClick={() => navigate(item)}>
             <Icon size={18} />
             {item === "Mis tareas" ? "Tareas" : item}
           </button>
         ))}
+        <button className={!mobilePrimaryViews.includes(view) ? "active" : ""} aria-label="Abrir más secciones" aria-expanded={mobileNav} onClick={() => setMobileNav(true)}>
+          <Icons.MoreHorizontal size={18} />
+          Más
+        </button>
       </nav>
       {showForm && (
         <div className="modal-backdrop">
@@ -1966,7 +1978,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
   );
 }
 
-function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload, onOpenClassroom }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -2007,81 +2019,68 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
         </div>
       </div>
       {view === "Configuración" ? (
+        <>
+        <p className="settings-intro">Ajusta tus recordatorios y sonidos, controla los avisos del navegador y conecta tus herramientas de estudio.</p>
         <div className="settings-list">
-          <label className="settings-role">
-            <span>
-              <b>Rol en RECORDATE</b>
-              <small>Estudiante, padre, madre o trabajador. Profesor y administrador los asigna un administrador.</small>
-            </span>
-            <select
-              value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")}
-              onChange={(event) => onSettingsChange({ role: event.target.value })}
-              aria-label="Seleccionar rol"
-              disabled={isStaffRole(profile?.role, email)}
-            >
-              {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>
-              <b>Recordatorios automáticos</b>
-              <small>Recibe avisos antes de cada entrega.</small>
-            </span>
-            <input type="checkbox" checked={profile?.reminders_enabled ?? true} onChange={async (event) => { if (event.target.checked && "Notification" in window && Notification.permission === "default") await Notification.requestPermission(); onSettingsChange({ reminders_enabled: event.target.checked }); }} />
-          </label>
-          <label>
-            <span>
-              <b>Notificaciones del navegador</b>
-              <small>Recibe avisos del sistema aunque estés en otra pestaña o ventana.</small>
-            </span>
-            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnableNotifications())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
-          </label>
-          <div className="settings-action-row">
-            <span>
-              <b>Probar notificación nativa</b>
-              <small>Comprueba que el navegador y el sistema tienen los avisos permitidos.</small>
-            </span>
-            <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
-          </div>
-          <label>
-            <span>
-              <b>Alarmas sonoras</b>
-              <small>Emite el sonido seleccionado mientras RECORDATE está abierto.</small>
-            </span>
-            <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
-          </label>
-          <div className="alarm-settings">
+          <section className="settings-group">
+            <div className="settings-group-heading"><Icons.UserRound size={17} /><div><h3>Cuenta y agenda</h3><p>Personaliza tu espacio de trabajo.</p></div></div>
             <label>
-              <span><b>Sonido de alarma</b><small>Presets locales, sin descargar audio de terceros.</small></span>
-              <select value={profile?.alarm_sound || DEFAULT_ALARM_SOUND} onChange={(event) => onSettingsChange({ alarm_sound: event.target.value })}>
-                {ALARM_SOUNDS.map((sound) => <option key={sound.value} value={sound.value}>{sound.label}</option>)}
+              <span><b>Rol en RECORDATE</b><small>Profesor y administrador los asigna un administrador.</small></span>
+              <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role, email) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label="Seleccionar rol" disabled={isStaffRole(profile?.role, email)}>
+                {(isStaffRole(profile?.role, email) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
             <label>
-              <span><b>Volumen</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME}
-                onChange={(event) => onSettingsChange({ alarm_volume: normalizeAlarmVolume(event.target.value) })}
-              />
+              <span><b>Mostrar tareas completadas</b><small>Conserva visible tu avance en la agenda.</small></span>
+              <input type="checkbox" checked={profile?.show_completed ?? true} onChange={(event) => onSettingsChange({ show_completed: event.target.checked })} />
             </label>
-            <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}>
-              Escuchar sonido seleccionado
-            </button>
-          </div>
-          <label>
-            <span>
-              <b>Mostrar tareas completadas</b>
-              <small>Conserva visible tu avance en la agenda.</small>
-            </span>
-            <input type="checkbox" checked={profile?.show_completed ?? true} onChange={(event) => onSettingsChange({ show_completed: event.target.checked })} />
-          </label>
+          </section>
+          <section className="settings-group">
+            <div className="settings-group-heading"><Icons.CalendarClock size={17} /><div><h3>Recordatorios</h3><p>Avisos antes de tus fechas de entrega.</p></div></div>
+            <label>
+              <span><b>Recordatorios automáticos</b><small>Activa las alertas de las tareas próximas.</small></span>
+              <input type="checkbox" checked={profile?.reminders_enabled ?? true} onChange={(event) => onSettingsChange({ reminders_enabled: event.target.checked })} />
+            </label>
+          </section>
+          <section className="settings-group">
+            <div className="settings-group-heading"><Icons.Volume2 size={17} /><div><h3>Alarmas</h3><p>Elige un tono y ajusta su volumen.</p></div></div>
+            <label>
+              <span><b>Alarmas sonoras</b><small>El sonido funciona mientras RECORDATE esté abierto.</small></span>
+              <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
+            </label>
+            <div className="alarm-settings">
+              <label>
+                <span><b>Sonido de alarma</b><small>Presets locales, sin descargar audio de terceros.</small></span>
+                <select value={profile?.alarm_sound || DEFAULT_ALARM_SOUND} onChange={(event) => onSettingsChange({ alarm_sound: event.target.value })}>{ALARM_SOUNDS.map((sound) => <option key={sound.value} value={sound.value}>{sound.label}</option>)}</select>
+              </label>
+              <label>
+                <span><b>Volumen</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
+                <input type="range" min="0" max="1" step="0.05" value={profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME} onChange={(event) => onSettingsChange({ alarm_volume: normalizeAlarmVolume(event.target.value) })} />
+              </label>
+              <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}><Icons.Play size={15} /> Escuchar sonido seleccionado</button>
+            </div>
+          </section>
+          <section className="settings-group">
+            <div className="settings-group-heading"><Icons.BellRing size={17} /><div><h3>Notificaciones</h3><p>El navegador y el sistema operativo controlan cómo aparecen.</p></div></div>
+            <label>
+              <span><b>Notificaciones del navegador</b><small>Recibe avisos del sistema con RECORDATE abierta o en segundo plano.</small></span>
+              <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnableNotifications())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
+            </label>
+            <div className="settings-action-row">
+              <span><b>Probar notificación</b><small>Comprueba los permisos de este dispositivo.</small></span>
+              <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
+            </div>
+          </section>
+          <section className="settings-group">
+            <div className="settings-group-heading"><Icons.Plug size={17} /><div><h3>Integraciones</h3><p>Conecta tus servicios de estudio.</p></div></div>
+            <div className="settings-action-row integration-action">
+              <span><b>Google Classroom</b><small>Consulta cursos e importa actividades con fecha límite.</small></span>
+              <button className="outline-button" type="button" onClick={onOpenClassroom}><Icons.BookOpen size={15} /> Abrir</button>
+            </div>
+            {!import.meta.env.VITE_GOOGLE_CLIENT_ID && <p className="settings-hint">Requiere configurar el Client ID web de Google para activar la conexión.</p>}
+          </section>
         </div>
+        </>
       ) : (
         <div className="profile-info">
           <span>Institución</span>

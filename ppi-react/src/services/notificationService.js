@@ -30,7 +30,12 @@ export async function showBrowserNotification({
   if (!canUseBrowserNotifications() || Notification.permission !== "granted") return false;
   try {
     const targetUrl = new URL(assetUrl(taskId ? "/tareas" : "/dashboard"), window.location.origin).href;
-    const registration = await navigator.serviceWorker?.ready;
+    let registration = null;
+    try {
+      registration = await navigator.serviceWorker?.ready;
+    } catch {
+      // Si el Service Worker no está disponible, intenta el aviso de la pestaña abierta.
+    }
     if (registration?.showNotification) {
       await registration.showNotification(title, {
         body,

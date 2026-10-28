@@ -708,12 +708,25 @@ html.translated-rtl body {
   flex-direction: column;
   width: var(--sidebar);
   height: 100svh;
+  height: 100dvh;
   padding: 22px 14px 16px;
+  padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   color: var(--ink-2);
   background: var(--dark);
   border-right: 1px solid var(--dark-line);
   backdrop-filter: blur(22px);
 }
+.sidebar nav {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.nav-group { display: grid; gap: 2px; }
 .sidebar-head {
   display: flex;
   align-items: center;
@@ -721,7 +734,7 @@ html.translated-rtl body {
   padding: 0 8px;
 }
 .sidebar-caption {
-  margin: 28px 12px 10px;
+  margin: 14px 12px 6px;
   color: var(--muted);
   font-size: 10px;
   letter-spacing: 0.16em;
@@ -1290,9 +1303,9 @@ html.translated-rtl body {
     display: flex;
     position: fixed;
     z-index: 20;
-    left: 12px;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left, 0px));
+    right: max(8px, env(safe-area-inset-right, 0px));
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     padding: 8px;
     border-radius: 22px;
     background: rgba(8, 11, 28, 0.86);
@@ -1335,6 +1348,18 @@ html.translated-rtl body {
   .calendar-day { min-height: 54px }
   .modal { padding: 16px; border-radius: 22px }
   .logo-plate { width: 84px; height: 84px }
+  .workspace-header { min-height: 68px; gap: 8px; padding: 10px 12px; }
+  .workspace-header > div:nth-child(2) { min-width: 0; flex: 1; }
+  .workspace-header > div:nth-child(2) .eyebrow { display: none; }
+  .workspace-header h1 { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 20px; }
+  .header-user { gap: 7px; }
+  .header-user .avatar, .header-user .avatar-image { width: 34px; height: 34px; }
+  .menu-toggle, .notification-button { width: 40px; height: 40px; flex: 0 0 auto; }
+  .bottom-nav { padding: 6px; border-radius: 18px; }
+  .bottom-nav button { min-width: 0; min-height: 48px; font-size: 9px; }
+  .content-area { width: calc(100% - 24px); padding-top: 20px; padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  .profile-card { align-items: flex-start; gap: 12px; padding: 14px; }
+  .profile-card > div:last-child { min-width: 0; overflow-wrap: anywhere; }
 }
 
 /* Roles, avatares, mensajes Recibidos/Enviados y agendas compartidas */
@@ -1733,6 +1758,49 @@ html.translated-rtl body {
   .classroom-item-actions { width: 100%; justify-content: flex-start; }
   .settings-action-row { grid-template-columns: 1fr; }
   .settings-action-row .outline-button { justify-self: start; }
+}
+
+/* Preferencias en tarjetas claras y fáciles de recorrer desde el teléfono. */
+.settings-intro { max-width: 680px; margin: -4px 0 18px; color: var(--muted); line-height: 1.55; }
+.settings-list {
+  gap: 12px;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.settings-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(11, 16, 38, 0.54);
+  box-shadow: 0 12px 30px rgba(5, 8, 24, 0.12);
+}
+.settings-group-heading { display: flex; align-items: flex-start; gap: 10px; padding: 15px 18px 9px; color: var(--lilac); }
+.settings-group-heading svg { flex: 0 0 auto; margin-top: 2px; }
+.settings-group-heading h3 { color: var(--ink); font-family: var(--font-ui); font-size: 14px; letter-spacing: 0; }
+.settings-group-heading p { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.settings-list .settings-group > label { padding: 13px 18px; }
+.settings-list .settings-group > label > span { align-self: center; display: grid; gap: 4px; }
+.settings-list .settings-group > label small { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.settings-list input[type="checkbox"] { width: 20px; height: 20px; align-self: center; accent-color: var(--lilac); }
+.settings-list .settings-group > label > select { max-width: 170px; align-self: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--ink); background: rgba(11,16,38,0.72); }
+.settings-group .alarm-settings { padding-top: 0; background: transparent; }
+.settings-group .alarm-settings label { grid-template-columns: 1fr minmax(120px, 180px); align-items: center; padding: 12px 0; }
+.settings-group .alarm-settings select, .settings-group .alarm-settings input[type="range"] { width: 100%; min-width: 0; }
+.settings-group .alarm-settings .text-button { min-height: 40px; }
+.settings-group .settings-action-row { border-bottom: 0; }
+.settings-group .integration-action { padding: 14px 18px 16px; }
+.settings-hint { margin: 0 18px 15px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+@media (max-width: 560px) {
+  .settings-list .settings-group > label { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 14px; }
+  .settings-group-heading { padding: 14px 14px 8px; }
+  .settings-group .alarm-settings { padding: 0 14px 12px; }
+  .settings-group .alarm-settings label { grid-template-columns: 1fr; }
+  .settings-group .alarm-settings select { max-width: none; }
+  .settings-group .integration-action { padding: 14px; }
+  .settings-hint { margin: 0 14px 14px; }
 }
 
 

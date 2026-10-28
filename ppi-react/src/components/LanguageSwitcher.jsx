@@ -23,11 +23,16 @@ function applyLanguage(lang) {
 function LanguageSwitcher({ lang = "es", onChange }) {
   useEffect(() => {
     window.googleTranslateElementInit = () => {
-      if (!window.google?.translate) return;
-      new window.google.translate.TranslateElement(
-        { pageLanguage: "es", includedLanguages: "es,en", autoDisplay: false },
-        "google_translate_element",
-      );
+      const TranslateElement = window.google?.translate?.TranslateElement;
+      if (typeof TranslateElement !== "function") return;
+      try {
+        new TranslateElement(
+          { pageLanguage: "es", includedLanguages: "es,en", autoDisplay: false },
+          "google_translate_element",
+        );
+      } catch {
+        // El selector propio sigue disponible aunque el widget remoto esté bloqueado.
+      }
     };
     if (!document.getElementById(SCRIPT_ID)) {
       const script = document.createElement("script");
@@ -69,4 +74,3 @@ function LanguageSwitcher({ lang = "es", onChange }) {
 }
 
 export default LanguageSwitcher;
-

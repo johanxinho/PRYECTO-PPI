@@ -46,3 +46,14 @@ npm run build
 ```
 
 Después de aplicar las migraciones, revisar que `profiles`, `tasks` y `ai_messages` incluyan las nuevas columnas. En Supabase se debe validar con usuarios de prueba: estudiante activo, profesor, administrador, usuario de otro perfil y cuenta dada de baja. Una cuenta dada de baja no debe poder consultar ni modificar datos aunque conserve un JWT anterior.
+
+
+## Revisión de usabilidad móvil — 2026-10-28
+
+La barra inferior mantiene Inicio, Tareas, Calendario y Mensajes; **Más** abre el cajón organizado en Agenda, Seguimiento, Conecta y, para personal autorizado, Gestión. Perfil y Configuración quedan al pie del cajón. Configuración presenta tarjetas independientes para cuenta, recordatorios, alarmas, notificaciones e integraciones, con acceso directo a Classroom. El cajón tiene desplazamiento propio y respeta las zonas seguras de iPhone. En Chromium con viewport 390 × 844 se verificó el flujo de demo, navegación a Configuración, presencia de los cinco grupos y ausencia de desbordamiento horizontal.
+
+En iPhone/iPad, las notificaciones web requieren agregar RECORDATE a la pantalla de inicio y autorizar los avisos en el sistema. Como en otros navegadores, el SO controla su posición y no se garantiza que queden literalmente por encima de todas las ventanas.
+
+## Estado de Google Classroom en producción
+
+El bundle público verificado el 2026-10-28 no contiene un Client ID OAuth de Google y `.env.production` no lo define. La pantalla ahora informa el requisito y da acceso directo desde Configuración, pero la conexión real a Classroom queda bloqueada hasta crear/configurar el Client ID web, activar Classroom API, configurar el consentimiento y autorizar `https://johanxinho.github.io` como origen en Google Cloud. El Client ID no es secreto; nunca debe exponerse un client secret en el frontend.
