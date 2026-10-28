@@ -35,6 +35,8 @@ function buildGradient(pos: number, colors: string[], textColor: string) {
 }
 
 function measureWidths(el: HTMLElement, texts: string[]) {
+  const parent = el.parentElement;
+  if (!parent) return [];
   const ghost = el.cloneNode() as HTMLElement;
   Object.assign(ghost.style, {
     position: "absolute",
@@ -43,7 +45,7 @@ function measureWidths(el: HTMLElement, texts: string[]) {
     width: "auto",
     whiteSpace: "nowrap",
   });
-  el.parentElement!.appendChild(ghost);
+  parent.appendChild(ghost);
   const widths = texts.map((t) => {
     ghost.textContent = t;
     return ghost.getBoundingClientRect().width;
@@ -86,6 +88,16 @@ export function DiaTextReveal({
   const texts = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
   const isMulti = texts.length > 1;
   const prefersReducedMotion = useReducedMotion();
+  const deviceMemory = typeof navigator === "undefined" ? 0 : Number(navigator.deviceMemory) || 0;
+  const cpuCores =
+    typeof navigator === "undefined" ? 0 : Number(navigator.hardwareConcurrency) || 0;
+  const saveData = typeof navigator !== "undefined" && Boolean(navigator.connection?.saveData);
+  const suppressMotion = Boolean(
+    prefersReducedMotion ||
+    saveData ||
+    (deviceMemory > 0 && deviceMemory <= 2) ||
+    (cpuCores > 0 && cpuCores <= 2)
+  );
   const spanRef = useRef<HTMLSpanElement>(null);
   const optsRef = useRef({ colors, textColor, duration, delay, repeat, repeatDelay, texts });
   optsRef.current = { colors, textColor, duration, delay, repeat, repeatDelay, texts };
@@ -98,7 +110,7 @@ export function DiaTextReveal({
   const [measuredWidths, setMeasuredWidths] = useState<number[]>([]);
   const sweepPos = useMotionValue(SWEEP_START);
   const backgroundImage = useTransform(sweepPos, (pos) =>
-    buildGradient(pos, optsRef.current.colors, optsRef.current.textColor),
+    buildGradient(pos, optsRef.current.colors, optsRef.current.textColor)
   );
   const isInView = useInView(spanRef, { once, amount: 0.1 });
 
@@ -129,7 +141,7 @@ export function DiaTextReveal({
   };
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (suppressMotion) {
       sweepPos.set(SWEEP_END);
       return undefined;
     }
@@ -141,7 +153,7 @@ export function DiaTextReveal({
       stopRef.current?.();
       clearTimeout(timerRef.current);
     };
-  }, [isInView, startOnView, once, prefersReducedMotion, sweepPos]);
+  }, [isInView, startOnView, once, suppressMotion, sweepPos]);
 
   const fixedW =
     isMulti && fixedWidth && measuredWidths.length > 0 ? Math.max(...measuredWidths) : undefined;

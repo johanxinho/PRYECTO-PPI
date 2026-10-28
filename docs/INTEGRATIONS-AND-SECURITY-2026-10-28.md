@@ -121,3 +121,14 @@ Actualización final de pruebas: se añadieron dos pruebas de regresión para el
 
 
 Smoke test público posterior al commit `c9c2622`: el workflow `40755121484` y el despliegue estático `40755182512` finalizaron `success`. La raíz devuelve HTTP 200 e incluye ambos metadatos PWA; el CSS actual y el alias antiguo `index-BOrMBj_F.css` responden HTTP 200 como `text/css` (42.727 bytes y contenido idéntico). La ruta de notificación `/?view=%2Ftareas` responde 200. `/dashboard` conserva la respuesta HTTP 404 propia del fallback estático de GitHub Pages, pero entrega el shell de RECORDATE con el enlace al CSS actual y monta la app. La hoja antigua que provocaba el error dejó de devolver 404.
+
+
+## Rendimiento de animaciones y dispositivos móviles — 2026-10-28
+
+Se redujo el coste de la portada y de la interfaz en equipos limitados. `MorphingText` ya no aplica blur/SVG filters ni actualiza estilos cada frame: rota el texto con temporizadores y una entrada basada en `opacity`/`transform`; pausa cuando la pestaña está oculta y muestra una frase estable con `prefers-reduced-motion`. El barrido de `DiaTextReveal` se omite en modo de movimiento reducido, ahorro de datos o hardware muy limitado.
+
+El renderer ASCII limita el backing store por presupuesto de píxeles, sube el tamaño de celda según capacidad, reduce la frecuencia en táctiles, queda estático en equipos con pocos recursos, cancela el RAF real cuando sale del viewport y atiende cambios de visibilidad/preferencia. También evita remuestrear si el tamaño no cambió y descarta eventos de carga tardíos al desmontar.
+
+WebGL deja de ejecutarse en login y paneles (conservan el fondo CSS estático), elimina `preserveDrawingBuffer`, limita resolución/frecuencia en pantallas táctiles, evita inicializarse en modo ahorro de datos o hardware muy limitado y muestra el fallback CSS ante ausencia o pérdida del contexto. Se redujeron además los desenfoques de tarjetas en pantallas táctiles/pequeñas.
+
+Validación: Prettier para los componentes modificados, ESLint, **51 pruebas en 10 archivos** y build Vite completados correctamente. Se añadieron tres pruebas de regresión para rotación y cambios en movimiento reducido. No se dispone de mediciones de FPS en los dispositivos físicos del usuario; las mejoras se basan en limitar trabajo de CPU/GPU y deben confirmarse visualmente en el teléfono/portátil objetivo.

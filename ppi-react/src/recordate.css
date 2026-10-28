@@ -175,6 +175,7 @@ html.translated-rtl body {
   pointer-events: none;
 }
 .webgl-bg { z-index: 1; display: block }
+.webgl-stack.no-webgl .webgl-bg { visibility: hidden }
 .webgl-fallback {
   z-index: 0;
   background:
@@ -452,25 +453,19 @@ html.translated-rtl body {
   font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 1;
-  filter: url(#threshold) blur(0.6px);
   text-align: left;
   overflow: hidden;
-  contain: paint;
+  contain: layout paint;
 }
 .morphing-line {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
   display: block;
-  width: 100%;
+  width: max-content;
   white-space: nowrap;
+  animation: morph-word-in 420ms var(--ease) both;
 }
-.morphing-filters {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  pointer-events: none;
+@keyframes morph-word-in {
+  from { opacity: 0; transform: translate3d(0, 0.12em, 0) }
+  to { opacity: 1; transform: translate3d(0, 0, 0) }
 }
 .dia-text-reveal { display: inline; }
 
@@ -2013,4 +2008,36 @@ html.translated-rtl body {
 @media (max-width: 720px) {
   .directory-card { grid-template-columns: auto 1fr; }
   .directory-actions { grid-column: 1 / -1; }
+}
+
+
+/* Calidad de composición más ligera para móviles y pantallas táctiles. */
+@media (pointer: coarse), (max-width: 700px) {
+  .glass-card,
+  .panel-card,
+  .stat-card,
+  .task-card,
+  .share-form,
+  .chat-window,
+  .profile-card,
+  .profile-info,
+  .day-agenda,
+  .calendar-days,
+  .modal,
+  .notification-panel,
+  .auth-panel-card,
+  .benefit-band,
+  .auth-panel,
+  .sidebar,
+  .workspace-header,
+  .feature-item,
+  .faq-grid > div {
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .bottom-nav {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
