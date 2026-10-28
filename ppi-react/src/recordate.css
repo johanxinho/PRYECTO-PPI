@@ -1695,6 +1695,46 @@ html.translated-rtl body {
   }
 }
 
+/* Google Classroom y preferencias de audio/notificaciones */
+.classroom-view { max-width: 860px; }
+.classroom-setup {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(61, 70, 232, 0.14);
+  color: var(--ink-2);
+}
+.classroom-setup > svg { color: var(--gold); flex: 0 0 auto; }
+.classroom-setup p, .classroom-note { color: var(--muted); line-height: 1.55; margin-top: 6px; font-size: 13px; }
+.classroom-setup code { color: var(--blush); }
+.classroom-actions { display: flex; align-items: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+.classroom-summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
+.classroom-summary span { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; }
+.classroom-summary b { color: var(--ink); }
+.classroom-list { display: grid; gap: 10px; }
+.classroom-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-strong); }
+.classroom-item h3 { margin-top: 5px; font-family: var(--font-ui); font-size: 16px; letter-spacing: -0.02em; }
+.classroom-item p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.classroom-item-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.settings-action-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.settings-action-row > span, .alarm-settings label > span { display: grid; gap: 5px; }
+.settings-action-row small, .alarm-settings small { color: var(--muted); font-size: 11px; }
+.alarm-settings { display: grid; gap: 0; padding: 8px 18px 12px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.03); }
+.alarm-settings label { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.alarm-settings select { min-width: 150px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; color: var(--ink); background: rgba(11,16,38,0.55); }
+.alarm-settings input[type="range"] { accent-color: var(--lilac); min-width: 150px; }
+.alarm-settings .text-button { justify-self: start; margin-top: 6px; }
+@media (max-width: 560px) {
+  .classroom-item { align-items: flex-start; flex-direction: column; }
+  .classroom-item-actions { width: 100%; justify-content: flex-start; }
+  .settings-action-row { grid-template-columns: 1fr; }
+  .settings-action-row .outline-button { justify-self: start; }
+}
+
 
 /* Historial y fotos del asistente IA */
 .ai-chat-history {

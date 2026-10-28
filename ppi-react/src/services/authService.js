@@ -11,7 +11,7 @@ const missingBackend = () => ({
 });
 
 /** Traduce errores comunes de Auth a español para quien consuma el servicio. */
-function translateAuthError(error) {
+export function translateAuthError(error) {
   const details = `${error?.message || ''} ${error?.code || ''}`.toLowerCase();
   if (!details.trim()) return 'Ocurrió un error de autenticación.';
   if (details.includes('already registered') || details.includes('user_already_exists')) {
@@ -29,13 +29,14 @@ function translateAuthError(error) {
   if (details.includes('network') || details.includes('fetch')) {
     return 'No fue posible conectar con el servicio.';
   }
-  // Si el mensaje ya viene en español o es corto, reutilízalo; si no, genérico.
+  // Conserva mensajes ya localizados; no expongas detalles arbitrarios de proveedores externos.
   const raw = error?.message || '';
-  if (/[áéíóúñ¿¡]/i.test(raw) || raw.length < 80) return raw;
+  if (/[áéíóúñ¿¡]/i.test(raw) || /\b(el|la|los|las|usuario|correo|contraseña|ya|existe|debe|puede)\b/i.test(raw)) return raw;
   return 'No fue posible completar la operación de autenticación.';
 }
 
 export const authService = {
+  translateAuthError,
   async signup(email, password, fullName, role = 'estudiante') {
     if (!supabase) return missingBackend();
     try {

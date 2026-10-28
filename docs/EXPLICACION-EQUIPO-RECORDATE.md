@@ -298,8 +298,8 @@ Estado `focusTask`. La vista `/enfoque` o el botón de la tarjeta deja **una sol
 ### 6.5 Notificaciones y alarmas
 
 1. **Bandeja interna** (`notifications`): `listNotifications`, marcar una/todas leídas; Realtime INSERT.
-2. **Alarmas locales** (intervalo 15 s en `App`): si `reminders_enabled` y llega la ventana del `reminder` de la tarea → modal `alarmTask`, tono Web Audio si `alarms_enabled`, y `Notification` del navegador si `browser_notifications_enabled`.
-3. **Web Push**: `enablePushNotifications` registra `sw.js`, suscribe con VAPID y guarda en `push_subscriptions`. Sin servidor que envíe el push, no hay avisos con la pestaña cerrada.
+2. **Alarmas locales** (intervalo 15 s en `App`): si `reminders_enabled` y llega la ventana del `reminder` de la tarea → modal `alarmTask`, preset Web Audio (`alarm_sound` + `alarm_volume`) si `alarms_enabled`, y notificación persistente del Service Worker si `browser_notifications_enabled`.
+3. **Web Push opcional**: `enableBrowserNotifications` registra `sw.js`, suscribe con VAPID y guarda en `push_subscriptions`. Sin un emisor backend que use la clave VAPID privada, no hay avisos con la pestaña cerrada; las notificaciones nativas de la página abierta sí funcionan sin VAPID.
 
 ### 6.6 Mensajes (Recibidos / Enviados)
 
@@ -564,11 +564,11 @@ AiChat.jsx
   → supabase.functions.invoke("ai-chat")   // JWT del usuario
   → Edge Function ai-chat
        1. auth.getUser()
-       2. rate limit en ai_request_usage (40 / hora / usuario)
+       2. rate limit atómico en `consume_ai_request` (30 / hora / usuario)
        3. crea o reusa ai_conversations
-       4. sube fotos al bucket privado ai-chat/{uid}/{conversationId}/…
-       5. llama Gemini 3.6 Flash (secreto GEMINI_API_KEY)
-       6. inserta ai_messages (user + assistant, image_urls = paths)
+       4. valida tipo/tamaño y envía las fotos como `inlineData`
+       5. llama Gemini 2.5 Flash (secreto GEMINI_API_KEY)
+       6. inserta ai_messages (user + assistant)
   → UI muestra reply; historial se lista desde ai_conversations
 ```
 
@@ -584,10 +584,10 @@ Request (POST, `verify_jwt: true`):
 }
 ```
 
-- Máx. 2 imágenes; jpg/png/webp/gif; 4 MB cada una.
+- Máx. 2 imágenes; jpg/png/webp/gif; 6 MB de base64 cada una y 12 MB por request.
 - Mensaje máx. 4000 caracteres. Mensaje vacío permitido si hay foto.
 
-Response: `{ reply, conversation_id, model, image_urls }`. `image_urls` son **paths** del bucket. El cliente firma con `supabase.storage.from("ai-chat").createSignedUrl(path, 3600)`.
+Response: `{ reply, conversation_id, model }`. Las imágenes se procesan en la llamada y no se guardan como archivos del usuario.
 
 ### Tablas
 
@@ -595,7 +595,7 @@ Response: `{ reply, conversation_id, model, image_urls }`. `image_urls` son **pa
 | --- | --- | --- |
 | `ai_conversations` | Un hilo por usuario (`title`, `updated_at`) | solo `user_id = auth.uid()` |
 | `ai_messages` | `role` user/assistant, `content`, `image_urls` jsonb | insert/select propios |
-| `ai_request_usage` | contador de ventana horaria | select propio; escribe la función con service role |
+| `ai_request_usage` | contador de ventana horaria | lo actualiza `consume_ai_request()` de forma atómica |
 
 ### Secretos
 
@@ -606,7 +606,7 @@ Dashboard → Edge Function Secrets del proyecto `oavqxmsyhmtnnwkyiycr`: `GEMINI
 1. Cuenta real (no demo).
 2. Abrir el robot, mandar texto, adjuntar foto, reabrir un chat.
 3. `missing_gemini_key` = falta el secreto.
-4. `rate_limit` = 40 mensajes en la hora.
+4. `rate_limit` = 30 mensajes en la hora.
 
 
 ---

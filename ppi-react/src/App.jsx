@@ -13,7 +13,10 @@ import { MorphingText } from "./components/ui/morphing-text";
 import { DiaTextReveal } from "./components/ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
-import { currentPath, pushRoute, assetUrl } from "./paths";
+import { currentPath, pushRoute } from "./paths";
+import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, normalizeAlarmVolume } from "./services/alarmService";
+import { registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
+import GoogleClassroomPanel from "./components/GoogleClassroomPanel";
 import {
   createTask,
   deleteTask,
@@ -48,7 +51,6 @@ import {
   setUserStatus,
   setUserRole,
   assignTaskToUser,
-  isPrimaryAdminEmail,
 } from "./dataService";
 import "./recordate.css";
 
@@ -62,8 +64,9 @@ const navItems = [
   "Modo enfoque",
   "Compartir agendas",
   "Mensajes",
+  "Google Classroom",
 ];
-const navIcons = [Icons.House, Icons.ListTodo, Icons.CalendarDays, Icons.Bell, Icons.Flag, Icons.Focus, Icons.Share2, Icons.MessageCircle];
+const navIcons = [Icons.House, Icons.ListTodo, Icons.CalendarDays, Icons.Bell, Icons.Flag, Icons.Focus, Icons.Share2, Icons.MessageCircle, Icons.BookOpen];
 const routeViews = {
   "/dashboard": "Inicio",
   "/tareas": "Mis tareas",
@@ -73,6 +76,7 @@ const routeViews = {
   "/enfoque": "Modo enfoque",
   "/compartir": "Compartir agendas",
   "/mensajes": "Mensajes",
+  "/classroom": "Google Classroom",
   "/administracion": "Administración",
   "/asignar": "Asignar tareas",
   "/perfil": "Perfil",
@@ -87,6 +91,7 @@ const viewRoutes = {
   "Modo enfoque": "/enfoque",
   "Compartir agendas": "/compartir",
   Mensajes: "/mensajes",
+  "Google Classroom": "/classroom",
   Administración: "/administracion",
   "Asignar tareas": "/asignar",
   Perfil: "/perfil",
@@ -340,6 +345,10 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
       setError("Completa título, materia, fecha y hora para guardar la actividad.");
       return;
     }
+    if (form.title.trim().length > 120 || form.subject.trim().length > 60 || form.description.trim().length > 1000) {
+      setError("Título, materia o descripción superan el límite permitido.");
+      return;
+    }
     setSaving(true);
     onSave({
       ...form,
@@ -358,11 +367,11 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
       <div className="form-grid">
         <label>
           Título
-          <input autoFocus value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
+          <input autoFocus maxLength={120} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
         </label>
         <label>
           Materia
-          <input value={form.subject} onChange={(event) => update("subject", event.target.value)} placeholder="Ej. Matemáticas" />
+          <input maxLength={60} value={form.subject} onChange={(event) => update("subject", event.target.value)} placeholder="Ej. Matemáticas" />
         </label>
         <label>
           Fecha
@@ -389,7 +398,7 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
       </div>
       <label>
         Descripción
-        <textarea value={form.description} onChange={(event) => update("description", event.target.value)} rows="3" placeholder="Agrega detalles para recordar qué debes hacer..." />
+        <textarea maxLength={1000} value={form.description} onChange={(event) => update("description", event.target.value)} rows="3" placeholder="Agrega detalles para recordar qué debes hacer..." />
       </label>
       <label>
         Adjuntar imagen
@@ -448,6 +457,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
           <div className="task-heading-badges">
             {!canManage && <span className="shared-badge">Compartida</span>}
             {task.assignedBy && <span className="shared-badge">Asignada</span>}
+            {task.source === "google_classroom" && <span className="shared-badge">Classroom</span>}
             <PriorityBadge priority={task.priority} />
           </div>
         </div>
@@ -521,21 +531,26 @@ function App() {
   const sessionEmail = session?.user?.email || profile?.email;
   const admin = isAdminRole(profile?.role, sessionEmail);
   const teacher = profile?.role === "profesor" || admin;
-  const enablePushNotifications = async () => {
+  const enableBrowserNotifications = async () => {
     if (demo) {
-      setNotice("Las notificaciones push no están disponibles en la demostración local.");
+      setNotice("Las notificaciones del sistema no están disponibles en la demostración local.");
       return false;
     }
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !import.meta.env.VITE_VAPID_PUBLIC_KEY) {
-      setNotice("Las notificaciones avanzadas requieren configurar Web Push.");
+    if (!(await requestBrowserNotificationPermission())) {
+      setNotice("El navegador no concedió permiso para mostrar notificaciones.");
       return false;
     }
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return false;
-    const registration = await navigator.serviceWorker.register(assetUrl("/sw.js"));
-    const existing = await registration.pushManager.getSubscription();
-    const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
-    await savePushSubscription(subscription);
+    await registerRecordateServiceWorker();
+    if ("serviceWorker" in navigator && "PushManager" in window && import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        const subscription = existing || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(import.meta.env.VITE_VAPID_PUBLIC_KEY) });
+        await savePushSubscription(subscription);
+      } catch {
+        setNotice("Las notificaciones de esta página están activas; el push con la app cerrada requiere un emisor backend.");
+      }
+    }
     return true;
   };
   useEffect(() => {
@@ -581,7 +596,17 @@ function App() {
         listNotifications(),
       ]);
       const fulfilled = (result, fallback) => (result.status === "fulfilled" ? result.value : fallback);
-      if (settled[0].status === "rejected") throw settled[0].reason;
+      if (settled[0].status === "rejected") {
+        const { data: activeState } = await supabase.rpc("is_active_account");
+        if (activeState === false) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setScreen("auth");
+          setNotice("Tu cuenta está dada de baja. Habla con el administrador de RECORDATE.");
+          return;
+        }
+        throw settled[0].reason;
+      }
       if (settled[1].status === "rejected") throw settled[1].reason;
       const currentProfile = fulfilled(settled[0], null);
       const currentTasks = fulfilled(settled[1], []);
@@ -591,9 +616,7 @@ function App() {
         setNotice("Tu agenda se cargó, pero algunas secciones extra no respondieron. Puedes seguir usando RECORDATE.");
       }
       setProfile(
-        currentProfile && isAdminRole(currentProfile.role, current.user.email)
-          ? { ...currentProfile, role: isPrimaryAdminEmail(current.user.email) ? "administrador" : currentProfile.role }
-          : currentProfile,
+        currentProfile,
       );
       if (isAccountDisabled(currentProfile)) {
         if (!isDemoSession(current) && supabase) await supabase.auth.signOut();
@@ -678,11 +701,20 @@ function App() {
   }, []);
   useEffect(() => {
     if (!session || demo) return undefined;
-    const unsubscribe = subscribeToNotifications(session.user.id, (payload) =>
-      setNotifications((current) => current.some((item) => item.id === payload.new.id) ? current : [payload.new, ...current]),
-    );
+    const unsubscribe = subscribeToNotifications(session.user.id, (payload) => {
+      const item = payload.new;
+      setNotifications((current) => current.some((notification) => notification.id === item.id) ? current : [item, ...current]);
+      if (profile?.browser_notifications_enabled && item.type !== "system") {
+        void showBrowserNotification({
+          title: item.title || "Nueva notificación de RECORDATE",
+          body: item.body || "Tienes una novedad en tu agenda.",
+          taskId: item.task_id,
+          tag: `recordate-${item.id}`,
+        });
+      }
+    });
     return unsubscribe;
-  }, [session, demo]);
+  }, [session, demo, profile?.browser_notifications_enabled]);
   useEffect(() => {
     if (!profile?.reminders_enabled) return undefined;
     const checkReminders = () => {
@@ -693,20 +725,14 @@ function App() {
         if (now < reminderAt || now - reminderAt > 60 * 1000 || alarmedTasks.current.has(task.id)) return;
         alarmedTasks.current.add(task.id);
         if (profile.alarms_enabled) setAlarmTask(task);
-        if (profile.alarms_enabled && "AudioContext" in window) {
-          const audioContext = new AudioContext();
-          const oscillator = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          oscillator.connect(gain);
-          gain.connect(audioContext.destination);
-          oscillator.frequency.value = 740;
-          gain.gain.setValueAtTime(0.12, audioContext.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
-          oscillator.start();
-          oscillator.stop(audioContext.currentTime + 0.6);
-        }
+        if (profile.alarms_enabled) void playAlarm(profile.alarm_sound || DEFAULT_ALARM_SOUND, profile.alarm_volume ?? DEFAULT_ALARM_VOLUME);
         if (profile.browser_notifications_enabled && "Notification" in window && Notification.permission === "granted") {
-          new Notification("Alarma de RECORDATE", { body: `${task.title} · ${task.subject} · Prioridad ${task.priority}` });
+          void showBrowserNotification({
+            title: "Alarma de RECORDATE",
+            body: `${task.title} · ${task.subject} · Prioridad ${task.priority}`,
+            taskId: task.id,
+            tag: `recordate-alarm-${task.id}`,
+          });
         }
       });
     };
@@ -796,6 +822,35 @@ function App() {
   const completeAlarmTask = async () => {
     if (alarmTask) await toggleTask(alarmTask.id);
     setAlarmTask(null);
+  };
+  const previewAlarm = async (sound, volume) => {
+    const played = await playAlarm(sound, volume);
+    if (!played) setNotice("Este navegador no permite reproducir audio web.");
+  };
+  const testBrowserNotification = async () => {
+    if (!(await enableBrowserNotifications())) return;
+    await showBrowserNotification({
+      title: "Notificación de prueba",
+      body: "RECORDATE puede avisarte aunque estés en otra pestaña del navegador.",
+      tag: "recordate-test-notification",
+    });
+  };
+  const importClassroomTask = async (assignment) => {
+    if (demo) {
+      setNotice("La importación de Google Classroom requiere una cuenta conectada.");
+      return;
+    }
+    if (tasks.some((task) => task.source === "google_classroom" && task.externalId === assignment.externalId)) {
+      setNotice("Esta actividad de Classroom ya está en tu agenda.");
+      return;
+    }
+    try {
+      const imported = await createTask(assignment);
+      setTasks((current) => [imported, ...current]);
+      setNotice(`Actividad importada: ${assignment.title}.`);
+    } catch (error) {
+      setNotice(supabaseErrorMessage(error, "No fue posible importar la actividad de Classroom."));
+    }
   };
   const removeAttachment = async (taskId, attachment) => {
     if (demo) {
@@ -1061,6 +1116,9 @@ function App() {
     if (view === "Mensajes") {
       return <Chat message={message} setMessage={setMessage} userId={session.user.id} demo={demo} />;
     }
+    if (view === "Google Classroom") {
+      return <GoogleClassroomPanel profile={profile} tasks={tasks} demo={demo} onImport={importClassroomTask} />;
+    }
     if ((view === "Administración" && admin) || (view === "Asignar tareas" && teacher)) {
       return (
         <UsersDirectory
@@ -1113,7 +1171,9 @@ function App() {
           email={session.user.email}
           profile={profile}
           demo={demo}
-          onEnablePush={enablePushNotifications}
+          onEnableNotifications={enableBrowserNotifications}
+          onTestNotification={testBrowserNotification}
+          onPreviewAlarm={previewAlarm}
           onAvatarUpload={async (file) => {
             try {
               if (demo) {
@@ -1906,7 +1966,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
   );
 }
 
-function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnablePush, onAvatarUpload }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -1974,17 +2034,46 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           <label>
             <span>
               <b>Notificaciones del navegador</b>
-              <small>Recibe avisos aunque estés en otra pestaña.</small>
+              <small>Recibe avisos del sistema aunque estés en otra pestaña o ventana.</small>
             </span>
-            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnablePush())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
+            <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnableNotifications())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
           </label>
+          <div className="settings-action-row">
+            <span>
+              <b>Probar notificación nativa</b>
+              <small>Comprueba que el navegador y el sistema tienen los avisos permitidos.</small>
+            </span>
+            <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
+          </div>
           <label>
             <span>
               <b>Alarmas sonoras</b>
-              <small>Emite un sonido mientras RECORDATE está abierto.</small>
+              <small>Emite el sonido seleccionado mientras RECORDATE está abierto.</small>
             </span>
             <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
           </label>
+          <div className="alarm-settings">
+            <label>
+              <span><b>Sonido de alarma</b><small>Presets locales, sin descargar audio de terceros.</small></span>
+              <select value={profile?.alarm_sound || DEFAULT_ALARM_SOUND} onChange={(event) => onSettingsChange({ alarm_sound: event.target.value })}>
+                {ALARM_SOUNDS.map((sound) => <option key={sound.value} value={sound.value}>{sound.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span><b>Volumen</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME}
+                onChange={(event) => onSettingsChange({ alarm_volume: normalizeAlarmVolume(event.target.value) })}
+              />
+            </label>
+            <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}>
+              Escuchar sonido seleccionado
+            </button>
+          </div>
           <label>
             <span>
               <b>Mostrar tareas completadas</b>

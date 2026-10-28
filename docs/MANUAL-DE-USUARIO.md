@@ -483,7 +483,7 @@ Para el directorio, dar de baja y asignar tareas, ejecuta también:
 ## 18b. Administrador y profesor
 
 ### Administrador
-La cuenta **restrepojohan225@gmail.com** es la administradora principal. Al entrar verás el menú **Administración**.
+La cuenta definida durante el bootstrap inicial recibe el rol **Administrador**. El menú **Administración** aparece únicamente para perfiles con rol administrador y estado activo; el correo por sí solo nunca concede privilegios.
 
 Desde ahí puedes:
 - Ver todas las cuentas

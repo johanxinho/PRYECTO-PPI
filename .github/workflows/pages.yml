@@ -23,15 +23,19 @@ jobs: # Lista de trabajos.
           cache: npm # Reutiliza la caché de paquetes entre ejecuciones.
           cache-dependency-path: ppi-react/package-lock.json # Lockfile de la app, no el de la raíz.
       - run: npm ci # Instala dependencias exactas del lockfile.
+      - run: npm run lint # Comprueba reglas de calidad y errores comunes.
+      - run: npm test -- --run # Ejecuta las pruebas sin modo interactivo.
       - name: Optional GitHub secrets override # Si hay secretos de Actions, pisan el .env.production.
         env: # Inyecta secretos (vacíos si no existen).
           URL: ${{ secrets.VITE_SUPABASE_URL }} # URL del proyecto Supabase (opcional).
           KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }} # Clave pública/anon (opcional).
           VAPID: ${{ secrets.VITE_VAPID_PUBLIC_KEY }} # Clave VAPID de Web Push (opcional).
+          GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }} # Client ID público de Google OAuth (opcional).
         run: | # Escribe en GITHUB_ENV solo las variables que sí tienen valor.
           if [ -n "$URL" ]; then echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"; fi # Override de URL si hay secreto.
           if [ -n "$KEY" ]; then echo "VITE_SUPABASE_ANON_KEY=$KEY" >> "$GITHUB_ENV"; fi # Override de clave si hay secreto.
           if [ -n "$VAPID" ]; then echo "VITE_VAPID_PUBLIC_KEY=$VAPID" >> "$GITHUB_ENV"; fi # Override de VAPID si hay secreto.
+          if [ -n "$GOOGLE_CLIENT_ID" ]; then echo "VITE_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> "$GITHUB_ENV"; fi # Override de Client ID de Google.
       - run: npm run build # Genera la carpeta dist/ con el JS/CSS de producción.
         env: # Variables visibles para Vite durante el build.
           VITE_BASE: /PRYECTO-PPI/ # Prefijo de rutas de GitHub Pages (nombre del repo).

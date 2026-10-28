@@ -4,74 +4,64 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const MODEL = "gemini-2.5-flash";
 const MAX_HISTORY = 16;
 const MAX_MESSAGE = 4000;
-const RATE_LIMIT = 40;
-const RATE_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT = 30;
 
 const SYSTEM = `Eres el asistente de Recórdate, una app de la IE La Candelaria (Medellín) para organizar tareas, fechas y recordatorios académicos.
 Responde en español, breve y claro. Ayuda a crear o priorizar tareas, explicar cómo usar la app y resolver dudas del estudiante.
 No inventes notas, claves ni datos que el usuario no te dio. Si no sabes algo de la institución, dilo.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatImage = { mime_type: string; data: string };
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const DEFAULT_ORIGINS = new Set([
+  "https://johanxinho.github.io",
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
 
-function json(data: unknown, status = 200) {
+function allowedOrigins() {
+  return new Set([
+    ...DEFAULT_ORIGINS,
+    ...(Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+  ]);
+}
+
+function isAllowedOrigin(req: Request) {
+  const origin = req.headers.get("Origin");
+  return !origin || allowedOrigins().has(origin);
+}
+
+function json(data: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Connection": "keep-alive",
+      ...extraHeaders,
     },
   });
 }
 
 function cors(req: Request) {
-  const origin = req.headers.get("Origin") ?? "*";
+  const origin = req.headers.get("Origin");
   return {
-    "Access-Control-Allow-Origin": origin,
+    ...(origin && allowedOrigins().has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
+    "Vary": "Origin",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
 
 async function consumeRateLimit(
-  admin: ReturnType<typeof createClient>,
+  client: ReturnType<typeof createClient>,
   userId: string,
 ) {
-  const { data, error } = await admin
-    .from("ai_request_usage")
-    .select("user_id, window_started_at, request_count")
-    .eq("user_id", userId)
-    .maybeSingle();
+  void userId;
+  const { data, error } = await client.rpc("consume_ai_request", { request_limit: RATE_LIMIT });
   if (error) throw error;
-
-  const now = Date.now();
-  if (!data) {
-    const { error: insertError } = await admin.from("ai_request_usage").insert({
-      user_id: userId,
-      window_started_at: new Date(now).toISOString(),
-      request_count: 1,
-    });
-    if (insertError) throw insertError;
-    return;
-  }
-
-  const started = new Date(data.window_started_at).getTime();
-  const expired = now - started > RATE_WINDOW_MS;
-  const nextCount = expired ? 1 : data.request_count + 1;
-  if (!expired && data.request_count >= RATE_LIMIT) {
-    throw new Error("RATE_LIMIT");
-  }
-
-  const { error: updateError } = await admin
-    .from("ai_request_usage")
-    .update({
-      request_count: nextCount,
-      window_started_at: new Date(expired ? now : started).toISOString(),
-    })
-    .eq("user_id", userId);
-  if (updateError) throw updateError;
+  if (data !== true) throw new Error("RATE_LIMIT");
 }
 
-async function callGemini(history: ChatMessage[], message: string) {
+async function callGemini(history: ChatMessage[], message: string, images: ChatImage[]) {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("MISSING_GEMINI_KEY");
 
@@ -80,7 +70,13 @@ async function callGemini(history: ChatMessage[], message: string) {
       role: item.role === "assistant" ? "model" : "user",
       parts: [{ text: item.content }],
     })),
-    { role: "user", parts: [{ text: message }] },
+    {
+      role: "user",
+      parts: [
+        ...(message ? [{ text: message }] : []),
+        ...images.map((image) => ({ inlineData: { mimeType: image.mime_type, data: image.data } })),
+      ],
+    },
   ];
 
   const response = await fetch(
@@ -115,37 +111,44 @@ async function callGemini(history: ChatMessage[], message: string) {
 
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
+  if (!isAllowedOrigin(req)) return json({ error: "origin_not_allowed" }, 403, headers);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405, headers);
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !anonKey || !serviceKey) {
-      return json({ error: "server_misconfigured" }, 500);
+    if (!supabaseUrl || !anonKey) {
+      return json({ error: "server_misconfigured" }, 500, headers);
     }
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: userData, error: userError } = await userClient.auth.getUser();
-    if (userError || !userData.user) return json({ error: "unauthorized" }, 401);
+    if (userError || !userData.user) return json({ error: "unauthorized" }, 401, headers);
     const userId = userData.user.id;
 
+    const contentLength = Number(req.headers.get("Content-Length") || 0);
+    if (contentLength > 12 * 1024 * 1024) return json({ error: "payload_too_large" }, 413, headers);
     const body = await req.json().catch(() => ({}));
     const message = String(body.message ?? "").trim();
+    const images: ChatImage[] = Array.isArray(body.images)
+      ? body.images.slice(0, 2).filter((image: ChatImage) => ALLOWED_IMAGE_TYPES.has(image?.mime_type) && typeof image?.data === "string" && image.data.length > 0)
+      : [];
+    if (images.some((image) => image.data.length > 6 * 1024 * 1024)) {
+      return json({ error: "image_too_large" }, 413, headers);
+    }
     let conversationId = typeof body.conversation_id === "string"
       ? body.conversation_id
       : null;
-    if (!message || message.length > MAX_MESSAGE) {
-      return json({ error: "invalid_message" }, 400);
+    if ((!message && !images.length) || message.length > MAX_MESSAGE) {
+      return json({ error: "invalid_message" }, 400, headers);
     }
 
-    await consumeRateLimit(admin, userId);
+    await consumeRateLimit(userClient, userId);
 
     if (!conversationId) {
       const { data: created, error: createError } = await userClient
@@ -168,7 +171,7 @@ Deno.serve(async (req: Request) => {
       (row): row is ChatMessage => row.role === "user" || row.role === "assistant",
     );
 
-    const reply = await callGemini(history, message);
+    const reply = await callGemini(history, message, images);
 
     const { error: saveError } = await userClient.from("ai_messages").insert([
       { conversation_id: conversationId, user_id: userId, role: "user", content: message },
@@ -199,7 +202,7 @@ Deno.serve(async (req: Request) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ error: "ai_failed", detail: message }), {
+    return new Response(JSON.stringify({ error: "ai_failed" }), {
       status: 500,
       headers: { ...headers, "Content-Type": "application/json" },
     });

@@ -14,9 +14,9 @@ cp .env.example .env
 npm run dev
 ```
 
-La aplicación requiere Supabase para registrar usuarios y guardar tareas. Define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env`. Nunca uses una clave `service_role` en el frontend.
+La aplicación requiere Supabase para registrar usuarios y guardar tareas. Define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env`. `VITE_GOOGLE_CLIENT_ID` habilita Google Classroom y es público; nunca uses una clave `service_role`, client secret de Google o `GEMINI_API_KEY` en el frontend.
 
-Antes de probar la aplicación, ejecuta `supabase/migrations/20260826_recordate.sql` en el SQL Editor de tu proyecto Supabase. La migración crea perfiles, tareas, agendas compartidas y mensajes, además de sus políticas RLS. El trigger crea automáticamente el perfil al registrarse.
+Antes de probar la aplicación, aplica la cadena completa de `../supabase/migrations/` en orden. La entrega añade preferencias de alarma, columnas de importación Classroom, bloqueo RLS de cuentas inactivas y el contrato multimodal de Gemini. El trigger crea automáticamente el perfil al registrarse.
 
 En la pantalla de acceso también existe **Explorar demostración**: guarda datos solo en este navegador y no sustituye la cuenta real.
 
@@ -33,7 +33,7 @@ En la pantalla de acceso también existe **Explorar demostración**: guarda dato
 
 El dashboard usa la sesión persistente de Supabase Auth y carga las tareas del usuario desde `public.tasks`. Crear, editar, completar y eliminar tareas son operaciones de base de datos protegidas por RLS; no se usa `localStorage` ni información demo para el usuario autenticado.
 
-Compartir agendas y mensajes ya usan las tablas, políticas y la función segura de la migración. La migración añade `messages` a `supabase_realtime`; si el proyecto tiene Realtime desactivado globalmente, actívalo en la configuración de Supabase. Los recordatorios del dispositivo y los correos requieren además una Edge Function y un proveedor externo de notificaciones.
+Compartir agendas y mensajes ya usan las tablas, políticas y la función segura de la migración. La migración añade `messages` a `supabase_realtime`; si el proyecto tiene Realtime desactivado globalmente, actívalo en la configuración de Supabase. Google Classroom se conecta con scopes de solo lectura desde Configuración; Gemini se sirve mediante `ai-chat` con el secreto en Supabase. Las notificaciones nativas funcionan con la pestaña abierta; los avisos con la aplicación cerrada requieren además un emisor Web Push externo.
 
 ## Documentación
 

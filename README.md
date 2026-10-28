@@ -51,8 +51,12 @@ La aplicación principal actualmente incluye, según el código y la documentaci
 - Compartir agendas con usuarios registrados.
 - Mensajes internos entre usuarios autenticados.
 - Perfil del usuario y configuración de preferencias.
+- Selector de sonido y volumen de alarma con presets sintetizados localmente.
 - Adjuntar imágenes a tareas.
 - Notificaciones internas del sistema para tareas, mensajes y comparticiones.
+- Notificaciones nativas persistentes del navegador cuando el usuario concede permiso.
+- Conexión de solo lectura con Google Classroom e importación idempotente de actividades con fecha.
+- Asistente Gemini protegido por una Edge Function con rate limit e imágenes multimodales.
 
 > La funcionalidad de Web Push está preparada para configurarse con una clave pública VAPID, pero la entrega real de notificaciones con la aplicación cerrada requiere además un emisor backend externo. Eso no está implementado como parte de este repositorio.
 
@@ -79,7 +83,7 @@ Para ejecutar la aplicación principal necesitas:
 - npm
 - Node.js
 - Un proyecto de Supabase con las variables de entorno configuradas
-- Acceso al SQL Editor de Supabase para ejecutar la migración disponible en [supabase/migrations/20260826_recordate.sql](supabase/migrations/20260826_recordate.sql)
+- Acceso al proyecto Supabase para aplicar todas las migraciones ordenadas de `supabase/migrations/`
 
 No se incluyen claves ni secretos en este README.
 
@@ -106,18 +110,23 @@ La aplicación usa las siguientes variables de entorno en [ppi-react/.env.exampl
 VITE_SUPABASE_URL=tu_project_url_aqui
 VITE_SUPABASE_ANON_KEY=tu_anon_key_aqui
 VITE_VAPID_PUBLIC_KEY=tu_clave_publica_vapid_aqui
+VITE_GOOGLE_CLIENT_ID=tu_client_id_web_de_google.apps.googleusercontent.com
 ```
 
 - `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` son necesarias para autenticación y persistencia con Supabase.
 - `VITE_VAPID_PUBLIC_KEY` es opcional y se usa para la configuración de Web Push; no reemplaza un backend externo para enviar notificaciones con la app cerrada.
+- `VITE_GOOGLE_CLIENT_ID` es público y habilita el consentimiento de Classroom; no pongas un client secret en el frontend.
 
 ### Migración de Supabase
 
-Antes de probar registro, tareas, mensajes o compartición, ejecuta la migración en el SQL Editor de tu proyecto Supabase:
+Antes de probar registro, tareas, mensajes o compartición, aplica en orden la cadena completa de migraciones en tu proyecto Supabase. En el proyecto conectado ya se aplicaron además estas migraciones de esta entrega:
 
-- [supabase/migrations/20260826_recordate.sql](supabase/migrations/20260826_recordate.sql)
+- [20260826_recordate.sql](supabase/migrations/20260826_recordate.sql) y las migraciones históricas posteriores del directorio.
+- [20261028140246_alarm_google_preferences_20261028000100.sql](supabase/migrations/20261028140246_alarm_google_preferences_20261028000100.sql): preferencias de alarma e importaciones Classroom.
+- [20261028140255_security_active_roles_20261028000200.sql](supabase/migrations/20261028140255_security_active_roles_20261028000200.sql): roles sin bypass por correo y bloqueo RLS de cuentas inactivas.
+- [20261028140300_ai_chat_multimodal_20261028000300.sql](supabase/migrations/20261028140300_ai_chat_multimodal_20261028000300.sql): contrato `image_urls` del historial Gemini.
 
-La migración crea las tablas, políticas RLS y funciones necesarias para perfiles, tareas, mensajes, notificaciones, agendas compartidas, attachments y configuraciones del sistema.
+Para Gemini configura `GEMINI_API_KEY` como secreto de la Edge Function `ai-chat`; nunca como variable `VITE_*`.
 
 ## Documentación adicional
 

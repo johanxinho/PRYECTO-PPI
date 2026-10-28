@@ -23,7 +23,10 @@ function translateAiError(payload, fallback) {
     return "Escribe un mensaje o adjunta una foto (máximo 4000 caracteres).";
   }
   if (code === "image_too_large") {
-    return "Alguna foto pesa demasiado (máximo 4 MB).";
+    return "Alguna foto pesa demasiado (máximo 6 MB por imagen).";
+  }
+  if (code === "payload_too_large") {
+    return "El envío es demasiado grande (máximo 12 MB).";
   }
   if (typeof payload?.detail === "string" && payload.detail.trim()) {
     return `No pude responder: ${payload.detail}`;

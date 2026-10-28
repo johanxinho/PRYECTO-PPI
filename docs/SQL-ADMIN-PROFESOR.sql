@@ -1,6 +1,7 @@
 -- RECORDATE: instala administrador, profesor y bajas.
 -- Ejecuta TODO este archivo de una vez en el SQL Editor.
--- Cuenta dueña: restrepojohan225@gmail.com
+-- Bootstrap único: asigna el rol a una cuenta explícita y luego administra por rol/estado.
+-- No uses un correo como condición de autorización permanente.
 --
 -- El error "Solo un administrador puede cambiar roles" salía porque un
 -- trigger bloqueaba el UPDATE. Aquí se quita el trigger ANTES de asignar
@@ -41,10 +42,10 @@ as $$
     select 1
     from public.profiles
     where id = auth.uid()
-      and (
-        role = 'administrador'
-        or lower(email) = 'restrepojohan225@gmail.com'
-      )
+      and role = 'administrador'
+      and coalesce(status, 'activo') = 'activo'
+      and coalesce(is_active, true) = true
+      and disabled_at is null
   );
 $$;
 
@@ -59,10 +60,10 @@ as $$
     select 1
     from public.profiles
     where id = auth.uid()
-      and (
-        role in ('profesor', 'administrador')
-        or lower(email) = 'restrepojohan225@gmail.com'
-      )
+      and role in ('profesor', 'administrador')
+      and coalesce(status, 'activo') = 'activo'
+      and coalesce(is_active, true) = true
+      and disabled_at is null
   );
 $$;
 
@@ -73,12 +74,12 @@ stable
 security definer
 set search_path = public
 as $$
-  select case
-    when lower(email) = 'restrepojohan225@gmail.com' then 'administrador'
-    else role
-  end
+  select role
   from public.profiles
-  where id = auth.uid();
+  where id = auth.uid()
+    and coalesce(status, 'activo') = 'activo'
+    and coalesce(is_active, true) = true
+    and disabled_at is null;
 $$;
 
 create or replace function public.list_managed_users()
@@ -240,9 +241,7 @@ as $$
 declare chosen_role text;
 begin
   chosen_role := coalesce(new.raw_user_meta_data->>'role', 'estudiante');
-  if lower(new.email) = 'restrepojohan225@gmail.com' then
-    chosen_role := 'administrador';
-  elsif chosen_role not in ('estudiante', 'padre', 'madre', 'profesor', 'trabajador') then
+  if chosen_role not in ('estudiante', 'padre', 'madre', 'profesor', 'trabajador') then
     chosen_role := 'estudiante';
   end if;
 
@@ -258,10 +257,7 @@ begin
   on conflict (id) do update
     set full_name = excluded.full_name,
         email = excluded.email,
-        role = case
-          when lower(excluded.email) = 'restrepojohan225@gmail.com' then 'administrador'
-          else public.profiles.role
-        end;
+        role = public.profiles.role;
   return new;
 end;
 $$;

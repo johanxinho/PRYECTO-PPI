@@ -65,7 +65,7 @@ La aplicación principal usa:
 - Motion (Framer) para DiaTextReveal; filtro SVG para MorphingText.
 - Lucide React para iconos.
 - Migración SQL de Supabase para perfiles, tareas, agendas, mensajes y chat IA.
-- Edge Function `ai-chat` (Gemini 3.6 Flash); secreto `GEMINI_API_KEY`.
+- Edge Function `ai-chat` (Gemini 2.5 Flash, rate limit atómico y multimodal); secreto `GEMINI_API_KEY`.
 - GitHub Pages (`gh-pages`) como hosting, no Vercel.
 - ESLint para validación estática.
 
@@ -155,13 +155,15 @@ Aunque actualmente están en un único archivo, estas funciones son componentes 
 | Recordatorios | Lista real de tareas pendientes | Estado cargado desde `public.tasks` |
 | Prioridades | Funcional con Alta, Media y Baja | `public.tasks` + RLS |
 | Modo enfoque | Funcional para una tarea real | Estado + `public.tasks` |
-| Notificaciones | Recordatorios configurables y alarmas mientras la aplicación está abierta y con permiso | API `Notification`, `AudioContext` + estado de tareas |
+| Notificaciones | Recordatorios configurables, alarmas y avisos nativos persistentes con permiso | Service Worker + API `Notification` + `AudioContext` |
 | Compartir agendas | Funcional, persistente y revocable con usuario destinatario registrado | `task_shares` + `share_task_by_email` |
 | Chat | Persistente y Realtime configurado; el esquema actual es un canal común para usuarios autenticados | `messages` + `supabase_realtime` |
 | Roles `student/admin` | Estructura y protección del rol preparadas | `profiles.role` + trigger |
-| Configuración | Preferencias persistentes de recordatorios y tareas completadas | `public.profiles` + RLS |
-| Adjuntar imágenes | No implementado en la versión principal | Requiere almacenamiento/backend |
-| Alarmas del sistema | No implementadas como notificaciones del dispositivo | Requiere servicio adicional |
+| Configuración | Preferencias persistentes de recordatorios, tareas completadas, sonido y volumen | `public.profiles` + RLS |
+| Google Classroom | Conexión OAuth de solo lectura e importación idempotente de actividades con fecha | Google Identity Services + Classroom API |
+| Gemini multimodal | Chat textual y fotos inline con clave solo en Edge Function | `ai-chat` + `GEMINI_API_KEY` |
+| Adjuntar imágenes | Funcional en tareas con Storage privado | `task-attachments` + RLS |
+| Alarmas del sistema | Funcional con notificación nativa cuando el usuario concede permiso; push con app cerrada requiere emisor VAPID | Service Worker + Push opcional |
 
 Las etiquetas DEMO y los mensajes de configuración indican cuándo una acción todavía no está conectada a un backend real.
 
@@ -187,7 +189,7 @@ La autenticación utiliza:
 - `supabase.auth.verifyOtp()` para confirmar el código de 6 dígitos enviado al registrarse.
 - `supabase.auth.signOut()` para cerrar sesión.
 
-La migración reproducible está en [`../supabase/migrations/20260826_recordate.sql`](../supabase/migrations/20260826_recordate.sql). Debe ejecutarse en el SQL Editor del proyecto antes de probar el registro o las tareas. Nunca se usa `service_role` en el frontend.
+La base reproducible está en [`../supabase/migrations/20260826_recordate.sql`](../supabase/migrations/20260826_recordate.sql), pero debe aplicarse junto con las migraciones posteriores del directorio, incluidas las de roles, adjuntos, `20261028140246_alarm_google_preferences_20261028000100.sql`, `20261028140255_security_active_roles_20261028000200.sql` y `20261028140300_ai_chat_multimodal_20261028000300.sql`. Nunca se usa `service_role` en el frontend.
 
 En Supabase, activa `Authentication > Providers > Email` y la confirmación de correo. Para mostrar el código, la plantilla de confirmación debe incluir `{{ .Token }}`. En Vercel, agrega `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `Project Settings > Environment Variables` para los entornos necesarios y vuelve a desplegar. Estas variables no se pueden agregar al `vercel.json` de forma segura.
 

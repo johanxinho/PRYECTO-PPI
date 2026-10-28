@@ -11,6 +11,8 @@ const PROFILE_UPDATABLE = [
   "show_completed",
   "browser_notifications_enabled",
   "alarms_enabled",
+  "alarm_sound",
+  "alarm_volume",
 ];
 
 // Base columns for profiles - used by most queries
@@ -25,6 +27,9 @@ const PROFILE_BASE_COLUMNS = [
   "show_completed",
   "browser_notifications_enabled",
   "alarms_enabled",
+  "alarm_sound",
+  "alarm_volume",
+  "is_active",
 ].join(",");
 
 // Extended columns with status
@@ -37,7 +42,7 @@ const PROFILE_FULL_COLUMNS = [...PROFILE_SAFE_COLUMNS.split(","), "disabled_at"]
 const PROFILE_MIN_COLUMNS = "id,full_name,email,role,created_at";
 
 const taskColumns =
-  "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
+  "id,user_id,assigned_by,title,description,subject,date,time,priority,reminder,completed,source,external_id,created_at,updated_at,task_attachments(id,storage_path,file_name,content_type)";
 
 // Utility function to get profile columns based on detail level
 export function getProfileColumns(level = 'base') {
@@ -53,8 +58,14 @@ export function getProfileColumns(level = 'base') {
 // Email validation - stricter regex
 export function validateEmail(email) {
   if (!email) return false;
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(String(email).trim().toLowerCase());
+  const normalized = String(email).trim().toLowerCase();
+  const parts = normalized.split("@");
+  const [local, domain] = parts;
+  if (!local || !domain || parts.length !== 2) return false;
+  if (!/^[a-z0-9._%+-]+$/.test(local) || local.startsWith(".") || local.endsWith(".")) return false;
+  if (domain === "localhost") return true;
+  if (domain.includes("..") || domain.startsWith(".") || domain.endsWith(".")) return false;
+  return /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(domain);
 }
 
 // Task validation
@@ -79,7 +90,8 @@ export function isValidTask(task) {
   return true;
 }
 
-export const PRIMARY_ADMIN_EMAIL = "restrepojohan225@gmail.com";
+// La elevación de privilegios se decide en Supabase por rol y estado activo.
+export const PRIMARY_ADMIN_EMAIL = "";
 
 export const ROLE_OPTIONS = [
   { value: "estudiante", label: "Estudiante" },
@@ -107,15 +119,16 @@ export function roleLabel(role) {
 }
 
 export function isPrimaryAdminEmail(email) {
-  return String(email || "").trim().toLowerCase() === PRIMARY_ADMIN_EMAIL;
+  void email;
+  return false;
 }
 
-export function isAdminRole(role, email) {
-  return role === "administrador" || isPrimaryAdminEmail(email);
+export function isAdminRole(role) {
+  return role === "administrador";
 }
 
-export function isStaffRole(role, email) {
-  return role === "profesor" || isAdminRole(role, email);
+export function isStaffRole(role) {
+  return role === "profesor" || isAdminRole(role);
 }
 
 function withActiveDefaults(row) {
@@ -127,17 +140,17 @@ function ensureBackend() {
   if (!supabase) throw new Error("Supabase no está configurado.");
 }
 
-// Single, secure profile fetch - uses base columns by default
+// Single, secure profile fetch - includes status so accounts deactivated by staff are not trusted by the UI.
 async function readProfileById(id) {
   const { data, error } = await supabase
     .from("profiles")
-    .select(PROFILE_BASE_COLUMNS)
+    .select(PROFILE_FULL_COLUMNS)
     .eq("id", id)
     .single();
   
   if (!error && data) return withActiveDefaults(data);
   
-  // If base columns fail, try with safe columns (includes status)
+  // If disabled_at is unavailable in an older local schema, keep the status-aware fallback.
   const { data: safeData, error: safeError } = await supabase
     .from("profiles")
     .select(PROFILE_SAFE_COLUMNS)
@@ -166,6 +179,8 @@ export function mapTask(task) {
     priority: task.priority,
     reminder: task.reminder,
     completed: task.completed,
+    source: task.source || "recordate",
+    externalId: task.external_id || null,
     attachments: task.task_attachments || [],
   };
 }
@@ -205,6 +220,12 @@ export async function updateProfileSettings(settings) {
   }
   if (payload.role && !SELF_ROLE_OPTIONS.some((item) => item.value === payload.role)) {
     throw new Error("Ese rol solo lo asigna el administrador.");
+  }
+  if (payload.alarm_sound && !["classic", "digital", "chime", "gentle"].includes(payload.alarm_sound)) {
+    throw new Error("Ese sonido de alarma no está disponible.");
+  }
+  if (payload.alarm_volume !== undefined && (!Number.isFinite(Number(payload.alarm_volume)) || Number(payload.alarm_volume) < 0 || Number(payload.alarm_volume) > 1)) {
+    throw new Error("El volumen de la alarma debe estar entre 0 y 1.");
   }
   if (!Object.keys(payload).length) {
     throw new Error("No hay cambios para guardar.");
@@ -277,6 +298,8 @@ export async function createTask(task) {
       priority: task.priority,
       reminder: task.reminder,
       completed: false,
+      source: task.source || "recordate",
+      external_id: task.externalId || null,
     })
     .select(taskColumns)
     .single();
@@ -611,5 +634,5 @@ export async function assignTaskToUser(recipientId, task) {
 }
 
 export function isAccountDisabled(profile) {
-  return profile?.status === "baja";
+  return Boolean(profile && (profile.status === "baja" || profile.is_active === false || profile.disabled_at));
 }
