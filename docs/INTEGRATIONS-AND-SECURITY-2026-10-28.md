@@ -130,3 +130,12 @@ Se revirtió la simplificación visual aplicada en el primer pase de optimizaci�
 Las optimizaciones ahora se limitan al ciclo de vida y la cadencia de render: los ciclos de `MorphingText` y WebGL se cancelan mientras la pestaña está oculta; el canvas ASCII pausa cuando está fuera del viewport o la pestaña no es visible y evita remuestrear si las dimensiones no cambiaron. La composición, resolución, tamaño de celda, shader y movimiento del diseño se mantienen; únicamente se limita la frecuencia de actualización del morphing en equipos muy modestos. WebGL no preserva innecesariamente el buffer entre frames y activa el fallback CSS solo si el contexto falla o se pierde.
 
 Validación tras la restauración: ESLint, Prettier para los componentes modificados, **50 pruebas en 10 archivos** y build Vite completados correctamente. Se añadieron dos pruebas para verificar la presencia del filtro SVG original y la detención del bucle al activar movimiento reducido. No se dispone de mediciones de FPS en los dispositivos físicos del usuario; las mejoras se limitan al ciclo de vida de los renders y a reducir repaints innecesarios, sin cambiar la composición del diseño.
+
+
+## Acciones de RECORDATE IA — 2026-11-01
+
+La Edge Function `ai-chat` quedó actualizada a la versión 13 con Gemini 3.6 Flash y function calling de Google. La primera acción disponible es **crear una tarea con alarma**: solo se habilita ante una instrucción explícita; si falta título, fecha u hora, la IA debe pedir el dato y no crear nada. El servidor valida longitud, formato de fecha/hora, que la fecha no haya pasado, zona horaria IANA, prioridad y anticipación del recordatorio.
+
+La inserción usa el JWT de la persona y el cliente Supabase `authenticated`, sin `service_role`; la política RLS exige `user_id = auth.uid()`. Se guarda la hora local junto a `time_zone` para que los recordatorios y Push existentes puedan programarse correctamente. La interfaz recibe la actividad creada y la refleja en la agenda al instante. Gemini no tiene acceso libre a tablas ni a toda la aplicación: cualquier acción nueva deberá añadirse como herramienta específica con validación propia.
+
+Verificación local: Prettier en archivos aplicables, ESLint, build Vite y **54 pruebas en 11 archivos** correctos. La Edge Function está desplegada con `verify_jwt=true`. Falta una prueba funcional autenticada desde una cuenta del usuario, ya que no se envió ni creó ninguna tarea real durante la validación.

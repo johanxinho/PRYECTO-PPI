@@ -1637,7 +1637,13 @@ function App() {
       {!demo && hasSupabaseConfig && (
         <div inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
           <Suspense fallback={null}>
-            <AiChat enabled />
+            <AiChat
+              enabled
+              onTaskCreated={(task) => {
+                setTasks((current) => [task, ...current.filter((item) => item.id !== task.id)]);
+                setNotice(`Alarma creada: ${task.title}`);
+              }}
+            />
           </Suspense>
         </div>
       )}

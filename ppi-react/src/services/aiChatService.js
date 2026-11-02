@@ -22,6 +22,9 @@ function translateAiError(payload, fallback) {
   if (code === "message_save_failed") {
     return "La IA respondió, pero no se pudo guardar el mensaje. Intenta nuevamente.";
   }
+  if (code === "task_creation_failed") {
+    return "No se pudo crear la alarma en tu agenda. Verifica tu conexión e inténtalo de nuevo.";
+  }
   if (code === "unauthorized") {
     return "Debes iniciar sesión para usar el asistente.";
   }
@@ -62,6 +65,7 @@ export const aiChatService = {
       const body = {
         message: String(message || "").trim(),
         conversation_id: conversationId || undefined,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Bogota",
       };
       if (images?.length) {
         body.images = images.slice(0, 2).map((item) => ({
@@ -107,6 +111,15 @@ export const aiChatService = {
         conversationId: data.conversation_id || conversationId || null,
         model: data.model || null,
         imageUrls,
+        action: data.action?.task
+          ? {
+              ...data.action,
+              task: {
+                ...data.action.task,
+                time: String(data.action.task.time || "").slice(0, 5),
+              },
+            }
+          : data.action || null,
       };
     } catch (error) {
       return {

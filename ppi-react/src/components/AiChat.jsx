@@ -10,7 +10,7 @@ const WELCOME = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hola, soy el asistente de Recórdate. Puedo ayudarte a organizar tareas y leer fotos de horarios o apuntes. ¿En qué te ayudo?",
+    "Hola, soy el asistente de Recórdate. Puedo organizar tareas, crear alarmas cuando me indiques título, fecha y hora, y leer fotos de horarios o apuntes. ¿En qué te ayudo?",
   imageUrls: [],
 };
 
@@ -46,7 +46,7 @@ function readFileAsImage(file) {
  * Chat flotante del asistente de Recórdate (Gemini vía Edge Function ai-chat).
  * Soporta fotos (máx 2) e historial de conversaciones.
  */
-export default function AiChat({ enabled = true }) {
+export default function AiChat({ enabled = true, onTaskCreated }) {
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
@@ -127,7 +127,7 @@ export default function AiChat({ enabled = true }) {
         role: item.role,
         content: item.content,
         imageUrls: item.imageUrls || [],
-      })),
+      }))
     );
   };
 
@@ -183,6 +183,9 @@ export default function AiChat({ enabled = true }) {
     }
 
     if (result.conversationId) setConversationId(result.conversationId);
+    if (result.action?.type === "task_created" && result.action.task) {
+      onTaskCreated?.(result.action.task);
+    }
     setMessages((current) => [
       ...current,
       {
