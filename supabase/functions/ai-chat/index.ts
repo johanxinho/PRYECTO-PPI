@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.8-flash";
 const MAX_HISTORY = 16;
 const MAX_MESSAGE = 4000;
 const RATE_LIMIT = 30;
@@ -113,7 +113,10 @@ async function callGemini(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM }] },
         contents,
-        generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
+        generationConfig: {
+          maxOutputTokens: 1024,
+          thinkingConfig: { thinkingLevel: "low" },
+        },
       }),
     },
   );
