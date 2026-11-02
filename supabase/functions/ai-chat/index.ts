@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-3.6-flash";
 const MAX_HISTORY = 16;
 const MAX_MESSAGE = 4000;
 const RATE_LIMIT = 30;
