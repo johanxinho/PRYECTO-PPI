@@ -12,7 +12,12 @@ No inventes notas, claves ni datos que el usuario no te dio. Si no sabes algo de
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatImage = { mime_type: string; data: string };
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 const DEFAULT_ORIGINS = new Set([
   "https://johanxinho.github.io",
   "http://localhost:5173",
@@ -22,7 +27,10 @@ const DEFAULT_ORIGINS = new Set([
 function allowedOrigins() {
   return new Set([
     ...DEFAULT_ORIGINS,
-    ...(Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+    ...(Deno.env.get("ALLOWED_ORIGINS") ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
   ]);
 }
 
@@ -31,7 +39,11 @@ function isAllowedOrigin(req: Request) {
   return !origin || allowedOrigins().has(origin);
 }
 
-function json(data: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
+function json(
+  data: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -44,9 +56,12 @@ function json(data: unknown, status = 200, extraHeaders: Record<string, string> 
 function cors(req: Request) {
   const origin = req.headers.get("Origin");
   return {
-    ...(origin && allowedOrigins().has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
-    "Vary": "Origin",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    ...(origin && allowedOrigins().has(origin)
+      ? { "Access-Control-Allow-Origin": origin }
+      : {}),
+    Vary: "Origin",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
@@ -56,12 +71,18 @@ async function consumeRateLimit(
   userId: string,
 ) {
   void userId;
-  const { data, error } = await client.rpc("consume_ai_request", { request_limit: RATE_LIMIT });
+  const { data, error } = await client.rpc("consume_ai_request", {
+    request_limit: RATE_LIMIT,
+  });
   if (error) throw error;
   if (data !== true) throw new Error("RATE_LIMIT");
 }
 
-async function callGemini(history: ChatMessage[], message: string, images: ChatImage[]) {
+async function callGemini(
+  history: ChatMessage[],
+  message: string,
+  images: ChatImage[],
+) {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("MISSING_GEMINI_KEY");
 
@@ -74,7 +95,9 @@ async function callGemini(history: ChatMessage[], message: string, images: ChatI
       role: "user",
       parts: [
         ...(message ? [{ text: message }] : []),
-        ...images.map((image) => ({ inlineData: { mimeType: image.mime_type, data: image.data } })),
+        ...images.map((image) => ({
+          inlineData: { mimeType: image.mime_type, data: image.data },
+        })),
       ],
     },
   ];
@@ -111,10 +134,13 @@ async function callGemini(history: ChatMessage[], message: string, images: ChatI
 
 Deno.serve(async (req: Request) => {
   const headers = cors(req);
-  if (!isAllowedOrigin(req)) return json({ error: "origin_not_allowed" }, 403, headers);
+  if (!isAllowedOrigin(req))
+    return json({ error: "origin_not_allowed" }, 403, headers);
   if (req.method === "OPTIONS") return new Response("ok", { headers });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405, headers);
+  if (req.method !== "POST")
+    return json({ error: "method_not_allowed" }, 405, headers);
 
+  let stage = "authentication";
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -127,39 +153,52 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userError } = await userClient.auth.getUser();
-    if (userError || !userData.user) return json({ error: "unauthorized" }, 401, headers);
+    const { data: userData, error: userError } =
+      await userClient.auth.getUser();
+    if (userError || !userData.user)
+      return json({ error: "unauthorized" }, 401, headers);
     const userId = userData.user.id;
 
     const contentLength = Number(req.headers.get("Content-Length") || 0);
-    if (contentLength > 12 * 1024 * 1024) return json({ error: "payload_too_large" }, 413, headers);
+    if (contentLength > 12 * 1024 * 1024)
+      return json({ error: "payload_too_large" }, 413, headers);
     const body = await req.json().catch(() => ({}));
     const message = String(body.message ?? "").trim();
     const images: ChatImage[] = Array.isArray(body.images)
-      ? body.images.slice(0, 2).filter((image: ChatImage) => ALLOWED_IMAGE_TYPES.has(image?.mime_type) && typeof image?.data === "string" && image.data.length > 0)
+      ? body.images
+          .slice(0, 2)
+          .filter(
+            (image: ChatImage) =>
+              ALLOWED_IMAGE_TYPES.has(image?.mime_type) &&
+              typeof image?.data === "string" &&
+              image.data.length > 0,
+          )
       : [];
     if (images.some((image) => image.data.length > 6 * 1024 * 1024)) {
       return json({ error: "image_too_large" }, 413, headers);
     }
-    let conversationId = typeof body.conversation_id === "string"
-      ? body.conversation_id
-      : null;
+    let conversationId =
+      typeof body.conversation_id === "string" ? body.conversation_id : null;
     if ((!message && !images.length) || message.length > MAX_MESSAGE) {
       return json({ error: "invalid_message" }, 400, headers);
     }
 
+    stage = "rate_limit";
     await consumeRateLimit(userClient, userId);
 
     if (!conversationId) {
+      stage = "conversation_create";
       const { data: created, error: createError } = await userClient
         .from("ai_conversations")
         .insert({ user_id: userId, title: message.slice(0, 80) })
         .select("id")
         .single();
-      if (createError || !created) throw createError ?? new Error("create_failed");
+      if (createError || !created)
+        throw createError ?? new Error("create_failed");
       conversationId = created.id;
     }
 
+    stage = "history_read";
     const { data: prior, error: priorError } = await userClient
       .from("ai_messages")
       .select("role, content")
@@ -168,14 +207,27 @@ Deno.serve(async (req: Request) => {
     if (priorError) throw priorError;
 
     const history = (prior ?? []).filter(
-      (row): row is ChatMessage => row.role === "user" || row.role === "assistant",
+      (row): row is ChatMessage =>
+        row.role === "user" || row.role === "assistant",
     );
 
+    stage = "gemini";
     const reply = await callGemini(history, message, images);
 
+    stage = "message_save";
     const { error: saveError } = await userClient.from("ai_messages").insert([
-      { conversation_id: conversationId, user_id: userId, role: "user", content: message },
-      { conversation_id: conversationId, user_id: userId, role: "assistant", content: reply },
+      {
+        conversation_id: conversationId,
+        user_id: userId,
+        role: "user",
+        content: message,
+      },
+      {
+        conversation_id: conversationId,
+        user_id: userId,
+        role: "assistant",
+        content: reply,
+      },
     ]);
     if (saveError) throw saveError;
 
@@ -186,10 +238,18 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ reply, conversation_id: conversationId, model: MODEL }),
-      { status: 200, headers: { ...headers, "Content-Type": "application/json" } },
+      {
+        status: 200,
+        headers: { ...headers, "Content-Type": "application/json" },
+      },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
+    console.error("[ai-chat] request failed", {
+      stage,
+      name: error instanceof Error ? error.name : "UnknownError",
+      message: message.slice(0, 400),
+    });
     if (message === "RATE_LIMIT") {
       return new Response(JSON.stringify({ error: "rate_limit" }), {
         status: 429,
@@ -202,7 +262,13 @@ Deno.serve(async (req: Request) => {
         headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ error: "ai_failed" }), {
+    const errorCode =
+      stage === "gemini"
+        ? "gemini_failed"
+        : stage === "message_save"
+          ? "message_save_failed"
+          : "ai_failed";
+    return new Response(JSON.stringify({ error: errorCode }), {
       status: 500,
       headers: { ...headers, "Content-Type": "application/json" },
     });
