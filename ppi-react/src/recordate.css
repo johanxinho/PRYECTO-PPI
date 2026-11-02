@@ -1750,6 +1750,10 @@ html.translated-rtl body {
 .classroom-setup p, .classroom-note { color: var(--muted); line-height: 1.55; margin-top: 6px; font-size: 13px; }
 .classroom-setup code { color: var(--blush); }
 .classroom-actions { display: flex; align-items: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+.classroom-access-control { display: grid; gap: 8px; margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.025); }
+.classroom-access-control label { display: grid; gap: 6px; max-width: 320px; color: var(--ink-2); font-size: 12px; font-weight: 650; }
+.classroom-access-control select { min-height: 42px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; color: var(--ink); background: rgba(11,16,38,0.72); }
+.classroom-access-control p, .classroom-access-control small { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .classroom-summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
 .classroom-summary span { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; }
 .classroom-summary b { color: var(--ink); }

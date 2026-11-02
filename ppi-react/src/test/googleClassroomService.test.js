@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const COURSES_SCOPE = "https://www.googleapis.com/auth/classroom.courses.readonly";
 const WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.me.readonly";
+const STAFF_WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.students.readonly";
 
 function installGoogleTokenMock() {
   window.google = {
@@ -149,5 +150,15 @@ describe("googleClassroomService", () => {
       apiStatus: "PERMISSION_DENIED",
       message: "HTTP 403: El usuario no puede leer las tareas de este curso.",
     });
+  });
+
+  it("permite seleccionar la cuenta y solicita el scope de solo lectura para docentes", async () => {
+    const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+    await connectGoogleClassroom({ staff: true, selectAccount: true });
+
+    const [config] = window.google.accounts.oauth2.initTokenClient.mock.calls[0];
+    const tokenClient = window.google.accounts.oauth2.initTokenClient.mock.results[0].value;
+    expect(config.scope).toBe(`${COURSES_SCOPE} ${STAFF_WORK_SCOPE}`);
+    expect(tokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: "select_account consent" });
   });
 });

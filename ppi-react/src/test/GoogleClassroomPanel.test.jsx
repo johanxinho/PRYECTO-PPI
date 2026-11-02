@@ -1,10 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockListAssignments } = vi.hoisted(() => ({ mockListAssignments: vi.fn() }));
+const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom } = vi.hoisted(() => ({
+  mockListAssignments: vi.fn(),
+  mockConnectGoogleClassroom: vi.fn(),
+  mockDisconnectGoogleClassroom: vi.fn(),
+}));
 vi.mock("../services/googleClassroomService", () => ({
-  connectGoogleClassroom: vi.fn(),
-  disconnectGoogleClassroom: vi.fn(),
+  connectGoogleClassroom: (...args) => mockConnectGoogleClassroom(...args),
+  disconnectGoogleClassroom: (...args) => mockDisconnectGoogleClassroom(...args),
   isGoogleClassroomConfigured: true,
   listClassroomAssignments: (...args) => mockListAssignments(...args),
 }));
@@ -25,6 +29,8 @@ const assignment = {
 
 beforeEach(() => {
   mockListAssignments.mockReset();
+  mockConnectGoogleClassroom.mockReset().mockResolvedValue({ token: "test-token" });
+  mockDisconnectGoogleClassroom.mockReset();
   mockListAssignments.mockResolvedValue({
     courses: [{ id: "biology", name: "Biología" }],
     assignments: [assignment],
@@ -38,6 +44,7 @@ describe("GoogleClassroomPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
     await screen.findByText("Entrega de ecosistemas");
+    expect(mockConnectGoogleClassroom).toHaveBeenCalledWith({ staff: false, selectAccount: true });
 
     fireEvent.change(screen.getByRole("combobox", { name: "Anticipación de alarma para Entrega de ecosistemas" }), {
       target: { value: "1 hora antes" },
@@ -45,6 +52,31 @@ describe("GoogleClassroomPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /agregar tarea y alarma/i }));
 
     await waitFor(() => expect(onImport).toHaveBeenCalledWith(assignment, "1 hora antes"));
+  });
+
+  it("usa el rol docente seleccionado, sin pedir permisos de escritura", async () => {
+    render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Rol de esta cuenta en Google Classroom"), {
+      target: { value: "staff" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
+
+    await screen.findByText("Entrega de ecosistemas");
+    expect(mockConnectGoogleClassroom).toHaveBeenCalledWith({ staff: true, selectAccount: true });
+    expect(mockListAssignments).toHaveBeenCalledWith({ staff: true });
+  });
+
+  it("revoca la sesión anterior y permite elegir otra cuenta o rol", async () => {
+    render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
+    await screen.findByText("Entrega de ecosistemas");
+    fireEvent.click(screen.getByRole("button", { name: /cambiar cuenta o rol/i }));
+
+    await waitFor(() => {
+      expect(mockDisconnectGoogleClassroom).toHaveBeenCalledTimes(1);
+      expect(mockConnectGoogleClassroom).toHaveBeenCalledTimes(2);
+    });
+    expect(mockConnectGoogleClassroom).toHaveBeenNthCalledWith(2, { staff: false, selectAccount: true });
   });
 
   it("marca como agregada y bloquea una actividad ya importada", async () => {
@@ -97,6 +129,7 @@ describe("GoogleClassroomPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
 
     expect(await screen.findByText(/HTTP 403: Request had insufficient authentication scopes/)).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/Cambiar cuenta o rol/);
     expect(screen.queryByText("No hay tareas publicadas en esta materia.")).not.toBeInTheDocument();
   });
 

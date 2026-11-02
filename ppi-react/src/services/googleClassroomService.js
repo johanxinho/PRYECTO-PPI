@@ -37,7 +37,7 @@ function loadGoogleIdentityScript() {
   return scriptPromise;
 }
 
-export async function connectGoogleClassroom({ staff = false } = {}) {
+export async function connectGoogleClassroom({ staff = false, selectAccount = true } = {}) {
   if (!isGoogleClassroomConfigured) {
     throw new Error("Configura VITE_GOOGLE_CLIENT_ID para habilitar Google Classroom.");
   }
@@ -62,7 +62,8 @@ export async function connectGoogleClassroom({ staff = false } = {}) {
       error_callback: (error) =>
         reject(new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
     });
-    tokenClient.requestAccessToken({ prompt: accessToken ? "" : "consent" });
+    const prompt = selectAccount ? "select_account consent" : accessToken ? "" : "consent";
+    tokenClient.requestAccessToken({ prompt });
   });
 }
 

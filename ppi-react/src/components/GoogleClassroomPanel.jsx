@@ -31,6 +31,10 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
   const [failedCourses, setFailedCourses] = useState([]);
   const [error, setError] = useState("");
   const [partialWarning, setPartialWarning] = useState("");
+  const [accessMode, setAccessMode] = useState(() =>
+    ["profesor", "administrador"].includes(profile?.role) ? "staff" : "student",
+  );
+  const [connectedAccessMode, setConnectedAccessMode] = useState("");
 
   const applyClassroomResult = (result) => {
     const nextCourses = Array.isArray(result.courses) ? result.courses : [];
@@ -45,6 +49,12 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     const skipped = Number(result.skippedCourseCount) || 0;
     if (failed) details.push(`${failed} ${failed === 1 ? "curso no se pudo consultar" : "cursos no se pudieron consultar"}`);
     if (skipped) details.push(`${skipped} fuera del límite de consulta`);
+    const permissionDenied = nextFailedCourses.filter(
+      (failure) => Number(failure.status) === 403 || failure.apiStatus === "PERMISSION_DENIED",
+    ).length;
+    if (failed && permissionDenied === failed) {
+      details.push("Google negó el acceso de lectura; confirma la cuenta y el rol elegidos, y usa Cambiar cuenta o rol para reautorizar");
+    }
     setPartialWarning(
       details.length
         ? `Carga parcial: ${details.join("; ")}. Revisa el motivo en cada materia y vuelve a actualizar.`
@@ -63,7 +73,7 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     return { date: deadline.date || "", time: deadline.time || "" };
   };
 
-  const connect = async () => {
+  const connect = async ({ selectAccount = true } = {}) => {
     if (demo) {
       setError("Google Classroom no está disponible en la demostración local.");
       return;
@@ -72,9 +82,11 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     setError("");
     setPartialWarning("");
     try {
-      await connectGoogleClassroom({ staff: ["profesor", "administrador"].includes(profile?.role) });
-      const result = await listClassroomAssignments({ staff: ["profesor", "administrador"].includes(profile?.role) });
+      const staff = accessMode === "staff";
+      await connectGoogleClassroom({ staff, selectAccount });
+      const result = await listClassroomAssignments({ staff });
       applyClassroomResult(result);
+      setConnectedAccessMode(accessMode);
       setConnected(true);
     } catch (cause) {
       setError(cause?.message || "No se pudo conectar con Google Classroom.");
@@ -89,7 +101,7 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     setError("");
     setPartialWarning("");
     try {
-      const result = await listClassroomAssignments({ staff: ["profesor", "administrador"].includes(profile?.role) });
+      const result = await listClassroomAssignments({ staff: connectedAccessMode === "staff" });
       applyClassroomResult(result);
     } catch (cause) {
       setError(cause?.message || "No se pudieron actualizar las actividades de Classroom.");
@@ -104,8 +116,21 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     setAssignments([]);
     setCourses([]);
     setFailedCourses([]);
+    setConnectedAccessMode("");
     setError("");
     setPartialWarning("");
+  };
+
+  const reconnect = async () => {
+    disconnectGoogleClassroom();
+    setConnected(false);
+    setAssignments([]);
+    setCourses([]);
+    setFailedCourses([]);
+    setConnectedAccessMode("");
+    setError("");
+    setPartialWarning("");
+    await connect({ selectAccount: true });
   };
 
   const setManualDeadline = (assignment, field, value) => {
@@ -243,16 +268,42 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
             </button>
           ) : (
             <>
-              <button className="outline-button" type="button" onClick={refresh} disabled={loading}>
+              <button className="outline-button" type="button" onClick={refresh} disabled={loading || accessMode !== connectedAccessMode}>
                 <RefreshCw size={16} /> {loading ? "Actualizando..." : "Actualizar cursos"}
               </button>
-              <button className="text-button" type="button" onClick={disconnect}><LogOut size={15} /> Desconectar</button>
+              <button className="outline-button" type="button" onClick={reconnect} disabled={loading}>
+                <BookOpen size={16} /> Cambiar cuenta o rol
+              </button>
+              <button className="text-button" type="button" onClick={disconnect} disabled={loading}><LogOut size={15} /> Desconectar</button>
             </>
+          )}
+        </div>
+      )}
+      {isGoogleClassroomConfigured && (
+        <div className="classroom-access-control">
+          <label>
+            <span>Rol de esta cuenta en Google Classroom</span>
+            <select
+              aria-label="Rol de esta cuenta en Google Classroom"
+              value={accessMode}
+              onChange={(event) => setAccessMode(event.target.value)}
+              disabled={loading || demo}
+            >
+              <option value="student">Estudiante</option>
+              <option value="staff">Docente o administrador</option>
+            </select>
+          </label>
+          <p>Selecciona el rol real de la cuenta de Google y, al conectar, elige la cuenta inscrita en estos cursos. RECORDATE solo pide acceso de lectura.</p>
+          {connected && (
+            <small>Conexión autorizada como {connectedAccessMode === "staff" ? "docente o administrador" : "estudiante"}.</small>
           )}
         </div>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
       {partialWarning && <p className="classroom-warning" role="status">{partialWarning}</p>}
+      {connected && accessMode !== connectedAccessMode && (
+        <p className="classroom-warning" role="status">Cambiaste el rol. Pulsa «Cambiar cuenta o rol» para solicitar el permiso de lectura correspondiente y elegir la cuenta de Google.</p>
+      )}
       {connected && (
         <>
           <div className="classroom-summary">
