@@ -8,7 +8,7 @@ const missingBackend = () => ({
   error: "Supabase no está configurado en este entorno.",
 });
 
-function translateAiError(payload, fallback) {
+export function translateAiError(payload, fallback) {
   const code = payload?.error || payload?.message || "";
   if (code === "rate_limit") {
     return "Llegaste al límite de mensajes por ahora. Intenta en unos minutos.";
@@ -18,6 +18,18 @@ function translateAiError(payload, fallback) {
   }
   if (code === "gemini_failed") {
     return "No se pudo completar la respuesta de Gemini. Puede ser un problema temporal del proveedor o de su configuración.";
+  }
+  if (code === "gemini_timeout") {
+    return "Gemini tardó demasiado en responder. Inténtalo de nuevo en unos segundos.";
+  }
+  if (code === "account_inactive") {
+    return "Tu cuenta no está activa para usar el asistente. Contacta al administrador de RECORDATE.";
+  }
+  if (code === "conversation_not_found" || code === "invalid_conversation") {
+    return "Esa conversación ya no está disponible. Inicia un chat nuevo.";
+  }
+  if (code === "invalid_request_body") {
+    return "No se pudo leer el mensaje enviado. Vuelve a intentarlo.";
   }
   if (code === "message_save_failed") {
     return "La IA respondió, pero no se pudo guardar el mensaje. Intenta nuevamente.";
@@ -35,7 +47,7 @@ function translateAiError(payload, fallback) {
     return "Alguna foto pesa demasiado (máximo 6 MB por imagen).";
   }
   if (code === "payload_too_large") {
-    return "El envío es demasiado grande (máximo 12 MB).";
+    return "El envío es demasiado grande (máximo 13 MB en total).";
   }
   if (typeof payload?.detail === "string" && payload.detail.trim()) {
     return `No pude responder: ${payload.detail}`;

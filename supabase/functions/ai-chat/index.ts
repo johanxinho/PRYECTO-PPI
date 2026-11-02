@@ -5,11 +5,19 @@ import {
   resolveTimeZone,
   validateReminderArgs,
 } from "./taskAction.ts";
+import {
+  fetchJsonWithTimeout,
+  MAX_CHAT_HISTORY,
+  readBoundedJson,
+  recentChronologicalHistory,
+} from "./chatUtils.ts";
 
 const MODEL = "gemini-3.6-flash";
-const MAX_HISTORY = 16;
 const MAX_MESSAGE = 4000;
 const RATE_LIMIT = 30;
+const MAX_BODY_BYTES = 13 * 1024 * 1024;
+const GEMINI_TIMEOUT_MS = 25_000;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TASK_ACTION_TOOLS = [
   {
     functionDeclarations: [
@@ -144,7 +152,7 @@ async function callGemini(
   if (!apiKey) throw new Error("MISSING_GEMINI_KEY");
 
   const contents = [
-    ...history.slice(-MAX_HISTORY).map((item) => ({
+    ...history.slice(-MAX_CHAT_HISTORY).map((item) => ({
       role: item.role === "assistant" ? "model" : "user",
       parts: [{ text: item.content }],
     })),
@@ -168,7 +176,7 @@ async function callGemini(
     ? `\n\nLa fecha y hora local actual es ${localNow} (${timeZone}). Si la persona solicita crear una alarma y tienes título, fecha y hora, llama a create_reminder. Interpreta fechas relativas usando esta fecha local. No afirmes que la alarma fue creada hasta recibir el resultado de la herramienta. Si faltan datos, pregunta en texto y no uses la herramienta.`
     : "";
 
-  const response = await fetch(
+  const { response, payload } = await fetchJsonWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
     {
       method: "POST",
@@ -188,15 +196,16 @@ async function callGemini(
         },
       }),
     },
+    GEMINI_TIMEOUT_MS,
   );
 
-  const payload = await response.json();
+  const geminiPayload = payload as Record<string, any>;
   if (!response.ok) {
-    const detail = payload?.error?.message ?? `Gemini ${response.status}`;
+    const detail = geminiPayload?.error?.message ?? `Gemini ${response.status}`;
     throw new Error(detail);
   }
 
-  const parts = payload?.candidates?.[0]?.content?.parts ?? [];
+  const parts = geminiPayload?.candidates?.[0]?.content?.parts ?? [];
   const functionCall =
     parts.find((part: { functionCall?: unknown }) => part.functionCall)
       ?.functionCall ?? null;
@@ -235,11 +244,21 @@ Deno.serve(async (req: Request) => {
       return json({ error: "unauthorized" }, 401, headers);
     const userId = userData.user.id;
 
-    const contentLength = Number(req.headers.get("Content-Length") || 0);
-    if (contentLength > 12 * 1024 * 1024)
-      return json({ error: "payload_too_large" }, 413, headers);
-    const body = await req.json().catch(() => ({}));
-    const message = String(body.message ?? "").trim();
+    stage = "account_status";
+    const { error: activeAccountError } = await userClient.rpc("assert_active_account");
+    if (activeAccountError) {
+      if (/account_inactive/i.test(activeAccountError.message || "")) {
+        return json({ error: "account_inactive" }, 403, headers);
+      }
+      throw activeAccountError;
+    }
+
+    stage = "body_parse";
+    const body = await readBoundedJson(req, MAX_BODY_BYTES);
+    if (body.message !== undefined && typeof body.message !== "string") {
+      return json({ error: "invalid_message" }, 400, headers);
+    }
+    const message = typeof body.message === "string" ? body.message.trim() : "";
     const timeZone = resolveTimeZone(body.time_zone);
     const images: ChatImage[] = Array.isArray(body.images)
       ? body.images
@@ -254,10 +273,28 @@ Deno.serve(async (req: Request) => {
     if (images.some((image) => image.data.length > 6 * 1024 * 1024)) {
       return json({ error: "image_too_large" }, 413, headers);
     }
-    let conversationId =
-      typeof body.conversation_id === "string" ? body.conversation_id : null;
+    if (body.conversation_id !== undefined && body.conversation_id !== null &&
+      (typeof body.conversation_id !== "string" || !UUID_PATTERN.test(body.conversation_id))) {
+      return json({ error: "invalid_conversation" }, 400, headers);
+    }
+    let conversationId = typeof body.conversation_id === "string"
+      ? body.conversation_id
+      : null;
     if ((!message && !images.length) || message.length > MAX_MESSAGE) {
       return json({ error: "invalid_message" }, 400, headers);
+    }
+
+    if (conversationId) {
+      stage = "conversation_authorization";
+      const { data: ownedConversation, error: conversationError } = await userClient
+        .from("ai_conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .maybeSingle();
+      if (conversationError) throw conversationError;
+      if (!ownedConversation) {
+        return json({ error: "conversation_not_found" }, 404, headers);
+      }
     }
 
     stage = "rate_limit";
@@ -280,13 +317,12 @@ Deno.serve(async (req: Request) => {
       .from("ai_messages")
       .select("role, content")
       .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
+      .in("role", ["user", "assistant"])
+      .order("created_at", { ascending: false })
+      .limit(MAX_CHAT_HISTORY);
     if (priorError) throw priorError;
 
-    const history = (prior ?? []).filter(
-      (row): row is ChatMessage =>
-        row.role === "user" || row.role === "assistant",
-    );
+    const history = recentChronologicalHistory(prior);
 
     stage = "gemini";
     const geminiResult = await callGemini(
@@ -408,6 +444,15 @@ Deno.serve(async (req: Request) => {
         status: 500,
         headers: { ...headers, "Content-Type": "application/json" },
       });
+    }
+    if (message === "PAYLOAD_TOO_LARGE") {
+      return json({ error: "payload_too_large" }, 413, headers);
+    }
+    if (message === "INVALID_JSON" || message === "INVALID_CONTENT_LENGTH") {
+      return json({ error: "invalid_request_body" }, 400, headers);
+    }
+    if (message === "GEMINI_TIMEOUT") {
+      return json({ error: "gemini_timeout" }, 504, headers);
     }
     const errorCode =
       stage === "gemini"

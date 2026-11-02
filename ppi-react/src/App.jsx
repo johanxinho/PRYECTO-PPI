@@ -18,6 +18,8 @@ import { currentPath, pushRoute, resolveCurrentRoute } from "./paths";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, startAlarm, unlockAlarmAudio, normalizeAlarmVolume } from "./services/alarmService";
 import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
 import { enqueueAlarmTasks, removeAlarmTask } from "./services/alarmQueue";
+import { taskDueAtMs } from "./services/alarmSchedule";
+import { useModalFocus } from "./hooks/useModalFocus";
 import GoogleClassroomPanel from "./components/GoogleClassroomPanel";
 import {
   createTask,
@@ -369,7 +371,7 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
       <div className="form-grid">
         <label>
           Título
-          <input autoFocus maxLength={120} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
+          <input data-modal-initial-focus maxLength={120} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
         </label>
         <label>
           Materia
@@ -535,12 +537,21 @@ function App() {
   const activeAlarm = useRef(null);
   const alarmDialogRef = useRef(null);
   const alarmPreviousFocus = useRef(null);
+  const taskDialogRef = useRef(null);
+  const taskPreviousFocus = useRef(null);
+  const notificationButtonRef = useRef(null);
   const sidebarRef = useRef(null);
   const menuToggleRef = useRef(null);
   const wasMobileNavOpen = useRef(false);
   const demo = isDemoSession(session);
   const admin = isAdminRole(profile?.role);
   const teacher = profile?.role === "profesor" || admin;
+  const closeTaskForm = useCallback(() => {
+    setShowForm(false);
+    setEditingTask(null);
+    setAssignTarget(null);
+  }, []);
+  useModalFocus(showForm, taskDialogRef, taskPreviousFocus, closeTaskForm, Boolean(activeAlarmTaskId));
   useEffect(() => {
     const unlockFromGesture = () => { void unlockAlarmAudio(); };
     window.addEventListener("pointerdown", unlockFromGesture, { once: true, passive: true });
@@ -804,7 +815,7 @@ function App() {
       const dueAlarms = [];
       tasks.filter((task) => !task.completed).forEach((task) => {
         const offset = reminderOffsets.get(task.reminder) ?? 0;
-        const dueAt = new Date(`${task.date}T${task.time}`).getTime();
+        const dueAt = taskDueAtMs(task);
         if (!Number.isFinite(dueAt)) return;
         const reminderAt = snoozedUntil.current.get(task.id) || (dueAt - offset);
         if (now < reminderAt || now > dueAt + 60 * 60 * 1000 || alarmedTasks.current.has(task.id)) return;
@@ -875,6 +886,7 @@ function App() {
     done: tasks.filter((task) => task.completed).length,
   };
   const progress = tasks.length ? Math.round((stats.done / tasks.length) * 100) : 0;
+  const modalOpen = showForm || Boolean(activeAlarmTaskId);
   const saveTask = async (task) => {
     try {
       let saved;
@@ -895,14 +907,23 @@ function App() {
       const savedTask = attachment
         ? { ...saved, attachments: [...(saved.attachments || []), attachment] }
         : saved;
+      const scheduleChanged = editingTask?.id && (
+        editingTask.date !== savedTask.date ||
+        String(editingTask.time || "").slice(0, 5) !== String(savedTask.time || "").slice(0, 5) ||
+        (editingTask.timeZone || "America/Bogota") !== (savedTask.timeZone || "America/Bogota") ||
+        editingTask.reminder !== savedTask.reminder
+      );
+      if (scheduleChanged) {
+        alarmedTasks.current.delete(savedTask.id);
+        snoozedUntil.current.delete(savedTask.id);
+        setAlarmQueue((current) => removeAlarmTask(current, savedTask.id));
+      }
       setTasks((current) =>
         editingTask?.id
           ? current.map((item) => (item.id === savedTask.id ? savedTask : item))
           : [savedTask, ...current],
       );
-      setShowForm(false);
-      setEditingTask(null);
-      setAssignTarget(null);
+      closeTaskForm();
       setNotice(assignTarget ? `Actividad asignada a ${assignTarget.full_name}.` : "Actividad guardada correctamente.");
       return true;
     } catch (error) {
@@ -1000,10 +1021,11 @@ function App() {
       if (event.key !== "Tab" || !focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+      const focusIsOutside = !dialog?.contains(document.activeElement);
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog || focusIsOutside)) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog || focusIsOutside)) {
         event.preventDefault();
         first.focus();
       }
@@ -1013,18 +1035,6 @@ function App() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [activeAlarmTaskId]);
-  useEffect(() => {
-    if (!showForm) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape" && !activeAlarmTaskId) {
-        event.preventDefault();
-        setShowForm(false);
-        setAssignTarget(null);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showForm, activeAlarmTaskId]);
   const previewAlarm = async (sound, volume) => {
     const played = await playAlarm(sound, volume);
     setNotice(played
@@ -1113,7 +1123,14 @@ function App() {
       setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
     }
   };
+  const openTaskForm = (task = null, target = null, previousFocus = document.activeElement) => {
+    taskPreviousFocus.current = previousFocus instanceof HTMLElement ? previousFocus : null;
+    setEditingTask(task);
+    setAssignTarget(target);
+    setShowForm(true);
+  };
   const openNotification = async (notification) => {
+    const opener = notificationButtonRef.current;
     await markOneRead(notification);
     setNotificationsOpen(false);
     if (!notification.task_id) return;
@@ -1123,9 +1140,7 @@ function App() {
       setNotice("No se encontró la tarea asociada. Actualiza tu agenda e inténtalo de nuevo.");
       return;
     }
-    setEditingTask(task);
-    setAssignTarget(null);
-    setShowForm(true);
+    openTaskForm(task, null, opener);
   };
   const navigate = (nextView) => {
     setView(nextView);
@@ -1134,11 +1149,7 @@ function App() {
     setMobileNav(false);
     setFocusTask(null);
   };
-  const openNewTask = () => {
-    setEditingTask(null);
-    setAssignTarget(null);
-    setShowForm(true);
-  };
+  const openNewTask = () => openTaskForm();
   const loadDirectory = useCallback(async () => {
     if (!isStaffRole(profile?.role)) return;
     setDirectoryLoading(true);
@@ -1160,11 +1171,7 @@ function App() {
   const taskHandlers = {
     userId: session?.user?.id,
     onToggle: toggleTask,
-    onEdit: (task) => {
-      setAssignTarget(null);
-      setEditingTask(task);
-      setShowForm(true);
-    },
+    onEdit: (task) => openTaskForm(task),
     onDelete: removeTask,
     onFocus: setFocusTask,
     onAttachmentDelete: removeAttachment,
@@ -1364,11 +1371,7 @@ function App() {
           users={directory}
           loading={directoryLoading}
           busyId={busyUserId}
-          onAssign={(user) => {
-            setAssignTarget(user);
-            setEditingTask(null);
-            setShowForm(true);
-          }}
+          onAssign={(user) => openTaskForm(null, user)}
           onSetRole={async (user, role) => {
             if (!window.confirm(`¿Cambiar el rol de ${user.full_name} a ${roleLabel(role)}?`)) return;
             setBusyUserId(user.id);
@@ -1525,7 +1528,7 @@ function App() {
   return frame(
     <main className="app-shell">
       {/* Menú lateral con grupos para que las funciones nuevas sean fáciles de encontrar. */}
-      <aside id="app-sidebar" ref={sidebarRef} className={`sidebar ${mobileNav ? "is-open" : ""}`} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav ? "true" : undefined} aria-label="Menú principal">
+      <aside id="app-sidebar" ref={sidebarRef} className={`sidebar ${mobileNav ? "is-open" : ""}`} inert={modalOpen} aria-hidden={modalOpen ? "true" : undefined} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav ? "true" : undefined} aria-label="Menú principal">
         <div className="sidebar-head">
           <Brand light size="sm" />
           <LanguageSwitcher lang={lang} onChange={setLang} />
@@ -1563,8 +1566,8 @@ function App() {
           </button>
         </div>
       </aside>
-      <div className="mobile-overlay" aria-hidden="true" onClick={() => setMobileNav(false)} />
-      <section className="workspace" inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
+      <div className="mobile-overlay" inert={modalOpen} aria-hidden="true" onClick={() => setMobileNav(false)} />
+      <section className="workspace" inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
         {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
           <button ref={menuToggleRef} className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú" aria-expanded={mobileNav} aria-controls="app-sidebar"><Icons.Menu size={18} /></button>
@@ -1573,7 +1576,7 @@ function App() {
             <h1>{view === "Inicio" ? "Hoy" : view}</h1>
           </div>
           <div className="header-user">
-            <button className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}>
+            <button ref={notificationButtonRef} className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}>
               <Icons.Bell size={16} />
               {notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
             </button>
@@ -1608,7 +1611,7 @@ function App() {
           ) : renderMain()}
         </div>
       </section>
-      <nav className="bottom-nav" aria-label="Navegación móvil" inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
+      <nav className="bottom-nav" aria-label="Navegación móvil" inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
         {[
           ["Inicio", Icons.House],
           ["Mis tareas", Icons.ListTodo],
@@ -1626,27 +1629,27 @@ function App() {
         </button>
       </nav>
       {showForm && (
-        <div className="modal-backdrop">
-          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
+        <div className="modal-backdrop" inert={Boolean(activeAlarmTaskId)} aria-hidden={activeAlarmTaskId ? "true" : undefined}>
+          <section ref={taskDialogRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" tabIndex={-1}>
             <div className="modal-header">
               <div>
                 <span className="eyebrow accent-label">Agenda académica</span>
                 <h2 id="task-modal-title">{editingTask ? "Editar actividad" : assignTarget ? "Asignar actividad" : "Nueva actividad"}</h2>
               </div>
-              <button className="icon-button" onClick={() => { setShowForm(false); setAssignTarget(null); }} aria-label="Cerrar formulario"><Icons.X size={16} /></button>
+              <button className="icon-button" onClick={closeTaskForm} aria-label="Cerrar formulario"><Icons.X size={16} /></button>
             </div>
             <TaskForm
               key={editingTask?.id || assignTarget?.id || "new-task"}
               task={editingTask}
               assignTarget={assignTarget}
               onSave={saveTask}
-              onCancel={() => { setShowForm(false); setAssignTarget(null); }}
+              onCancel={closeTaskForm}
             />
           </section>
         </div>
       )}
       {!demo && hasSupabaseConfig && (
-        <div inert={mobileNav} aria-hidden={mobileNav ? "true" : undefined}>
+        <div inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
           <Suspense fallback={null}>
             <AiChat
               enabled
