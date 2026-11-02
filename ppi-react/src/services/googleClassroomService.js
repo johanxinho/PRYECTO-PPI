@@ -24,7 +24,10 @@ function loadGoogleIdentityScript() {
     script.async = true;
     script.defer = true;
     script.src = GOOGLE_SCRIPT;
-    script.onload = () => getGoogleApi()?.accounts?.oauth2 ? resolve() : reject(new Error("Google Identity Services no está disponible."));
+    script.onload = () =>
+      getGoogleApi()?.accounts?.oauth2
+        ? resolve()
+        : reject(new Error("Google Identity Services no está disponible."));
     script.onerror = () => reject(new Error("No se pudo cargar Google Identity Services."));
     if (!existing) document.head.appendChild(script);
   }).catch((error) => {
@@ -47,14 +50,17 @@ export async function connectGoogleClassroom({ staff = false } = {}) {
       scope,
       callback: (response) => {
         if (response?.error || !response?.access_token) {
-          reject(new Error(response?.error_description || "Google no concedió acceso a Classroom."));
+          reject(
+            new Error(response?.error_description || "Google no concedió acceso a Classroom.")
+          );
           return;
         }
         accessToken = response.access_token;
         expiresAt = Date.now() + Number(response.expires_in || 3600) * 1000;
         resolve({ token: accessToken, scope: response.scope || scope });
       },
-      error_callback: (error) => reject(new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
+      error_callback: (error) =>
+        reject(new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
     });
     tokenClient.requestAccessToken({ prompt: accessToken ? "" : "consent" });
   });
@@ -85,31 +91,56 @@ async function classroomRequest(path, params = {}) {
 async function listAllPages(path, params, field) {
   const items = [];
   let pageToken = "";
-  do {
+  const seenPageTokens = new Set();
+  while (true) {
     const payload = await classroomRequest(path, { ...params, pageSize: 100, pageToken });
     items.push(...(Array.isArray(payload[field]) ? payload[field] : []));
-    pageToken = payload.nextPageToken || "";
-  } while (pageToken && items.length < 250);
+    const nextPageToken = payload.nextPageToken || "";
+    if (!nextPageToken || seenPageTokens.has(nextPageToken)) break;
+    seenPageTokens.add(nextPageToken);
+    pageToken = nextPageToken;
+  }
   return items;
+}
+
+async function mapSettled(items, worker, concurrency = 5) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= items.length) return;
+      try {
+        results[index] = { status: "fulfilled", value: await worker(items[index]) };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 export async function listClassroomAssignments({ staff = false } = {}) {
   const courses = await listAllPages("courses", { courseStates: "ACTIVE" }, "courses");
-  const coursesToLoad = courses.slice(0, 30);
-  const settled = await Promise.allSettled(
-    coursesToLoad.map(async (course) => {
-      const work = await listAllPages(`courses/${encodeURIComponent(course.id)}/courseWork`, {
+  const settled = await mapSettled(courses, async (course) => {
+    const work = await listAllPages(
+      `courses/${encodeURIComponent(course.id)}/courseWork`,
+      {
         courseWorkStates: staff ? undefined : "PUBLISHED",
         orderBy: "dueDate asc,updateTime desc",
-      }, "courseWork");
-      return work.map((item) => normalizeClassroomAssignment(item, course));
-    }),
+      },
+      "courseWork"
+    );
+    return work.map((item) => normalizeClassroomAssignment(item, course));
+  });
+  const assignments = settled.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : []
   );
-  const assignments = settled.flatMap((result) => result.status === "fulfilled" ? result.value : []);
   return {
     courses,
     failedCourseCount: settled.filter((result) => result.status === "rejected").length,
-    skippedCourseCount: Math.max(0, courses.length - coursesToLoad.length),
+    skippedCourseCount: 0,
     assignments: assignments
       .filter((item) => item.date)
       .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),
@@ -118,13 +149,18 @@ export async function listClassroomAssignments({ staff = false } = {}) {
 
 function normalizeClassroomAssignment(item, course) {
   const dueDate = item.dueDate;
-  const date = dueDate?.year && dueDate?.month && dueDate?.day
-    ? `${String(dueDate.year).padStart(4, "0")}-${String(dueDate.month).padStart(2, "0")}-${String(dueDate.day).padStart(2, "0")}`
-    : "";
-  const dueTime = item.dueTime?.hours !== undefined
-    ? `${String(item.dueTime.hours).padStart(2, "0")}:${String(item.dueTime.minutes || 0).padStart(2, "0")}`
-    : "23:59";
-  const details = [item.description, item.alternateLink ? `Abrir en Google Classroom: ${item.alternateLink}` : ""]
+  const date =
+    dueDate?.year && dueDate?.month && dueDate?.day
+      ? `${String(dueDate.year).padStart(4, "0")}-${String(dueDate.month).padStart(2, "0")}-${String(dueDate.day).padStart(2, "0")}`
+      : "";
+  const dueTime =
+    item.dueTime?.hours !== undefined
+      ? `${String(item.dueTime.hours).padStart(2, "0")}:${String(item.dueTime.minutes || 0).padStart(2, "0")}`
+      : "23:59";
+  const details = [
+    item.description,
+    item.alternateLink ? `Abrir en Google Classroom: ${item.alternateLink}` : "",
+  ]
     .filter(Boolean)
     .join("\n\n");
   return {

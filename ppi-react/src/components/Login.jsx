@@ -19,7 +19,7 @@ function errorDetails(error) {
 
 /** True si el mensaje es un error (para estilo y role=alert). */
 function isErrorMessage(text) {
-  return /no (fue|fue posible|encontramos|existe)|error|incorrect|inválid|imposible|falla|falló|requiere|coincide|mínimo|escribe|alcanzó|desactiv|expir|revisa spam/i.test(
+  return /no (fue|fue posible|encontramos|existe|está)|error|incorrect|inválid|imposible|falla|falló|requiere|coincide|mínimo|escribe|alcanzó|desactiv|expir|revisa spam/i.test(
     text || ""
   );
 }
@@ -294,6 +294,36 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setMessage("");
+    if (!hasSupabaseConfig) {
+      setMessage("El inicio con Google requiere configurar Supabase.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: appUrl("/"),
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) {
+        const details = errorDetails(error);
+        setMessage(
+          details.includes("provider is not enabled") || details.includes("unsupported provider")
+            ? "El inicio con Google aún no está habilitado en Supabase. Avisa al administrador del proyecto."
+            : loginErrorMessage(error),
+        );
+        setLoading(false);
+      }
+    } catch {
+      setMessage("No fue posible conectar con el inicio de Google. Inténtalo de nuevo.");
+      setLoading(false);
+    }
+  };
+
   const messageClass = message
     ? `auth-message${isErrorMessage(message) ? " auth-message-error" : " auth-message-success"}`
     : "";
@@ -495,6 +525,11 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
             <button className="primary-button auth-submit" type="submit" disabled={loading}>
               {loading ? "Conectando..." : isSignUp ? "Crear mi cuenta" : "Iniciar sesión"}
               <ArrowRight size={16} />
+            </button>
+            <div className="auth-divider"><span>o continúa con</span></div>
+            <button className="outline-button auth-google-button" type="button" onClick={handleGoogleSignIn} disabled={loading}>
+              <span className="google-mark" aria-hidden="true">G</span>
+              {loading ? "Conectando con Google..." : "Continuar con Google"}
             </button>
           </form>
         )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } fro
 import * as Icons from "lucide-react";
 import Login from "./components/Login";
 const AiChat = lazy(() => import("./components/AiChat")); // Carga diferida: solo pesa cuando hay sesión real.
+const GoogleDrivePanel = lazy(() => import("./components/GoogleDrivePanel"));
 import UsersDirectory from "./components/UsersDirectory";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { Brand } from "./Brand";
@@ -59,7 +60,7 @@ import "./recordate.css";
 const navGroups = [
   { label: "Agenda", items: [["Inicio", Icons.House], ["Mis tareas", Icons.ListTodo], ["Calendario", Icons.CalendarDays]] },
   { label: "Seguimiento", items: [["Recordatorios", Icons.Bell], ["Prioridades", Icons.Flag], ["Modo enfoque", Icons.Focus]] },
-  { label: "Conecta", items: [["Compartir agendas", Icons.Share2], ["Mensajes", Icons.MessageCircle], ["Google Classroom", Icons.BookOpen]] },
+  { label: "Conecta", items: [["Compartir agendas", Icons.Share2], ["Mensajes", Icons.MessageCircle], ["Google Classroom", Icons.BookOpen], ["Google Drive", Icons.FolderOpen]] },
 ];
 const mobilePrimaryViews = ["Inicio", "Mis tareas", "Calendario", "Mensajes"];
 const routeViews = {
@@ -72,6 +73,7 @@ const routeViews = {
   "/compartir": "Compartir agendas",
   "/mensajes": "Mensajes",
   "/classroom": "Google Classroom",
+  "/drive": "Google Drive",
   "/administracion": "Administración",
   "/asignar": "Asignar tareas",
   "/perfil": "Perfil",
@@ -87,6 +89,7 @@ const viewRoutes = {
   "Compartir agendas": "/compartir",
   Mensajes: "/mensajes",
   "Google Classroom": "/classroom",
+  "Google Drive": "/drive",
   Administración: "/administracion",
   "Asignar tareas": "/asignar",
   Perfil: "/perfil",
@@ -1346,6 +1349,13 @@ function App() {
     if (view === "Google Classroom") {
       return <GoogleClassroomPanel profile={profile} tasks={tasks} demo={demo} onImport={importClassroomTask} />;
     }
+    if (view === "Google Drive") {
+      return (
+        <Suspense fallback={<p className="empty-copy" role="status">Preparando Google Drive...</p>}>
+          <GoogleDrivePanel demo={demo} />
+        </Suspense>
+      );
+    }
     if ((view === "Administración" && admin) || (view === "Asignar tareas" && teacher)) {
       return (
         <UsersDirectory
@@ -1401,6 +1411,7 @@ function App() {
           onTestNotification={testBrowserNotification}
           onPreviewAlarm={previewAlarm}
           onOpenClassroom={() => navigate("Google Classroom")}
+          onOpenDrive={() => navigate("Google Drive")}
           onAvatarUpload={async (file) => {
             try {
               if (demo) {
@@ -2204,7 +2215,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
   );
 }
 
-function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload, onOpenClassroom }) {
+function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload, onOpenClassroom, onOpenDrive }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -2304,7 +2315,12 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
               <span><b>Google Classroom</b><small>Consulta cursos e importa actividades con fecha límite.</small></span>
               <button className="outline-button" type="button" onClick={onOpenClassroom}><Icons.BookOpen size={15} /> Abrir</button>
             </div>
+            <div className="settings-action-row integration-action">
+              <span><b>Google Drive</b><small>Busca, abre, sube, renombra y organiza tus archivos.</small></span>
+              <button className="outline-button" type="button" onClick={onOpenDrive}><Icons.FolderOpen size={15} /> Abrir</button>
+            </div>
             {!import.meta.env.VITE_GOOGLE_CLIENT_ID && <p className="settings-hint">Requiere configurar el Client ID web de Google para activar la conexión.</p>}
+            <p className="settings-hint">Gemini ya está integrado en el asistente de RECORDATE. El chat no comparte automáticamente el contenido de Drive ni Classroom.</p>
           </section>
         </div>
         </>
