@@ -16,6 +16,12 @@ function translateAiError(payload, fallback) {
   if (code === "missing_gemini_key") {
     return "La IA aún no está configurada en el servidor (falta la clave de Gemini).";
   }
+  if (code === "gemini_failed") {
+    return "No se pudo completar la respuesta de Gemini. Puede ser un problema temporal del proveedor o de su configuración.";
+  }
+  if (code === "message_save_failed") {
+    return "La IA respondió, pero no se pudo guardar el mensaje. Intenta nuevamente.";
+  }
   if (code === "unauthorized") {
     return "Debes iniciar sesión para usar el asistente.";
   }
@@ -43,9 +49,7 @@ async function signImagePaths(paths = []) {
       signed.push(path);
       continue;
     }
-    const { data, error } = await supabase.storage
-      .from("ai-chat")
-      .createSignedUrl(path, 60 * 60);
+    const { data, error } = await supabase.storage.from("ai-chat").createSignedUrl(path, 60 * 60);
     if (!error && data?.signedUrl) signed.push(data.signedUrl);
   }
   return signed;
@@ -71,9 +75,7 @@ export const aiChatService = {
       if (error) {
         let parsed = null;
         try {
-          parsed = typeof error.context?.json === "function"
-            ? await error.context.json()
-            : null;
+          parsed = typeof error.context?.json === "function" ? await error.context.json() : null;
         } catch {
           parsed = null;
         }
@@ -81,13 +83,16 @@ export const aiChatService = {
           success: false,
           error: translateAiError(
             parsed || data,
-            error.message || "No fue posible contactar al asistente.",
+            error.message || "No fue posible contactar al asistente."
           ),
         };
       }
 
       if (data?.error) {
-        return { success: false, error: translateAiError(data, "No fue posible obtener respuesta.") };
+        return {
+          success: false,
+          error: translateAiError(data, "No fue posible obtener respuesta."),
+        };
       }
 
       if (!data?.reply) {
@@ -142,9 +147,7 @@ export const aiChatService = {
 
       const messages = [];
       for (const row of data || []) {
-        const urls = await signImagePaths(
-          Array.isArray(row.image_urls) ? row.image_urls : [],
-        );
+        const urls = await signImagePaths(Array.isArray(row.image_urls) ? row.image_urls : []);
         messages.push({
           id: row.id,
           role: row.role,
