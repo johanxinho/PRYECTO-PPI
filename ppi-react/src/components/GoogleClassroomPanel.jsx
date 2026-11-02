@@ -1,11 +1,12 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen, ExternalLink, GraduationCap, Import, LogOut, RefreshCw } from "lucide-react";
 import {
   connectGoogleClassroom,
   disconnectGoogleClassroom,
   isGoogleClassroomConfigured,
   listClassroomAssignments,
+  prepareGoogleClassroom,
 } from "../services/googleClassroomService";
 
 const alarmOptions = [
@@ -35,6 +36,11 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
     ["profesor", "administrador"].includes(profile?.role) ? "staff" : "student",
   );
   const [connectedAccessMode, setConnectedAccessMode] = useState("");
+
+  useEffect(() => {
+    if (demo || !isGoogleClassroomConfigured) return;
+    void prepareGoogleClassroom().catch(() => {});
+  }, [demo]);
 
   const applyClassroomResult = (result) => {
     const nextCourses = Array.isArray(result.courses) ? result.courses : [];

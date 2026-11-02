@@ -47,6 +47,10 @@ describe("googleClassroomService", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    document
+      .querySelectorAll('script[src="https://accounts.google.com/gsi/client"]')
+      .forEach((script) => script.remove());
     delete window.google;
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
@@ -160,5 +164,45 @@ describe("googleClassroomService", () => {
     const tokenClient = window.google.accounts.oauth2.initTokenClient.mock.results[0].value;
     expect(config.scope).toBe(`${COURSES_SCOPE} ${STAFF_WORK_SCOPE}`);
     expect(tokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: "select_account consent" });
+  });
+
+  it("muestra un error recuperable si Google Identity Services no carga", async () => {
+    vi.useFakeTimers();
+    delete window.google;
+    const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+    const pending = connectGoogleClassroom();
+    const assertion = expect(pending).rejects.toThrow(/tardó más de 15 segundos/);
+
+    await vi.advanceTimersByTimeAsync(15_000);
+    await assertion;
+  });
+
+  it("espera un nuevo clic si GIS termina de cargar después del clic inicial", async () => {
+    delete window.google;
+    const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+    const pending = connectGoogleClassroom();
+    const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    expect(script).not.toBeNull();
+
+    installGoogleTokenMock();
+    script.dispatchEvent(new Event("load"));
+
+    await expect(pending).rejects.toThrow(/Pulsa de nuevo/);
+    expect(window.google.accounts.oauth2.initTokenClient).not.toHaveBeenCalled();
+    await connectGoogleClassroom();
+    expect(window.google.accounts.oauth2.initTokenClient).toHaveBeenCalledTimes(1);
+  });
+
+  it("no deja la conexión pendiente si Google no devuelve el token OAuth", async () => {
+    vi.useFakeTimers();
+    window.google.accounts.oauth2.initTokenClient.mockImplementation(() => ({
+      requestAccessToken: vi.fn(),
+    }));
+    const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+    const pending = connectGoogleClassroom();
+    const assertion = expect(pending).rejects.toThrow(/Google no respondió en 60 segundos/);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await assertion;
   });
 });

@@ -3,6 +3,8 @@ const COURSES_SCOPE = "https://www.googleapis.com/auth/classroom.courses.readonl
 const STUDENT_WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.me.readonly";
 const STAFF_WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.students.readonly";
 const clientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+const SCRIPT_LOAD_TIMEOUT_MS = 15_000;
+const OAUTH_TIMEOUT_MS = 60_000;
 
 let scriptPromise = null;
 let tokenClient = null;
@@ -21,14 +23,32 @@ function loadGoogleIdentityScript() {
   scriptPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${GOOGLE_SCRIPT}"]`);
     const script = existing || document.createElement("script");
+    let settled = false;
+    let timeoutId;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
+      if (error) reject(error);
+      else resolve();
+    };
+    const handleLoad = () =>
+      getGoogleApi()?.accounts?.oauth2
+        ? finish()
+        : finish(new Error("Google Identity Services no está disponible."));
+    const handleError = () =>
+      finish(new Error("No se pudo cargar Google Identity Services."));
+    timeoutId = window.setTimeout(
+      () => finish(new Error("Google Identity Services tardó más de 15 segundos en cargar. Revisa tu conexión o el bloqueador del navegador y vuelve a intentar.")),
+      SCRIPT_LOAD_TIMEOUT_MS,
+    );
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", handleError, { once: true });
     script.async = true;
     script.defer = true;
     script.src = GOOGLE_SCRIPT;
-    script.onload = () =>
-      getGoogleApi()?.accounts?.oauth2
-        ? resolve()
-        : reject(new Error("Google Identity Services no está disponible."));
-    script.onerror = () => reject(new Error("No se pudo cargar Google Identity Services."));
     if (!existing) document.head.appendChild(script);
   }).catch((error) => {
     scriptPromise = null;
@@ -37,33 +57,64 @@ function loadGoogleIdentityScript() {
   return scriptPromise;
 }
 
-export async function connectGoogleClassroom({ staff = false, selectAccount = true } = {}) {
+export function prepareGoogleClassroom() {
+  if (!isGoogleClassroomConfigured) return Promise.resolve(false);
+  return loadGoogleIdentityScript().then(() => true);
+}
+
+export function connectGoogleClassroom({ staff = false, selectAccount = true } = {}) {
   if (!isGoogleClassroomConfigured) {
-    throw new Error("Configura VITE_GOOGLE_CLIENT_ID para habilitar Google Classroom.");
+    return Promise.reject(new Error("Configura VITE_GOOGLE_CLIENT_ID para habilitar Google Classroom."));
   }
-  await loadGoogleIdentityScript();
+  if (!getGoogleApi()?.accounts?.oauth2) {
+    return loadGoogleIdentityScript().then(() => {
+      throw new Error("Google Identity Services ya está listo. Pulsa de nuevo para abrir la autorización de forma segura.");
+    });
+  }
   const google = getGoogleApi();
   return new Promise((resolve, reject) => {
     const scope = [COURSES_SCOPE, staff ? STAFF_WORK_SCOPE : STUDENT_WORK_SCOPE].join(" ");
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope,
-      callback: (response) => {
-        if (response?.error || !response?.access_token) {
-          reject(
-            new Error(response?.error_description || "Google no concedió acceso a Classroom."),
-          );
-          return;
-        }
-        accessToken = response.access_token;
-        expiresAt = Date.now() + Number(response.expires_in || 3600) * 1000;
-        resolve({ token: accessToken, scope: response.scope || scope });
-      },
-      error_callback: (error) =>
-        reject(new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
-    });
-    const prompt = selectAccount ? "select_account consent" : accessToken ? "" : "consent";
-    tokenClient.requestAccessToken({ prompt });
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      tokenClient = null;
+      reject(new Error("Google no respondió en 60 segundos. Revisa si el navegador bloqueó la ventana de autorización y vuelve a intentar."));
+    }, OAUTH_TIMEOUT_MS);
+    const finish = (callback, value) => {
+      if (settled) return false;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      callback(value);
+      return true;
+    };
+    try {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope,
+        callback: (response) => {
+          if (settled) {
+            if (response?.access_token) {
+              google.accounts.oauth2.revoke?.(response.access_token, () => {});
+            }
+            return;
+          }
+          if (response?.error || !response?.access_token) {
+            finish(reject, new Error(response?.error_description || "Google no concedió acceso a Classroom."));
+            return;
+          }
+          accessToken = response.access_token;
+          expiresAt = Date.now() + Number(response.expires_in || 3600) * 1000;
+          finish(resolve, { token: accessToken, scope: response.scope || scope });
+        },
+        error_callback: (error) =>
+          finish(reject, new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
+      });
+      const prompt = selectAccount ? "select_account consent" : accessToken ? "" : "consent";
+      tokenClient.requestAccessToken({ prompt });
+    } catch (error) {
+      finish(reject, error instanceof Error ? error : new Error("No se pudo abrir el consentimiento de Google."));
+    }
   });
 }
 

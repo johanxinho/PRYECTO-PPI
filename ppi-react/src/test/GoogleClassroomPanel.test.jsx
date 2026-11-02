@@ -1,16 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom } = vi.hoisted(() => ({
+const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom, mockPrepareGoogleClassroom } = vi.hoisted(() => ({
   mockListAssignments: vi.fn(),
   mockConnectGoogleClassroom: vi.fn(),
   mockDisconnectGoogleClassroom: vi.fn(),
+  mockPrepareGoogleClassroom: vi.fn(),
 }));
 vi.mock("../services/googleClassroomService", () => ({
   connectGoogleClassroom: (...args) => mockConnectGoogleClassroom(...args),
   disconnectGoogleClassroom: (...args) => mockDisconnectGoogleClassroom(...args),
   isGoogleClassroomConfigured: true,
   listClassroomAssignments: (...args) => mockListAssignments(...args),
+  prepareGoogleClassroom: (...args) => mockPrepareGoogleClassroom(...args),
 }));
 
 import GoogleClassroomPanel from "../components/GoogleClassroomPanel";
@@ -31,6 +33,7 @@ beforeEach(() => {
   mockListAssignments.mockReset();
   mockConnectGoogleClassroom.mockReset().mockResolvedValue({ token: "test-token" });
   mockDisconnectGoogleClassroom.mockReset();
+  mockPrepareGoogleClassroom.mockReset().mockResolvedValue(true);
   mockListAssignments.mockResolvedValue({
     courses: [{ id: "biology", name: "Biología" }],
     assignments: [assignment],
@@ -38,6 +41,12 @@ beforeEach(() => {
 });
 
 describe("GoogleClassroomPanel", () => {
+  it("prepara Google Identity Services al abrir el panel sin pedir consentimiento", () => {
+    render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
+
+    expect(mockPrepareGoogleClassroom).toHaveBeenCalledTimes(1);
+  });
+
   it("pasa a RECORDATE la anticipación de alarma elegida para la actividad", async () => {
     const onImport = vi.fn().mockResolvedValue(true);
     render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={onImport} />);

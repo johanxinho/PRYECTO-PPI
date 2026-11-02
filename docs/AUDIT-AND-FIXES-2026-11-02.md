@@ -1,27 +1,31 @@
 # Auditoría y correcciones de RECORDATE — 2 de noviembre de 2026
 
-## Cambios aplicados
+## Correcciones incluidas
 
-- **Alarmas locales por zona horaria:** el reloj del dispositivo ya no determina por error cuándo debe dispararse una tarea. RECORDATE convierte fecha y hora con la zona IANA guardada en la tarea, usando la misma utilidad que el emisor Web Push. Si se modifica fecha, hora, zona o anticipación de una tarea, se limpia su estado de alarma/snooze para que se programe de nuevo.
-- **Accesibilidad de diálogos:** el formulario que realmente renderiza `App.jsx` ya no usa `autoFocus` antes de que el diálogo gestione el foco. El formulario contiene el foco de teclado, responde a Escape, devuelve foco al disparador y deja inertes los controles de fondo. Si se presenta una alarma mientras el formulario está abierto, este se oculta temporalmente del árbol accesible; el alertdialog recupera el foco si Tab lo encuentra fuera.
-- **Protección de `ai-chat`:** el servidor comprueba la sesión y el estado activo de la cuenta, valida que el hilo pertenezca al usuario, valida el UUID recibido, limita el cuerpo leyendo el stream (no solo confiando en `Content-Length`), conserva como máximo 16 mensajes recientes y aborta la solicitud a Gemini a los 25 segundos. Los límites/errores se traducen a mensajes útiles en el cliente.
-- **RLS de tareas asignadas:** las políticas de lectura, actualización y borrado de tareas asignadas ahora requieren simultáneamente cuenta activa, rol vigente de profesor/administrador y `assigned_by = auth.uid()`.
-- **CI para cambios futuros:** se agregó un workflow de Pull Request que ejecuta auditoría de dependencias de producción, lint, pruebas y build sin permisos para publicar.
+- **Alarmas por zona horaria:** RECORDATE calcula la alarma con la zona IANA guardada en la tarea y limpia el estado de alarma/snooze cuando se modifican los datos que determinan su programación.
+- **Accesibilidad de diálogos:** el formulario real administra el foco, contiene el tabulador, responde a Escape, devuelve el foco al disparador y vuelve inerte el fondo mientras el modal está abierto. El diálogo de alarma también evita que el foco escape.
+- **Seguridad y rendimiento de `ai-chat`:** el servidor valida sesión, cuenta activa y propiedad del hilo; limita el cuerpo de la solicitud y el historial, y aborta la llamada a Gemini a los 25 segundos. El cliente muestra errores más claros.
+- **RLS de tareas asignadas:** las políticas requieren cuenta activa, rol vigente de profesor/administrador y que quien asignó la tarea sea el usuario autenticado.
+- **CI de Pull Request:** se agregó un workflow de solo verificación que ejecuta auditoría de dependencias, lint, pruebas y build sin permisos de publicación.
+- **OAuth de Classroom:** Google Identity Services se precarga al abrir el panel (sin pedir consentimiento). Si no está disponible, la interfaz no intenta abrir el popup fuera del clic del usuario; ofrece un mensaje para reintentar. La carga del script tiene timeout de 15 s y la autorización, de 60 s, para evitar el estado indefinido “Conectando…”. Una respuesta tardía de Google se revoca.
 
-## Verificación ejecutada
+## Verificación de código y servicios
 
-- `pnpm exec vitest run`: **78 pruebas aprobadas en 18 archivos**.
+- `pnpm exec vitest run`: **82 pruebas aprobadas en 18 archivos**, incluidas regresiones de timeouts, precarga de GIS y el clic requerido para OAuth.
 - `pnpm run lint`: aprobado.
 - `pnpm run build`: aprobado.
-- `npm audit --omit=dev`: **0 vulnerabilidades de producción**.
-- El parser de Node verificó la sintaxis de `ai-chat/index.ts` y `ai-chat/chatUtils.ts`.
-- Supabase confirmó `ai-chat` activa en **versión 14**, con `verify_jwt=true`.
-- La llamada de humo sin sesión al endpoint de `ai-chat` devolvió **401**, como corresponde a una función protegida.
-- Se aplicó la migración `staff_task_policy_role_guard_20261102094500` (versión registrada por Supabase: `20261102145550`) y una consulta posterior confirmó `is_staff()` en las tres políticas indicadas.
-- El workflow de GitHub Pages del commit `2ab21df` terminó con éxito. El HTML publicado, sus recursos CSS/JS y los chunks diferidos de IA y Drive respondieron HTTP 200; el bundle vigente contiene el código de foco modal esperado.
+- `npm audit --omit=dev`: **0 vulnerabilidades de producción** en la revisión previa; este hotfix no modifica dependencias.
+- Node verificó la sintaxis de `ai-chat/index.ts` y `ai-chat/chatUtils.ts`.
+- Supabase confirmó `ai-chat` activa en versión 14 con `verify_jwt=true`; la llamada anónima de humo devolvió 401.
+- Supabase registró la migración `staff_task_policy_role_guard_20261102094500` (versión `20261102145550`) y la consulta posterior confirmó el control de rol en las tres políticas correspondientes.
+- El despliegue de Pages del commit `551c027` había servido la aplicación y sus assets con HTTP 200. El hotfix de Classroom descrito aquí todavía necesita commit, publicación y smoke test.
 
-## Dependencias externas que requieren validación de cuenta
+## Resultado de la prueba real de Classroom
 
-Un **HTTP 403 de Google Classroom no se resuelve solo habilitando la API**. La cuenta debe tener acceso real al curso y las tareas, y el consentimiento OAuth debe incluir el scope de lectura correcto para el rol (estudiante o docente). Tras el despliegue confirmado, reconectar Classroom eligiendo la cuenta y el rol correctos; si persiste el 403, revisar el permiso del curso y el estado de publicación/consentimiento de la aplicación en Google Cloud.
+Se abrió la aplicación publicada con la sesión de RECORDATE del usuario. Classroom estaba desconectado; se seleccionó el rol **Estudiante** y se pulsó **Conectar Google Classroom**. La interfaz permaneció en **“Conectando…”** durante más de 40 segundos, sin mostrar autorización ni error. Por ello, en esa sesión todavía **no se pudo confirmar la lectura real de cursos o tareas ni resolver de extremo a extremo el HTTP 403**.
 
-La sesión disponible no permitió ejecutar una prueba autenticada con la cuenta real del usuario, así que no se afirma que la lectura de todas las tareas de Classroom esté validada de extremo a extremo.
+El hotfix evita que ese bloqueo quede girando indefinidamente y prepara el script de Google antes del clic. Tras publicarlo, se debe volver a conectar con la cuenta Google que realmente está inscrita en los cursos. Si aparece una pantalla de consentimiento, revisar los scopes solicitados; si después de autorizar se reciben 403 por materia, comprobar que la cuenta pertenece a esos cursos y que el rol elegido (estudiante o docente) coincide con la cuenta.
+
+## Límites y estado de cierre
+
+Un HTTP 403 no se resuelve solo habilitando Classroom API: la cuenta debe tener acceso real al curso y el consentimiento debe corresponder al rol y scope de lectura adecuados. La auditoría de código está verificada, pero el proyecto no debe declararse completamente terminado hasta publicar este hotfix y completar una conexión OAuth real que muestre las actividades esperadas (o un error específico y reproducible que apunte a la configuración externa).
