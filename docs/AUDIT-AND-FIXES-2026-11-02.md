@@ -13,7 +13,9 @@
 
 La suite completa ejecutó **85 pruebas aprobadas en 18 archivos**; también pasaron `pnpm run lint` y `pnpm run build`. Las nuevas regresiones comprueban la restauración de una sesión de Classroom tras recargar el módulo, el rechazo de tokens vencidos, la limpieza al desconectar y la restauración automática de rol/cursos en el panel. `npm audit --omit=dev` había reportado 0 vulnerabilidades de producción en la revisión previa; este cambio no modifica dependencias. Node verificó la sintaxis de `ai-chat/index.ts` y `ai-chat/chatUtils.ts`.
 
-Supabase confirmó `ai-chat` activa en versión 14 con `verify_jwt=true`; la llamada anónima de humo devolvió 401. También registró la migración `staff_task_policy_role_guard_20261102094500` (versión `20261102145550`) y la consulta posterior confirmó el control de rol en las tres políticas correspondientes. El código de persistencia ya pasó las verificaciones locales y queda pendiente publicar y hacer smoke test de sus nuevos assets de GitHub Pages.
+Supabase confirmó `ai-chat` activa en versión 14 con `verify_jwt=true`; la llamada anónima de humo devolvió 401. También registró la migración `staff_task_policy_role_guard_20261102094500` (versión `20261102145550`) y la consulta posterior confirmó el control de rol en las tres políticas correspondientes.
+
+El arreglo se publicó desde `main` en el commit **`03ba7ee`**. GitHub Actions terminó correctamente el workflow [41473981360](https://github.com/johanxinho/PRYECTO-PPI/actions/runs/41473981360); Pages registró el build `ec597d5`. El smoke test público verificó la portada con HTTP 200, **7 assets JS/CSS con HTTP 200** y la clave `recordate.google-classroom.session.v1` en el bundle publicado. `/classroom` devuelve HTTP 404 por el alojamiento estático de GitHub Pages, pero entrega la shell SPA (`id="root"` y assets), por lo que el cliente puede renderizar la ruta.
 
 ## Resultado de la prueba real de Classroom
 
