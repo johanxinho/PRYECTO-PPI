@@ -18,9 +18,10 @@
 - Supabase confirmó `ai-chat` activa en **versión 14**, con `verify_jwt=true`.
 - La llamada de humo sin sesión al endpoint de `ai-chat` devolvió **401**, como corresponde a una función protegida.
 - Se aplicó la migración `staff_task_policy_role_guard_20261102094500` (versión registrada por Supabase: `20261102145550`) y una consulta posterior confirmó `is_staff()` en las tres políticas indicadas.
+- El workflow de GitHub Pages del commit `2ab21df` terminó con éxito. El HTML publicado, sus recursos CSS/JS y los chunks diferidos de IA y Drive respondieron HTTP 200; el bundle vigente contiene el código de foco modal esperado.
 
 ## Dependencias externas que requieren validación de cuenta
 
-Un **HTTP 403 de Google Classroom no se resuelve solo habilitando la API**. La cuenta debe tener acceso real al curso y las tareas, y el consentimiento OAuth debe incluir el scope de lectura correcto para el rol (estudiante o docente). Después de desplegar este código, reconectar Classroom eligiendo la cuenta y el rol correctos; si persiste el 403, revisar el permiso del curso y el estado de publicación/consentimiento de la aplicación en Google Cloud.
+Un **HTTP 403 de Google Classroom no se resuelve solo habilitando la API**. La cuenta debe tener acceso real al curso y las tareas, y el consentimiento OAuth debe incluir el scope de lectura correcto para el rol (estudiante o docente). Tras el despliegue confirmado, reconectar Classroom eligiendo la cuenta y el rol correctos; si persiste el 403, revisar el permiso del curso y el estado de publicación/consentimiento de la aplicación en Google Cloud.
 
-La sesión disponible no permitió ejecutar una prueba autenticada con la cuenta real del usuario, así que no se afirma que la lectura de todas las tareas de Classroom esté validada de extremo a extremo. La confirmación del nuevo despliegue público queda sujeta a que GitHub Actions termine correctamente tras publicar el commit.
+La sesión disponible no permitió ejecutar una prueba autenticada con la cuenta real del usuario, así que no se afirma que la lectura de todas las tareas de Classroom esté validada de extremo a extremo.
