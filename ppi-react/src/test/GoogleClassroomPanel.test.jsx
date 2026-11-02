@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom, mockPrepareGoogleClassroom } = vi.hoisted(() => ({
+const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom, mockPrepareGoogleClassroom, mockRestoreGoogleClassroomSession } = vi.hoisted(() => ({
   mockListAssignments: vi.fn(),
   mockConnectGoogleClassroom: vi.fn(),
   mockDisconnectGoogleClassroom: vi.fn(),
   mockPrepareGoogleClassroom: vi.fn(),
+  mockRestoreGoogleClassroomSession: vi.fn(),
 }));
 vi.mock("../services/googleClassroomService", () => ({
   connectGoogleClassroom: (...args) => mockConnectGoogleClassroom(...args),
@@ -13,6 +14,7 @@ vi.mock("../services/googleClassroomService", () => ({
   isGoogleClassroomConfigured: true,
   listClassroomAssignments: (...args) => mockListAssignments(...args),
   prepareGoogleClassroom: (...args) => mockPrepareGoogleClassroom(...args),
+  restoreGoogleClassroomSession: (...args) => mockRestoreGoogleClassroomSession(...args),
 }));
 
 import GoogleClassroomPanel from "../components/GoogleClassroomPanel";
@@ -34,6 +36,7 @@ beforeEach(() => {
   mockConnectGoogleClassroom.mockReset().mockResolvedValue({ token: "test-token" });
   mockDisconnectGoogleClassroom.mockReset();
   mockPrepareGoogleClassroom.mockReset().mockResolvedValue(true);
+  mockRestoreGoogleClassroomSession.mockReset().mockReturnValue(null);
   mockListAssignments.mockResolvedValue({
     courses: [{ id: "biology", name: "Biología" }],
     assignments: [assignment],
@@ -45,6 +48,16 @@ describe("GoogleClassroomPanel", () => {
     render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
 
     expect(mockPrepareGoogleClassroom).toHaveBeenCalledTimes(1);
+  });
+
+  it("restaura el rol y vuelve a cargar cursos tras una recarga sin pedir OAuth otra vez", async () => {
+    mockRestoreGoogleClassroomSession.mockReturnValue({ staff: false, expiresAt: Date.now() + 3_600_000 });
+    render(<GoogleClassroomPanel profile={{ role: "profesor" }} tasks={[]} onImport={vi.fn()} />);
+
+    expect(screen.getByLabelText("Rol de esta cuenta en Google Classroom")).toHaveValue("student");
+    await waitFor(() => expect(mockListAssignments).toHaveBeenCalledWith({ staff: false }));
+    expect(await screen.findByRole("button", { name: /actualizar cursos/i })).toBeEnabled();
+    expect(mockConnectGoogleClassroom).not.toHaveBeenCalled();
   });
 
   it("pasa a RECORDATE la anticipación de alarma elegida para la actividad", async () => {

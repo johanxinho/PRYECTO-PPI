@@ -10,6 +10,68 @@ let scriptPromise = null;
 let tokenClient = null;
 let accessToken = null;
 let expiresAt = 0;
+let sessionStaff = null;
+const SESSION_STORAGE_KEY = "recordate.google-classroom.session.v1";
+
+function getSessionStorage() {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredSession() {
+  accessToken = null;
+  expiresAt = 0;
+  sessionStaff = null;
+  try {
+    getSessionStorage()?.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable; the in-memory session is still cleared.
+  }
+}
+
+function persistSession(staff) {
+  sessionStaff = Boolean(staff);
+  try {
+    getSessionStorage()?.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({ version: 1, token: accessToken, expiresAt, staff: sessionStaff }),
+    );
+  } catch {
+    // Keep the current in-memory session if browser storage is unavailable.
+  }
+}
+
+export function restoreGoogleClassroomSession() {
+  const storage = getSessionStorage();
+  if (!storage || !isGoogleClassroomConfigured) return null;
+  try {
+    const raw = storage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    const savedExpiresAt = Number(saved?.expiresAt);
+    if (
+      saved?.version !== 1 ||
+      typeof saved.token !== "string" ||
+      !saved.token ||
+      !Number.isFinite(savedExpiresAt) ||
+      savedExpiresAt <= Date.now() ||
+      typeof saved.staff !== "boolean"
+    ) {
+      clearStoredSession();
+      return null;
+    }
+    accessToken = saved.token;
+    expiresAt = savedExpiresAt;
+    sessionStaff = saved.staff;
+    return { staff: sessionStaff, expiresAt };
+  } catch {
+    clearStoredSession();
+    return null;
+  }
+}
 
 export const isGoogleClassroomConfigured = Boolean(clientId && !clientId.includes("tu_client_id"));
 
@@ -105,6 +167,7 @@ export function connectGoogleClassroom({ staff = false, selectAccount = true } =
           }
           accessToken = response.access_token;
           expiresAt = Date.now() + Number(response.expires_in || 3600) * 1000;
+          persistSession(staff);
           finish(resolve, { token: accessToken, scope: response.scope || scope });
         },
         error_callback: (error) =>
@@ -119,7 +182,9 @@ export function connectGoogleClassroom({ staff = false, selectAccount = true } =
 }
 
 function requireToken() {
+  if (!accessToken) restoreGoogleClassroomSession();
   if (!accessToken || Date.now() >= expiresAt) {
+    clearStoredSession();
     throw new Error("La autorización de Google expiró. Vuelve a conectar Classroom.");
   }
   return accessToken;
@@ -134,7 +199,7 @@ async function classroomRequest(path, params = {}) {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (response.status === 401) accessToken = null;
+    if (response.status === 401) clearStoredSession();
     const apiError = payload?.error || {};
     const error = new Error(apiError.message || `Google Classroom respondió ${response.status}.`);
     error.name = "GoogleClassroomApiError";
@@ -267,9 +332,12 @@ function normalizeClassroomAssignment(item, course) {
 export function disconnectGoogleClassroom() {
   const google = getGoogleApi();
   if (accessToken && google?.accounts?.oauth2?.revoke) {
-    google.accounts.oauth2.revoke(accessToken, () => {});
+    try {
+      google.accounts.oauth2.revoke(accessToken, () => {});
+    } catch {
+      // Always clear the local session, even if Google's revocation request fails.
+    }
   }
-  accessToken = null;
-  expiresAt = 0;
+  clearStoredSession();
   tokenClient = null;
 }

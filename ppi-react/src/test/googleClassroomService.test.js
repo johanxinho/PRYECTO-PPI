@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const COURSES_SCOPE = "https://www.googleapis.com/auth/classroom.courses.readonly";
 const WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.me.readonly";
 const STAFF_WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.students.readonly";
+const SESSION_STORAGE_KEY = "recordate.google-classroom.session.v1";
 
 function installGoogleTokenMock() {
   window.google = {
@@ -42,12 +43,14 @@ async function connectService() {
 describe("googleClassroomService", () => {
   beforeEach(() => {
     vi.resetModules();
+    sessionStorage.clear();
     vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
     installGoogleTokenMock();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    sessionStorage.clear();
     document
       .querySelectorAll('script[src="https://accounts.google.com/gsi/client"]')
       .forEach((script) => script.remove());
@@ -164,6 +167,50 @@ describe("googleClassroomService", () => {
     const tokenClient = window.google.accounts.oauth2.initTokenClient.mock.results[0].value;
     expect(config.scope).toBe(`${COURSES_SCOPE} ${STAFF_WORK_SCOPE}`);
     expect(tokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: "select_account consent" });
+  });
+
+  it("restaura la sesión de estudiante tras recargar el módulo en la misma pestaña", async () => {
+    const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+    await connectGoogleClassroom({ staff: false });
+    const saved = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY));
+    expect(saved).toMatchObject({ version: 1, token: "test-classroom-token", staff: false });
+    expect(saved.expiresAt).toBeGreaterThan(Date.now());
+
+    vi.resetModules();
+    const restoredService = await import("../services/googleClassroomService");
+    expect(restoredService.restoreGoogleClassroomSession()).toEqual({ staff: false, expiresAt: saved.expiresAt });
+    const fetchMock = vi.fn(async () => response({ courses: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await restoredService.listClassroomAssignments({ staff: false });
+
+    expect(result.courses).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({ headers: { Authorization: "Bearer test-classroom-token" } }),
+    );
+  });
+
+  it("elimina la sesión persistida al desconectar y descarta tokens caducados", async () => {
+    const { connectGoogleClassroom, disconnectGoogleClassroom } = await import("../services/googleClassroomService");
+    await connectGoogleClassroom({ staff: false });
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).not.toBeNull();
+    window.google.accounts.oauth2.revoke.mockImplementation(() => {
+      throw new Error("Google no disponible");
+    });
+    disconnectGoogleClassroom();
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
+
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      token: "expired-token",
+      expiresAt: Date.now() - 1,
+      staff: false,
+    }));
+    vi.resetModules();
+    const restoredService = await import("../services/googleClassroomService");
+    expect(restoredService.restoreGoogleClassroomSession()).toBeNull();
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
 
   it("muestra un error recuperable si Google Identity Services no carga", async () => {

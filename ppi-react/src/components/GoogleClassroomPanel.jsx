@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BookOpen, ExternalLink, GraduationCap, Import, LogOut, RefreshCw } from "lucide-react";
 import {
   connectGoogleClassroom,
@@ -7,6 +7,7 @@ import {
   isGoogleClassroomConfigured,
   listClassroomAssignments,
   prepareGoogleClassroom,
+  restoreGoogleClassroomSession,
 } from "../services/googleClassroomService";
 
 const alarmOptions = [
@@ -21,8 +22,9 @@ const alarmOptions = [
 ];
 
 export default function GoogleClassroomPanel({ profile, tasks = [], onImport, demo = false }) {
-  const [connected, setConnected] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [restoredSession] = useState(() => (demo ? null : restoreGoogleClassroomSession()));
+  const [connected, setConnected] = useState(() => Boolean(restoredSession));
+  const [loading, setLoading] = useState(() => Boolean(restoredSession));
   const [importingId, setImportingId] = useState("");
   const [alarmOffsets, setAlarmOffsets] = useState({});
   const [manualDeadlines, setManualDeadlines] = useState({});
@@ -33,16 +35,15 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
   const [error, setError] = useState("");
   const [partialWarning, setPartialWarning] = useState("");
   const [accessMode, setAccessMode] = useState(() =>
-    ["profesor", "administrador"].includes(profile?.role) ? "staff" : "student",
+    restoredSession
+      ? restoredSession.staff ? "staff" : "student"
+      : ["profesor", "administrador"].includes(profile?.role) ? "staff" : "student",
   );
-  const [connectedAccessMode, setConnectedAccessMode] = useState("");
+  const [connectedAccessMode, setConnectedAccessMode] = useState(() =>
+    restoredSession ? restoredSession.staff ? "staff" : "student" : "",
+  );
 
-  useEffect(() => {
-    if (demo || !isGoogleClassroomConfigured) return;
-    void prepareGoogleClassroom().catch(() => {});
-  }, [demo]);
-
-  const applyClassroomResult = (result) => {
+  const applyClassroomResult = useCallback((result) => {
     const nextCourses = Array.isArray(result.courses) ? result.courses : [];
     const nextAssignments = Array.isArray(result.assignments) ? result.assignments : [];
     const nextFailedCourses = Array.isArray(result.failedCourses) ? result.failedCourses : [];
@@ -66,7 +67,39 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
         ? `Carga parcial: ${details.join("; ")}. Revisa el motivo en cada materia y vuelve a actualizar.`
         : "",
     );
-  };
+  }, []);
+
+  const handleSessionFailure = useCallback((cause, fallback) => {
+    setError(cause?.message || fallback);
+    if (cause?.status === 401 || /expiró/i.test(cause?.message || "")) {
+      disconnectGoogleClassroom();
+      setConnected(false);
+      setConnectedAccessMode("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (demo || !isGoogleClassroomConfigured) return;
+    let active = true;
+    void prepareGoogleClassroom().catch(() => {});
+    if (restoredSession) {
+      void listClassroomAssignments({ staff: restoredSession.staff })
+        .then((result) => {
+          if (!active) return;
+          applyClassroomResult(result);
+          setConnected(true);
+        })
+        .catch((cause) => {
+          if (active) handleSessionFailure(cause, "No se pudo restaurar la sesión de Google Classroom.");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [demo, restoredSession, applyClassroomResult, handleSessionFailure]);
 
   const isImported = (assignment) =>
     locallyImported.has(assignment.externalId) ||
@@ -110,7 +143,7 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
       const result = await listClassroomAssignments({ staff: connectedAccessMode === "staff" });
       applyClassroomResult(result);
     } catch (cause) {
-      setError(cause?.message || "No se pudieron actualizar las actividades de Classroom.");
+      handleSessionFailure(cause, "No se pudieron actualizar las actividades de Classroom.");
     } finally {
       setLoading(false);
     }
