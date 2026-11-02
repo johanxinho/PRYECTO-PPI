@@ -51,7 +51,7 @@ export async function connectGoogleClassroom({ staff = false } = {}) {
       callback: (response) => {
         if (response?.error || !response?.access_token) {
           reject(
-            new Error(response?.error_description || "Google no concedió acceso a Classroom.")
+            new Error(response?.error_description || "Google no concedió acceso a Classroom."),
           );
           return;
         }
@@ -83,7 +83,13 @@ async function classroomRequest(path, params = {}) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401) accessToken = null;
-    throw new Error(payload?.error?.message || `Google Classroom respondió ${response.status}.`);
+    const apiError = payload?.error || {};
+    const error = new Error(apiError.message || `Google Classroom respondió ${response.status}.`);
+    error.name = "GoogleClassroomApiError";
+    error.status = response.status;
+    error.apiStatus = apiError.status || "";
+    error.reason = apiError.errors?.[0]?.reason || "";
+    throw error;
   }
   return payload;
 }
@@ -121,6 +127,17 @@ async function mapSettled(items, worker, concurrency = 5) {
   return results;
 }
 
+function describeCourseError(error) {
+  const message = String(error?.message || "No se pudieron consultar las actividades de este curso.").trim();
+  const status = Number(error?.status);
+  return {
+    status: Number.isFinite(status) && status > 0 ? status : null,
+    apiStatus: String(error?.apiStatus || ""),
+    reason: String(error?.reason || ""),
+    message: status ? `HTTP ${status}: ${message}` : message,
+  };
+}
+
 export async function listClassroomAssignments({ staff = false } = {}) {
   const courses = await listAllPages("courses", { courseStates: "ACTIVE" }, "courses");
   const settled = await mapSettled(courses, async (course) => {
@@ -130,20 +147,33 @@ export async function listClassroomAssignments({ staff = false } = {}) {
         courseWorkStates: staff ? undefined : "PUBLISHED",
         orderBy: "dueDate asc,updateTime desc",
       },
-      "courseWork"
+      "courseWork",
     );
     return work.map((item) => normalizeClassroomAssignment(item, course));
   });
   const assignments = settled.flatMap((result) =>
-    result.status === "fulfilled" ? result.value : []
+    result.status === "fulfilled" ? result.value : [],
   );
+  const failedCourses = settled.flatMap((result, index) => {
+    if (result.status !== "rejected") return [];
+    const course = courses[index];
+    return [{
+      courseId: String(course.id),
+      courseName: course.name || String(course.id),
+      ...describeCourseError(result.reason),
+    }];
+  });
+
   return {
     courses,
-    failedCourseCount: settled.filter((result) => result.status === "rejected").length,
+    failedCourses,
+    failedCourseCount: failedCourses.length,
     skippedCourseCount: 0,
-    assignments: assignments
-      .filter((item) => item.date)
-      .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),
+    assignments: assignments.sort((a, b) => {
+      const dueAtA = `${a.date || "9999-12-31"}T${a.time || "23:59"}`;
+      const dueAtB = `${b.date || "9999-12-31"}T${b.time || "23:59"}`;
+      return dueAtA.localeCompare(dueAtB);
+    }),
   };
 }
 
@@ -153,10 +183,12 @@ function normalizeClassroomAssignment(item, course) {
     dueDate?.year && dueDate?.month && dueDate?.day
       ? `${String(dueDate.year).padStart(4, "0")}-${String(dueDate.month).padStart(2, "0")}-${String(dueDate.day).padStart(2, "0")}`
       : "";
-  const dueTime =
+  const time =
     item.dueTime?.hours !== undefined
       ? `${String(item.dueTime.hours).padStart(2, "0")}:${String(item.dueTime.minutes || 0).padStart(2, "0")}`
-      : "23:59";
+      : date
+        ? "23:59"
+        : "";
   const details = [
     item.description,
     item.alternateLink ? `Abrir en Google Classroom: ${item.alternateLink}` : "",
@@ -170,12 +202,12 @@ function normalizeClassroomAssignment(item, course) {
     title: item.title || "Actividad de Google Classroom",
     subject: course.name || "Google Classroom",
     date,
-    time: dueTime,
+    time,
     priority: "Media",
     reminder: "30 minutos antes",
     description: details,
     classroomUrl: item.alternateLink || `https://classroom.google.com/c/${course.id}`,
-    courseId: course.id,
+    courseId: String(course.id),
     courseName: course.name || "Google Classroom",
   };
 }

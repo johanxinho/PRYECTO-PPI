@@ -14,8 +14,8 @@ function installGoogleTokenMock() {
                 access_token: "test-classroom-token",
                 expires_in: 3600,
                 scope: `${COURSES_SCOPE} ${WORK_SCOPE}`,
-              })
-            )
+              }),
+            ),
           ),
         })),
         revoke: vi.fn(),
@@ -28,10 +28,21 @@ function response(payload) {
   return { ok: true, status: 200, json: async () => payload };
 }
 
-describe("googleClassroomService pagination", () => {
+function errorResponse(status, payload) {
+  return { ok: false, status, json: async () => payload };
+}
+
+async function connectService() {
+  const { connectGoogleClassroom } = await import("../services/googleClassroomService");
+  await connectGoogleClassroom();
+  return import("../services/googleClassroomService");
+}
+
+describe("googleClassroomService", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
+    installGoogleTokenMock();
   });
 
   afterEach(() => {
@@ -41,7 +52,6 @@ describe("googleClassroomService pagination", () => {
   });
 
   it("carga todos los cursos y actividades, sin topes locales de 30 cursos o 250 tareas", async () => {
-    installGoogleTokenMock();
     const courses = Array.from({ length: 35 }, (_, index) => ({
       id: `course-${index}`,
       name: `Curso ${index}`,
@@ -73,16 +83,71 @@ describe("googleClassroomService pagination", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const { connectGoogleClassroom, listClassroomAssignments } =
-      await import("../services/googleClassroomService");
-    await connectGoogleClassroom();
+    const { listClassroomAssignments } = await connectService();
     const result = await listClassroomAssignments();
 
     expect(result.courses).toHaveLength(35);
     expect(result.assignments).toHaveLength(260);
     expect(new Set(result.assignments.map((item) => item.externalId)).size).toBe(260);
+    expect(result.failedCourses).toEqual([]);
     expect(result.skippedCourseCount).toBe(0);
     expect(maxConcurrentRequests).toBeGreaterThan(1);
     expect(maxConcurrentRequests).toBeLessThanOrEqual(5);
+  });
+
+  it("conserva tareas publicadas que no tienen fecha de entrega", async () => {
+    const courses = [{ id: "course-bio", name: "Biología" }];
+    const fetchMock = vi.fn(async (request) => {
+      const url = new URL(request);
+      if (url.pathname.endsWith("/courses")) return response({ courses });
+      return response({
+        courseWork: [
+          { id: "with-date", title: "Ensayo", dueDate: { year: 2026, month: 11, day: 5 } },
+          { id: "without-date", title: "Lectura", description: "Revisar el capítulo 2." },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { listClassroomAssignments } = await connectService();
+    const result = await listClassroomAssignments();
+
+    expect(result.assignments).toHaveLength(2);
+    expect(result.assignments.find((item) => item.externalId.endsWith("without-date"))).toMatchObject({
+      title: "Lectura",
+      courseId: "course-bio",
+      courseName: "Biología",
+      date: "",
+      time: "",
+    });
+  });
+
+  it("conserva el código y mensaje de un fallo por curso", async () => {
+    const courses = [{ id: "course-403", name: "Álgebra" }];
+    const fetchMock = vi.fn(async (request) => {
+      const url = new URL(request);
+      if (url.pathname.endsWith("/courses")) return response({ courses });
+      return errorResponse(403, {
+        error: {
+          code: 403,
+          status: "PERMISSION_DENIED",
+          message: "El usuario no puede leer las tareas de este curso.",
+        },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { listClassroomAssignments } = await connectService();
+    const result = await listClassroomAssignments();
+
+    expect(result.assignments).toEqual([]);
+    expect(result.failedCourseCount).toBe(1);
+    expect(result.failedCourses[0]).toMatchObject({
+      courseId: "course-403",
+      courseName: "Álgebra",
+      status: 403,
+      apiStatus: "PERMISSION_DENIED",
+      message: "HTTP 403: El usuario no puede leer las tareas de este curso.",
+    });
   });
 });
