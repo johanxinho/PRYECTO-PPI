@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 import { assetUrl } from "../paths";
 
 const ALARM_VIBRATION = [500, 180, 500, 180, 900];
@@ -29,7 +30,7 @@ export async function registerRecordateServiceWorker() {
  */
 export async function showBrowserNotification({
   title = "RECORDATE",
-  body = "Tienes una actividad pendiente.",
+  body = localizeService("services.notification.pending"),
   taskId = null,
   tag = "recordate-notification",
   requireInteraction = true,
@@ -55,7 +56,7 @@ export async function showBrowserNotification({
         timestamp: Date.now(),
         icon: assetUrl("/favicon.svg"),
         badge: assetUrl("/favicon.svg"),
-        actions: [{ action: "open", title: "Ver en RECORDATE" }],
+        actions: [{ action: "open", title: localizeService("services.notification.viewBrand") }],
         data: { taskId, url: targetUrl },
       });
       return true;

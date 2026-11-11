@@ -52,10 +52,10 @@ describe('authService', () => {
       expect(result).toContain('No fue posible completar');
     });
 
-    it('should handle error with Spanish message', () => {
+    it('should not expose an unknown provider message in Spanish', () => {
       const error = { message: 'El usuario ya existe' };
       const result = authService.translateAuthError(error);
-      expect(result).toBe('El usuario ya existe');
+      expect(result).toContain('No fue posible completar');
     });
 
     it('should handle empty error', () => {

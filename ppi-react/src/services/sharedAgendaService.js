@@ -1,17 +1,24 @@
+import { localizeService } from "./localize.js";
 // @ts-nocheck
 import { supabase } from '../supabaseClient';
 import { listSharedTasks, revokeSharedTask, shareTask } from '../dataService';
 
+const safeShareError = (error) => {
+  console.error('Shared agenda request failed', error);
+  if (error?.message === localizeService('services.shared.noActivities')) return error.message;
+  return localizeService('services.shared.operationFailed');
+};
+
 export const sharedAgendaService = {
   async shareAgenda(userId, targetEmail, tasks = []) {
     try {
-      if (!tasks.length) throw new Error('No hay actividades para compartir');
+      if (!tasks.length) throw new Error(localizeService('services.shared.noActivities'));
       const results = await Promise.all(
         tasks.map(async (task) => shareTask(task.id, targetEmail)),
       );
       return { success: true, data: results };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: safeShareError(error) };
     }
   },
 
@@ -29,7 +36,7 @@ export const sharedAgendaService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: safeShareError(error) };
     }
   },
 
@@ -38,7 +45,7 @@ export const sharedAgendaService = {
       await revokeSharedTask(agendaId);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: safeShareError(error) };
     }
   },
 };

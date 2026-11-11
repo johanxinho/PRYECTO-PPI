@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useRef, useState } from "react";
+import { useI18n } from "../i18n/I18nProvider";
 import {
   Cloud,
   Download,
@@ -24,20 +25,19 @@ import {
 } from "../services/googleDriveService";
 
 function formatModifiedDate(value) {
-  if (!value) return "Fecha no disponible";
+  if (!value) return "";
   const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Fecha no disponible"
-    : new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(date);
+  return Number.isNaN(date.getTime()) ? "" : date;
 }
 
 function fileTypeLabel(file) {
-  if (file.mimeType === "application/vnd.google-apps.folder") return "Carpeta";
-  if (file.mimeType?.startsWith("application/vnd.google-apps.")) return "Documento de Google";
-  return file.mimeType || "Archivo";
+  if (file.mimeType === "application/vnd.google-apps.folder") return "integrations.drive.folder";
+  if (file.mimeType?.startsWith("application/vnd.google-apps.")) return "integrations.drive.googleDoc";
+  return file.mimeType || "integrations.drive.file";
 }
 
 export default function GoogleDrivePanel({ demo = false }) {
+  const { t, lang } = useI18n();
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busyFileId, setBusyFileId] = useState("");
@@ -57,7 +57,7 @@ export default function GoogleDrivePanel({ demo = false }) {
 
   const connect = async () => {
     if (demo) {
-      setError("Google Drive no está disponible en la demostración.");
+      setError(t("integrations.drive.demoUnavailable"));
       return;
     }
     setLoading(true);
@@ -67,7 +67,7 @@ export default function GoogleDrivePanel({ demo = false }) {
       setConnected(true);
       await loadFiles({ query: search.trim(), pageToken: "" });
     } catch (cause) {
-      setError(cause?.message || "No se pudo conectar con Google Drive.");
+      setError(cause?.message || t("integrations.drive.connectError"));
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function GoogleDrivePanel({ demo = false }) {
     try {
       await loadFiles({ query: activeQuery, pageToken: "" });
     } catch (cause) {
-      setError(cause?.message || "No se pudo actualizar Google Drive.");
+      setError(cause?.message || t("integrations.drive.refreshError"));
       if (/expiró|vuelve a conectar/i.test(cause?.message || "")) setConnected(false);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function GoogleDrivePanel({ demo = false }) {
     try {
       await loadFiles({ query: search.trim(), pageToken: "" });
     } catch (cause) {
-      setError(cause?.message || "No se pudo buscar en Google Drive.");
+      setError(cause?.message || t("integrations.drive.searchError"));
       if (/expiró|vuelve a conectar/i.test(cause?.message || "")) setConnected(false);
     } finally {
       setLoading(false);
@@ -107,7 +107,7 @@ export default function GoogleDrivePanel({ demo = false }) {
     try {
       await loadFiles({ query: activeQuery, pageToken: nextPageToken, append: true });
     } catch (cause) {
-      setError(cause?.message || "No se pudieron cargar más archivos.");
+      setError(cause?.message || t("integrations.drive.loadMoreError"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function GoogleDrivePanel({ demo = false }) {
       await uploadDriveFile(file);
       await loadFiles({ query: activeQuery, pageToken: "" });
     } catch (cause) {
-      setError(cause?.message || "No se pudo subir el archivo a Google Drive.");
+      setError(cause?.message || t("integrations.drive.uploadError"));
     } finally {
       setLoading(false);
     }
@@ -143,14 +143,14 @@ export default function GoogleDrivePanel({ demo = false }) {
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (cause) {
-      setError(cause?.message || "No se pudo descargar el archivo.");
+      setError(cause?.message || t("integrations.drive.downloadError"));
     } finally {
       setBusyFileId("");
     }
   };
 
   const rename = async (file) => {
-    const name = window.prompt("Nuevo nombre del archivo", file.name);
+    const name = window.prompt(t("integrations.drive.newFileName"), file.name);
     if (name === null || !name.trim() || name.trim() === file.name) return;
     setBusyFileId(file.id);
     setError("");
@@ -160,21 +160,21 @@ export default function GoogleDrivePanel({ demo = false }) {
         current.map((item) => (item.id === file.id ? { ...item, ...updated } : item))
       );
     } catch (cause) {
-      setError(cause?.message || "No se pudo cambiar el nombre del archivo.");
+      setError(cause?.message || t("integrations.drive.renameError"));
     } finally {
       setBusyFileId("");
     }
   };
 
   const moveToTrash = async (file) => {
-    if (!window.confirm(`¿Mover “${file.name}” a la papelera de Google Drive?`)) return;
+    if (!window.confirm(t("integrations.drive.trashConfirm", { name: file.name }))) return;
     setBusyFileId(file.id);
     setError("");
     try {
       await trashDriveFile(file.id);
       setFiles((current) => current.filter((item) => item.id !== file.id));
     } catch (cause) {
-      setError(cause?.message || "No se pudo mover el archivo a la papelera.");
+      setError(cause?.message || t("integrations.drive.trashError"));
     } finally {
       setBusyFileId("");
     }
@@ -191,21 +191,16 @@ export default function GoogleDrivePanel({ demo = false }) {
 
   return (
     <section className="panel-view classroom-view drive-view">
-      <span className="eyebrow accent-label">Servicios conectados</span>
-      <h2>Google Drive</h2>
-      <p className="panel-intro">
-        Busca y abre todos tus archivos, sube archivos nuevos, cambia nombres o muévelos a la
-        papelera. Google solicitará el permiso de Drive; el token se mantiene solo en esta pestaña y
-        tendrás que volver a conectar cuando expire.
-      </p>
+      <span className="eyebrow accent-label">{t("integrations.common.connectedServices")}</span>
+      <h2 translate="no">Google Drive</h2>
+      <p className="panel-intro">{t("integrations.drive.description")}</p>
       {!isGoogleDriveConfigured ? (
         <div className="classroom-setup">
           <Cloud size={26} />
           <div>
-            <strong>Falta configurar el Client ID web de Google</strong>
+            <strong>{t("integrations.common.missingClientId")}</strong>
             <p>
-              Define <code>VITE_GOOGLE_CLIENT_ID</code> en el entorno de compilación y autoriza el
-              origen de GitHub Pages en Google Cloud.
+              {t("integrations.drive.setupDetails")}
             </p>
           </div>
         </div>
@@ -218,12 +213,12 @@ export default function GoogleDrivePanel({ demo = false }) {
               onClick={connect}
               disabled={loading || demo}
             >
-              <Cloud size={16} /> {loading ? "Conectando..." : "Conectar Google Drive"}
+              <Cloud size={16} /> {loading ? t("integrations.common.connecting") : t("integrations.drive.connect")}
             </button>
           ) : (
             <>
               <button className="outline-button" type="button" onClick={refresh} disabled={loading}>
-                <RefreshCw size={16} /> {loading ? "Actualizando..." : "Actualizar archivos"}
+                <RefreshCw size={16} /> {loading ? t("integrations.common.updating") : t("integrations.drive.refresh")}
               </button>
               <button
                 className="outline-button"
@@ -231,18 +226,18 @@ export default function GoogleDrivePanel({ demo = false }) {
                 onClick={() => fileInput.current?.click()}
                 disabled={loading}
               >
-                <Upload size={16} /> Subir archivo
+                <Upload size={16} /> {t("integrations.drive.upload")}
               </button>
               <input
                 ref={fileInput}
                 type="file"
                 className="drive-file-input"
-                aria-label="Seleccionar archivo para subir a Drive"
+                aria-label={t("integrations.drive.selectUploadAria")}
                 onChange={upload}
                 hidden
               />
               <button className="text-button" type="button" onClick={disconnect} disabled={loading}>
-                <LogOut size={15} /> Desconectar
+                <LogOut size={15} /> {t("integrations.common.disconnect")}
               </button>
             </>
           )}
@@ -250,21 +245,21 @@ export default function GoogleDrivePanel({ demo = false }) {
       )}
       {connected && (
         <form className="drive-search" onSubmit={searchFiles}>
-          <label htmlFor="drive-search-input">Buscar en tus archivos de Drive</label>
+          <label htmlFor="drive-search-input">{t("integrations.drive.searchLabel")}</label>
           <div className="drive-search-row">
             <input
               id="drive-search-input"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nombre o contenido del archivo"
+              placeholder={t("integrations.drive.searchPlaceholder")}
             />
             <button
               className="outline-button"
               type="submit"
               disabled={loading}
-              aria-label="Buscar archivos"
+              aria-label={t("integrations.drive.searchAria")}
             >
-              <Search size={16} /> Buscar
+              <Search size={16} /> {t("integrations.drive.search")}
             </button>
           </div>
         </form>
@@ -278,20 +273,20 @@ export default function GoogleDrivePanel({ demo = false }) {
         <>
           <div className="classroom-summary">
             <span>
-              <b>{files.length}</b> archivos cargados
+              <b>{files.length}</b> {t("integrations.drive.filesLoaded", { count: files.length })}
             </span>
-            <span>Permiso completo de Drive</span>
+            <span>{t("integrations.drive.fullPermission")}</span>
           </div>
           <div className="classroom-list">
             {!files.length && !loading && (
-              <p className="empty-copy">No se encontraron archivos para esta búsqueda.</p>
+              <p className="empty-copy">{t("integrations.drive.noFiles")}</p>
             )}
             {files.map((file) => (
               <article className="classroom-item drive-file" key={file.id}>
                 <div className="classroom-item-details">
-                  <span className="eyebrow">{fileTypeLabel(file)}</span>
+                  <span className="eyebrow">{t(fileTypeLabel(file))}</span>
                   <h3>{file.name}</h3>
-                  <p>Modificado: {formatModifiedDate(file.modifiedTime)}</p>
+                  <p>{t("integrations.drive.modified")}: {(file.modifiedTime ? new Intl.DateTimeFormat(lang === "es" ? "es-CO" : "en-US", { dateStyle: "medium" }).format(new Date(file.modifiedTime)) : t("integrations.drive.dateUnavailable"))}</p>
                 </div>
                 <div className="classroom-item-actions drive-file-actions">
                   {file.webViewLink && (
@@ -301,7 +296,7 @@ export default function GoogleDrivePanel({ demo = false }) {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink size={14} /> Abrir
+                      <ExternalLink size={14} /> {t("integrations.drive.open")}
                     </a>
                   )}
                   <button
@@ -309,7 +304,7 @@ export default function GoogleDrivePanel({ demo = false }) {
                     type="button"
                     onClick={() => download(file)}
                     disabled={loading || busyFileId === file.id}
-                    aria-label={`Descargar ${file.name}`}
+                    aria-label={t("integrations.drive.downloadAria", { name: file.name })}
                   >
                     <Download size={14} />
                   </button>
@@ -318,7 +313,7 @@ export default function GoogleDrivePanel({ demo = false }) {
                     type="button"
                     onClick={() => rename(file)}
                     disabled={loading || busyFileId === file.id}
-                    aria-label={`Renombrar ${file.name}`}
+                    aria-label={t("integrations.drive.renameAria", { name: file.name })}
                   >
                     <Pencil size={14} />
                   </button>
@@ -327,7 +322,7 @@ export default function GoogleDrivePanel({ demo = false }) {
                     type="button"
                     onClick={() => moveToTrash(file)}
                     disabled={loading || busyFileId === file.id}
-                    aria-label={`Mover ${file.name} a la papelera`}
+                    aria-label={t("integrations.drive.trashAria", { name: file.name })}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -342,15 +337,13 @@ export default function GoogleDrivePanel({ demo = false }) {
               onClick={loadMore}
               disabled={loading}
             >
-              <FolderOpen size={15} /> {loading ? "Cargando..." : "Cargar más archivos"}
+              <FolderOpen size={15} /> {loading ? t("integrations.common.loading") : t("integrations.drive.loadMore")}
             </button>
           )}
         </>
       )}
       <p className="classroom-note">
-        Google concede a esta conexión capacidad de ver y administrar todos los archivos de Drive.
-        La acción de papelera siempre pide confirmación y los archivos pueden restaurarse desde
-        Google Drive. Revoca el acceso desde tu cuenta de Google cuando quieras.
+        {t("integrations.drive.note")}
       </p>
     </section>
   );

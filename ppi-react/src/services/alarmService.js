@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 // Alarmas locales con Web Audio; no descargan audio remoto ni exponen datos del usuario.
 export const DEFAULT_ALARM_SOUND = "classic";
 export const DEFAULT_ALARM_VOLUME = 0.55;
@@ -5,10 +6,10 @@ export const ALARM_DURATION_MS = 30_000;
 export const ALARM_REPEAT_MS = 1_500;
 
 export const ALARM_SOUNDS = [
-  { value: "classic", label: "Sirena potente", description: "Barrido insistente de dos tonos" },
-  { value: "digital", label: "Digital fuerte", description: "Pulsos electrónicos agudos y repetidos" },
-  { value: "chime", label: "Campanilla", description: "Secuencia ascendente clara" },
-  { value: "gentle", label: "Suave", description: "Tonos más cálidos para estudiar" },
+  { value: "classic", label: localizeService("services.alarm.classic"), description: localizeService("services.alarm.classicDescription") },
+  { value: "digital", label: localizeService("services.alarm.digital"), description: localizeService("services.alarm.digitalDescription") },
+  { value: "chime", label: localizeService("services.alarm.chime"), description: localizeService("services.alarm.chimeDescription") },
+  { value: "gentle", label: localizeService("services.alarm.gentle"), description: localizeService("services.alarm.gentleDescription") },
 ];
 
 const MAX_GAIN = 0.9;

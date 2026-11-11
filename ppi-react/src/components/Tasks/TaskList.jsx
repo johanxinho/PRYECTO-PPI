@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { ListTodo } from "lucide-react";
+import { useI18n } from "../../i18n";
 import PriorityBadge from "./PriorityBadge";
 import TaskCard from "./TaskCard";
 
@@ -12,7 +13,7 @@ export default function TaskList({
   tasks,
   title,
   subtitle,
-  empty = "No hay actividades registradas.",
+  empty,
   userId,
   compact = false,
   focusOnly = false,
@@ -22,6 +23,7 @@ export default function TaskList({
   onFocus,
   onAttachmentDelete,
 }) {
+  const { t } = useI18n();
   return (
     <section className={`task-list-section ${compact ? "compact-list" : ""}`}>
       {title && (
@@ -61,8 +63,8 @@ export default function TaskList({
       ) : (
         <div className="empty-state">
           <ListTodo size={28} />
-          <h3>{empty}</h3>
-          <p>Las actividades que agregues aparecer\u00e1n aqu\u00ed.</p>
+          <h3>{empty || t("tasks.list.emptyDefault")}</h3>
+          <p>{t("tasks.list.emptyHint")}</p>
         </div>
       )}
     </section>

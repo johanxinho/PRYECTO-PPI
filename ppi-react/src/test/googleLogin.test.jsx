@@ -8,7 +8,6 @@ vi.mock("../supabaseClient", () => ({
   supabase: { auth: { signInWithOAuth: mockSignInWithOAuth } },
 }));
 vi.mock("../Brand", () => ({ Brand: () => null, LogoMark: () => null }));
-vi.mock("../components/ui/dia-text-reveal", () => ({ DiaTextReveal: ({ children }) => children }));
 vi.mock("../components/LanguageSwitcher", () => ({ default: () => null }));
 vi.mock("../paths", () => ({
   appBase: "/PRYECTO-PPI",
@@ -16,6 +15,7 @@ vi.mock("../paths", () => ({
 }));
 
 import Login from "../components/Login";
+import { I18nProvider } from "../i18n";
 
 beforeEach(() => {
   mockSignInWithOAuth.mockReset();
@@ -27,8 +27,12 @@ beforeEach(() => {
 
 describe("inicio con Google", () => {
   it("inicia OAuth de Supabase y vuelve a la app publicada", async () => {
-    render(<Login onLogin={vi.fn()} onBack={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /continuar con google/i }));
+    render(<I18nProvider><Login onLogin={vi.fn()} onBack={vi.fn()} /></I18nProvider>);
+    const googleButton = screen.getByRole("button", { name: /continuar con google/i });
+    expect(googleButton.querySelector(".google-mark")).toHaveAttribute("aria-hidden", "true");
+    expect(googleButton.querySelector(".google-mark-wrap")).toHaveAttribute("translate", "no");
+    expect(googleButton.querySelector(".google-mark text")).toBeNull();
+    fireEvent.click(googleButton);
 
     await waitFor(() => expect(mockSignInWithOAuth).toHaveBeenCalledTimes(1));
     expect(mockSignInWithOAuth).toHaveBeenCalledWith({
@@ -45,7 +49,7 @@ describe("inicio con Google", () => {
       data: null,
       error: { message: "Unsupported provider: provider is not enabled" },
     });
-    render(<Login onLogin={vi.fn()} onBack={vi.fn()} />);
+    render(<I18nProvider><Login onLogin={vi.fn()} onBack={vi.fn()} /></I18nProvider>);
     fireEvent.click(screen.getByRole("button", { name: /continuar con google/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

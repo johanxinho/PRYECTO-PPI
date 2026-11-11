@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 // @ts-nocheck
 import { supabase } from '../supabaseClient';
 
@@ -7,7 +8,7 @@ import { supabase } from '../supabaseClient';
  */
 const missingBackend = () => ({
   success: false,
-  error: 'Supabase no está configurado en este entorno.',
+  error: localizeService("services.backend.unavailable"),
 });
 
 const SELF_SIGNUP_ROLES = ['estudiante', 'padre', 'madre', 'trabajador'];
@@ -16,29 +17,27 @@ export function sanitizeSignupRole(role) {
   return SELF_SIGNUP_ROLES.includes(role) ? role : 'estudiante';
 }
 
-/** Traduce errores comunes de Auth a español para quien consuma el servicio. */
+/** Mapea errores comunes de Auth al idioma activo sin exponer mensajes arbitrarios del proveedor. */
 export function translateAuthError(error) {
   const details = `${error?.message || ''} ${error?.code || ''}`.toLowerCase();
-  if (!details.trim()) return 'Ocurrió un error de autenticación.';
+  if (!details.trim()) return localizeService("services.auth.failed");
   if (details.includes('already registered') || details.includes('user_already_exists')) {
-    return 'Ese correo ya está registrado.';
+    return localizeService("services.auth.registered");
   }
   if (details.includes('invalid login credentials') || details.includes('invalid_credentials')) {
-    return 'El correo o la contraseña son incorrectos.';
+    return localizeService("services.auth.credentials");
   }
   if (details.includes('email not confirmed') || details.includes('email_not_confirmed')) {
-    return 'Debes confirmar tu correo antes de iniciar sesión.';
+    return localizeService("services.auth.confirmEmail");
   }
   if (details.includes('rate limit') || details.includes('too many')) {
-    return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+    return localizeService("services.auth.rateLimit");
   }
   if (details.includes('network') || details.includes('fetch')) {
-    return 'No fue posible conectar con el servicio.';
+    return localizeService("services.auth.connection");
   }
-  // Conserva mensajes ya localizados; no expongas detalles arbitrarios de proveedores externos.
-  const raw = error?.message || '';
-  if (/[áéíóúñ¿¡]/i.test(raw) || /\b(el|la|los|las|usuario|correo|contraseña|ya|existe|debe|puede)\b/i.test(raw)) return raw;
-  return 'No fue posible completar la operación de autenticación.';
+  if (error) console.error("Authentication provider error", error);
+  return localizeService("services.auth.operationFailed");
 }
 
 export const authService = {

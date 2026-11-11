@@ -1,3 +1,4 @@
+import { localizeService } from "./services/localize.js";
 // @ts-nocheck
 // Acceso a Supabase: perfiles, tareas, mensajes y adjuntos.
 // Las políticas RLS son la barrera real; aquí solo enviamos lo necesario.
@@ -132,7 +133,7 @@ function withActiveDefaults(row) {
 }
 
 function ensureBackend() {
-  if (!supabase) throw new Error("Supabase no está configurado.");
+  if (!supabase) throw new Error(localizeService("services.backend.unavailable"));
 }
 
 function currentTimeZone() {
@@ -163,7 +164,7 @@ async function readProfileById(id) {
   if (!safeError && safeData) return withActiveDefaults(safeData);
   
   // If still failing, throw the last error
-  throw error || safeError || new Error("No se pudo obtener el perfil");
+  throw error || safeError || new Error(localizeService("services.profile.loadFailed"));
 }
 
 // Map database task to frontend format
@@ -223,19 +224,19 @@ export async function updateProfileSettings(settings) {
     }
   }
   if (payload.role && !SELF_ROLE_OPTIONS.some((item) => item.value === payload.role)) {
-    throw new Error("Ese rol solo lo asigna el administrador.");
+    throw new Error(localizeService("services.profile.roleAdminOnly"));
   }
   if (payload.alarm_sound && !["classic", "digital", "chime", "gentle"].includes(payload.alarm_sound)) {
-    throw new Error("Ese sonido de alarma no está disponible.");
+    throw new Error(localizeService("services.alarm.unavailable"));
   }
   if (payload.alarm_volume !== undefined && (!Number.isFinite(Number(payload.alarm_volume)) || Number(payload.alarm_volume) < 0 || Number(payload.alarm_volume) > 1)) {
-    throw new Error("El volumen de la alarma debe estar entre 0 y 1.");
+    throw new Error(localizeService("services.alarm.volumeRange"));
   }
   if (!Object.keys(payload).length) {
-    throw new Error("No hay cambios para guardar.");
+    throw new Error(localizeService("services.common.noChanges"));
   }
   const { data: authData } = await supabase.auth.getUser();
-  if (!authData?.user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  if (!authData?.user) throw new Error(localizeService("services.session.expired"));
   const { error } = await supabase
     .from("profiles")
     .update(payload)
@@ -256,14 +257,14 @@ export async function updateProfileSettings(settings) {
 export async function uploadAvatar(file) {
   ensureBackend();
   if (!file || !file.type.startsWith("image/")) {
-    throw new Error("Solo puedes subir imágenes para la foto de perfil.");
+    throw new Error(localizeService("services.profile.imageOnly"));
   }
   if (file.size > 3 * 1024 * 1024) {
-    throw new Error("La foto de perfil no puede superar los 3 MB.");
+    throw new Error(localizeService("services.profile.imageMax"));
   }
   const { data: authData } = await supabase.auth.getUser();
   const user = authData?.user;
-  if (!user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  if (!user) throw new Error(localizeService("services.session.expired"));
   const extension = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
   const path = `${user.id}/avatar-${Date.now()}.${extension}`;
   const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, {
@@ -357,7 +358,7 @@ export async function listSharedTasks() {
     if (error) throw error;
     return (data || []).map((share) => ({
       ...share,
-      task: share.task_title || "Tarea compartida",
+      task: share.task_title || localizeService("services.task.shared"),
       taskDetails: {
         id: share.task_id,
         title: share.task_title,
@@ -409,11 +410,11 @@ export async function findUserByEmail(email) {
 export async function sendMessage(body, recipientId) {
   ensureBackend();
   const { data: authData } = await supabase.auth.getUser();
-  if (!authData?.user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  if (!authData?.user) throw new Error(localizeService("services.session.expired"));
   const text = String(body || "").trim();
-  if (!text) throw new Error("Escribe un mensaje antes de enviarlo.");
-  if (text.length > 2000) throw new Error("El mensaje no puede superar los 2000 caracteres.");
-  if (!recipientId) throw new Error("Elige un destinatario.");
+  if (!text) throw new Error(localizeService("services.message.required"));
+  if (text.length > 2000) throw new Error(localizeService("services.message.maxLength"));
+  if (!recipientId) throw new Error(localizeService("services.message.recipient"));
   const { data, error } = await supabase
     .from("messages")
     .insert({ body: text, recipient_id: recipientId })
@@ -496,15 +497,15 @@ export async function savePushSubscription(subscription) {
 export async function uploadTaskAttachment(taskId, file) {
   ensureBackend();
   if (!file || !file.type.startsWith("image/")) {
-    throw new Error("Solo puedes adjuntar imágenes.");
+    throw new Error(localizeService("services.task.imageOnly"));
   }
   if (file.size > 5 * 1024 * 1024) {
-    throw new Error("La imagen no puede superar los 5 MB.");
+    throw new Error(localizeService("services.task.imageMax"));
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+  if (!user) throw new Error(localizeService("services.session.expired"));
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${user.id}/${taskId}/${crypto.randomUUID()}-${safeName}`;
   const { error: uploadError } = await supabase.storage

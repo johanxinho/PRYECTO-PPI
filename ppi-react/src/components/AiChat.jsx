@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "../i18n/I18nProvider";
 import { Bot, Send, X, LoaderCircle, Paperclip, History, Plus } from "lucide-react";
 import { aiChatService } from "../services/aiChatService";
 
@@ -10,7 +11,7 @@ const WELCOME = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hola, soy el asistente de Recórdate. Puedo organizar tareas, crear alarmas cuando me indiques título, fecha y hora, y leer fotos de horarios o apuntes. ¿En qué te ayudo?",
+    "integrations.ai.welcome",
   imageUrls: [],
 };
 
@@ -19,11 +20,11 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 function readFileAsImage(file) {
   return new Promise((resolve, reject) => {
     if (!ALLOWED.has(file.type)) {
-      reject(new Error("Solo JPG, PNG, WEBP o GIF."));
+      reject(new Error("integrations.ai.invalidImage"));
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
-      reject(new Error("Cada foto debe pesar menos de 4 MB."));
+      reject(new Error("integrations.ai.imageTooLarge"));
       return;
     }
     const reader = new FileReader();
@@ -37,7 +38,7 @@ function readFileAsImage(file) {
         name: file.name,
       });
     };
-    reader.onerror = () => reject(new Error("No se pudo leer la foto."));
+    reader.onerror = () => reject(new Error("integrations.ai.readError"));
     reader.readAsDataURL(file);
   });
 }
@@ -47,6 +48,7 @@ function readFileAsImage(file) {
  * Soporta fotos (máx 2) e historial de conversaciones.
  */
 export default function AiChat({ enabled = true, onTaskCreated }) {
+  const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
@@ -85,7 +87,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
     (async () => {
       const result = await aiChatService.listConversations();
       if (!alive) return;
-      if (!result.success) setError(result.error || "No se pudo cargar el historial.");
+      if (!result.success) setError(result.error || t("integrations.ai.historyError"));
       setConversations(result.conversations || []);
     })();
     return () => {
@@ -104,7 +106,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
       {
         ...WELCOME,
         id: `welcome-${Date.now()}`,
-        content: "Nueva conversación lista. Escribe o adjunta una foto.",
+        content: "integrations.ai.newConversationReady",
       },
     ]);
   };
@@ -116,7 +118,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
     const result = await aiChatService.listMessages(id);
     setBusy(false);
     if (!result.success) {
-      setError(result.error || "No se pudo abrir el chat.");
+      setError(result.error || t("integrations.ai.openError"));
       return;
     }
     setConversationId(id);
@@ -144,7 +146,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
       }
       setPendingImages(next.slice(0, 2));
     } catch (err) {
-      setError(err?.message || "No se pudo adjuntar la foto.");
+      setError(err?.message || t("integrations.ai.attachError"));
     }
   };
 
@@ -178,7 +180,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
     setBusy(false);
 
     if (!result.success) {
-      setError(result.error || "No pude responder.");
+      setError(result.error || t("integrations.ai.replyError"));
       return;
     }
 
@@ -213,9 +215,9 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
         >
           <header className="ai-chat-header">
             <div>
-              <span className="eyebrow accent-label">Asistente</span>
+              <span className="eyebrow accent-label">{t("integrations.ai.assistant")}</span>
               <h2 id="ai-chat-title">
-                <Bot size={18} aria-hidden="true" /> Recórdate IA
+                <Bot size={18} aria-hidden="true" /> <span>{t("integrations.ai.brandTitle")}</span>
               </h2>
             </div>
             <div className="ai-chat-header-actions">
@@ -223,8 +225,8 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                 type="button"
                 className="icon-button"
                 onClick={() => setShowHistory((v) => !v)}
-                aria-label="Ver historial de chats"
-                title="Historial"
+                aria-label={t("integrations.ai.historyAria")}
+                title={t("integrations.ai.history")}
               >
                 <History size={16} />
               </button>
@@ -232,8 +234,8 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                 type="button"
                 className="icon-button"
                 onClick={startNew}
-                aria-label="Nueva conversación"
-                title="Nueva"
+                aria-label={t("integrations.ai.newConversation")}
+                title={t("integrations.ai.new")}
               >
                 <Plus size={16} />
               </button>
@@ -241,7 +243,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                 type="button"
                 className="icon-button"
                 onClick={() => setOpen(false)}
-                aria-label="Cerrar asistente"
+                aria-label={t("integrations.ai.close")}
               >
                 <X size={16} />
               </button>
@@ -250,9 +252,9 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
 
           {showHistory ? (
             <div className="ai-chat-history">
-              <p className="ai-chat-history-title">Chats guardados</p>
+              <p className="ai-chat-history-title">{t("integrations.ai.savedChats")}</p>
               {!conversations.length && (
-                <p className="ai-chat-history-empty">Aún no tienes conversaciones guardadas.</p>
+                <p className="ai-chat-history-empty">{t("integrations.ai.noSavedChats")}</p>
               )}
               {conversations.map((item) => (
                 <button
@@ -261,10 +263,10 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                   className={`ai-history-item ${item.id === conversationId ? "is-active" : ""}`}
                   onClick={() => openConversation(item.id)}
                 >
-                  <strong>{item.title || "Sin título"}</strong>
+                  <strong>{item.title || t("integrations.ai.untitled")}</strong>
                   <small>
                     {item.updated_at
-                      ? new Date(item.updated_at).toLocaleString("es-CO", {
+                      ? new Date(item.updated_at).toLocaleString(lang === "es" ? "es-CO" : "en-US", {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -288,16 +290,16 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                     {!!item.imageUrls?.length && (
                       <div className="ai-bubble-images">
                         {item.imageUrls.map((url, index) => (
-                          <img key={`${item.id}-img-${index}`} src={url} alt="Adjunto del chat" />
+                          <img key={`${item.id}-img-${index}`} src={url} alt={t("integrations.ai.chatAttachment")} />
                         ))}
                       </div>
                     )}
-                    {item.content && item.content !== "[imagen]" && <p>{item.content}</p>}
+                    {item.content && item.content !== "[imagen]" && <p>{item.id.startsWith("welcome") ? t(item.content) : item.content}</p>}
                   </article>
                 ))}
                 {busy && (
                   <article className="ai-bubble ai-bubble-bot ai-bubble-loading" aria-live="polite">
-                    <LoaderCircle size={16} className="ai-spin" /> Pensando…
+                    <LoaderCircle size={16} className="ai-spin" /> {t("integrations.ai.thinking")}
                   </article>
                 )}
               </div>
@@ -306,10 +308,10 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                 <div className="ai-pending-images">
                   {pendingImages.map((item, index) => (
                     <div className="ai-pending-thumb" key={`${item.name}-${index}`}>
-                      <img src={item.preview} alt={item.name || "Foto pendiente"} />
+                      <img src={item.preview} alt={item.name || t("integrations.ai.pendingPhoto")} />
                       <button
                         type="button"
-                        aria-label="Quitar foto"
+                        aria-label={t("integrations.ai.removePhoto")}
                         onClick={() => removePending(index)}
                       >
                         <X size={12} />
@@ -321,7 +323,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
 
               {error && (
                 <p className="ai-chat-error" role="alert">
-                  {error}
+                  {error.startsWith("integrations.") ? t(error) : error}
                 </p>
               )}
 
@@ -338,21 +340,21 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                   type="button"
                   className="icon-button ai-attach"
                   onClick={() => fileRef.current?.click()}
-                  aria-label="Adjuntar foto"
+                  aria-label={t("integrations.ai.attachPhoto")}
                   disabled={busy || pendingImages.length >= 2}
-                  title="Adjuntar foto (máx. 2)"
+                  title={t("integrations.ai.attachPhotoTitle")}
                 >
                   <Paperclip size={16} />
                 </button>
                 <label className="sr-only" htmlFor="ai-chat-input">
-                  Mensaje para el asistente
+                  {t("integrations.ai.messageLabel")}
                 </label>
                 <input
                   id="ai-chat-input"
                   ref={inputRef}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Escribe o adjunta una foto…"
+                  placeholder={t("integrations.ai.messagePlaceholder")}
                   maxLength={4000}
                   disabled={busy}
                   autoComplete="off"
@@ -361,7 +363,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
                   type="submit"
                   className="primary-button ai-send"
                   disabled={!canSend}
-                  aria-label="Enviar mensaje"
+                  aria-label={t("integrations.ai.send")}
                 >
                   <Send size={16} />
                 </button>
@@ -375,7 +377,7 @@ export default function AiChat({ enabled = true, onTaskCreated }) {
         type="button"
         className={`ai-chat-fab ${open ? "is-open" : ""}`}
         onClick={() => setOpen((current) => !current)}
-        aria-label={open ? "Cerrar asistente" : "Abrir asistente de Recórdate"}
+        aria-label={open ? t("integrations.ai.close") : t("integrations.ai.open")}
         aria-expanded={open}
       >
         {open ? <X size={22} /> : <Bot size={22} />}

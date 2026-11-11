@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 // @ts-nocheck
 import { supabase } from "../supabaseClient";
 
@@ -5,52 +6,53 @@ import { supabase } from "../supabaseClient";
 // images[].data es base64. image_urls del server son paths; se firman aquí.
 const missingBackend = () => ({
   success: false,
-  error: "Supabase no está configurado en este entorno.",
+  error: localizeService("services.backend.unavailable"),
 });
 
 export function translateAiError(payload, fallback) {
   const code = payload?.error || payload?.message || "";
   if (code === "rate_limit") {
-    return "Llegaste al límite de mensajes por ahora. Intenta en unos minutos.";
+    return localizeService("services.ai.rateLimit");
   }
   if (code === "missing_gemini_key") {
-    return "La IA aún no está configurada en el servidor (falta la clave de Gemini).";
+    return localizeService("services.ai.notConfigured");
   }
   if (code === "gemini_failed") {
-    return "No se pudo completar la respuesta de Gemini. Puede ser un problema temporal del proveedor o de su configuración.";
+    return localizeService("services.ai.providerFailed");
   }
   if (code === "gemini_timeout") {
-    return "Gemini tardó demasiado en responder. Inténtalo de nuevo en unos segundos.";
+    return localizeService("services.ai.timeout");
   }
   if (code === "account_inactive") {
-    return "Tu cuenta no está activa para usar el asistente. Contacta al administrador de RECORDATE.";
+    return localizeService("services.ai.inactive");
   }
   if (code === "conversation_not_found" || code === "invalid_conversation") {
-    return "Esa conversación ya no está disponible. Inicia un chat nuevo.";
+    return localizeService("services.ai.conversationUnavailable");
   }
   if (code === "invalid_request_body") {
-    return "No se pudo leer el mensaje enviado. Vuelve a intentarlo.";
+    return localizeService("services.ai.messageUnreadable");
   }
   if (code === "message_save_failed") {
-    return "La IA respondió, pero no se pudo guardar el mensaje. Intenta nuevamente.";
+    return localizeService("services.ai.saveFailed");
   }
   if (code === "task_creation_failed") {
-    return "No se pudo crear la alarma en tu agenda. Verifica tu conexión e inténtalo de nuevo.";
+    return localizeService("services.ai.alarmFailed");
   }
   if (code === "unauthorized") {
-    return "Debes iniciar sesión para usar el asistente.";
+    return localizeService("services.ai.loginRequired");
   }
   if (code === "invalid_message") {
-    return "Escribe un mensaje o adjunta una foto (máximo 4000 caracteres).";
+    return localizeService("services.ai.messageOrPhoto");
   }
   if (code === "image_too_large") {
-    return "Alguna foto pesa demasiado (máximo 6 MB por imagen).";
+    return localizeService("services.ai.photoTooLarge");
   }
   if (code === "payload_too_large") {
-    return "El envío es demasiado grande (máximo 13 MB en total).";
+    return localizeService("services.ai.totalTooLarge");
   }
   if (typeof payload?.detail === "string" && payload.detail.trim()) {
-    return `No pude responder: ${payload.detail}`;
+    console.error("AI service error detail", payload.detail);
+    return localizeService("services.ai.responseFailed");
   }
   return fallback;
 }
@@ -89,6 +91,7 @@ export const aiChatService = {
       const { data, error } = await supabase.functions.invoke("ai-chat", { body });
 
       if (error) {
+        console.error("AI Edge Function request failed", { message: error.message, status: error.status });
         let parsed = null;
         try {
           parsed = typeof error.context?.json === "function" ? await error.context.json() : null;
@@ -99,7 +102,7 @@ export const aiChatService = {
           success: false,
           error: translateAiError(
             parsed || data,
-            error.message || "No fue posible contactar al asistente."
+            localizeService("services.ai.contactFailed")
           ),
         };
       }
@@ -107,12 +110,12 @@ export const aiChatService = {
       if (data?.error) {
         return {
           success: false,
-          error: translateAiError(data, "No fue posible obtener respuesta."),
+          error: translateAiError(data, localizeService("services.ai.responseFailed")),
         };
       }
 
       if (!data?.reply) {
-        return { success: false, error: "El asistente no devolvió una respuesta." };
+        return { success: false, error: localizeService("services.ai.emptyResponse") };
       }
 
       const imageUrls = await signImagePaths(data.image_urls || []);
@@ -134,9 +137,10 @@ export const aiChatService = {
           : data.action || null,
       };
     } catch (error) {
+      console.error("AI chat request failed", error);
       return {
         success: false,
-        error: error?.message || "No fue posible contactar al asistente.",
+        error: localizeService("services.ai.contactFailed"),
       };
     }
   },
@@ -152,9 +156,10 @@ export const aiChatService = {
       if (error) throw error;
       return { success: true, conversations: data || [] };
     } catch (error) {
+      console.error("AI conversation list failed", error);
       return {
         success: false,
-        error: error?.message || "No se pudo cargar el historial.",
+        error: localizeService("services.ai.historyFailed"),
         conversations: [],
       };
     }
@@ -183,9 +188,10 @@ export const aiChatService = {
       }
       return { success: true, messages };
     } catch (error) {
+      console.error("AI conversation history failed", error);
       return {
         success: false,
-        error: error?.message || "No se pudo cargar el historial.",
+        error: localizeService("services.ai.historyFailed"),
         messages: [],
       };
     }

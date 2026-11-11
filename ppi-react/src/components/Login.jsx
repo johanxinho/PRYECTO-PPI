@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Brand, LogoMark } from "../Brand";
-import { DiaTextReveal } from "./ui/dia-text-reveal";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
 import { appBase } from "../paths";
+import { useI18n } from "../i18n";
 
 /** Validación simple de correo para formularios de acceso. */
 function isValidEmail(value) {
@@ -28,87 +28,87 @@ function isErrorMessage(text) {
  * Mensajes claros en español para el registro.
  * Evita jerga técnica (SQL, triggers) orientada a administradores.
  */
-function signupErrorMessage(error) {
+function signupErrorMessage(error, t) {
   const details = errorDetails(error);
   if (details.includes("already registered") || details.includes("already been registered") || details.includes("user_already_exists")) {
-    return "Ese correo ya está registrado. Inicia sesión o usa otro correo.";
+    return t("auth.signup.email_exists");
   }
   if (details.includes("signups not allowed") || details.includes("email signups are disabled")) {
-    return "El registro por correo no está disponible en este momento. Prueba más tarde o usa la demostración.";
+    return t("auth.signup.disabled");
   }
   if (details.includes("invalid email") || details.includes("email_address_invalid")) {
-    return "El correo electrónico no es válido.";
+    return t("auth.error.email_invalid");
   }
   if (details.includes("password should be") || details.includes("weak_password") || (details.includes("password") && details.includes("least"))) {
-    return "La contraseña es demasiado corta o no cumple los requisitos. Usa al menos 6 caracteres.";
+    return t("auth.error.password_weak");
   }
   if (details.includes("database error saving new user") || details.includes("saving new user") || details.includes("profiles") || details.includes("trigger")) {
-    return "No pudimos crear tu perfil. Inténtalo de nuevo en unos minutos. Si continúa, avisa al docente o al administrador.";
+    return t("auth.signup.profile_failed");
   }
   if (details.includes("rate limit") || details.includes("too many requests") || details.includes("over_email_send_rate_limit")) {
-    return "Se alcanzó el límite temporal de registros. Espera unos minutos e inténtalo de nuevo.";
+    return t("auth.signup.rate_limited");
   }
   if (details.includes("network") || details.includes("fetch")) {
-    return "No fue posible conectar con el servicio. Revisa tu internet e inténtalo de nuevo.";
+    return t("auth.error.connection_check");
   }
-  return "No fue posible crear la cuenta. Revisa los datos e inténtalo de nuevo.";
+  return t("auth.signup.failed");
 }
 
 /** Errores del inicio de sesión traducidos a español. */
-function loginErrorMessage(error) {
+function loginErrorMessage(error, t) {
   const details = errorDetails(error);
   if (details.includes("email not confirmed") || details.includes("email_not_confirmed")) {
-    return "Debes confirmar tu correo antes de entrar. Revisa tu bandeja o regístrate de nuevo para pedir otro código.";
+    return t("auth.login.confirm_email");
   }
   if (details.includes("invalid login credentials") || details.includes("invalid_credentials")) {
-    return "El correo o la contraseña son incorrectos.";
+    return t("auth.login.credentials_invalid");
   }
   if (details.includes("user not found")) {
-    return "No encontramos una cuenta con ese correo. Regístrate o revisa que esté bien escrito.";
+    return t("auth.login.account_missing");
   }
   if (details.includes("too many") || details.includes("rate limit")) {
-    return "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.";
+    return t("auth.error.too_many_attempts");
   }
   if (details.includes("network") || details.includes("fetch")) {
-    return "No fue posible conectar con el servicio. Revisa tu internet e inténtalo de nuevo.";
+    return t("auth.error.connection_check");
   }
-  return "No fue posible iniciar sesión. Revisa tus datos e inténtalo de nuevo.";
+  return t("auth.login.failed");
 }
 
 /** Errores del OTP de verificación (código de 6 dígitos). */
-function verificationErrorMessage(error) {
+function verificationErrorMessage(error, t) {
   const details = errorDetails(error);
   if (details.includes("expired") || details.includes("otp_expired")) {
-    return "El código de verificación expiró. Usa «Reenviar código» para pedir uno nuevo.";
+    return t("auth.verification.expired");
   }
   if (details.includes("invalid") || details.includes("otp_disabled") || details.includes("token")) {
-    return "El código de verificación es incorrecto. Revísalo o pide uno nuevo.";
+    return t("auth.verification.invalid");
   }
   if (details.includes("rate limit") || details.includes("too many") || details.includes("over_email_send_rate_limit")) {
-    return "Se alcanzó el límite de intentos. Espera unos minutos e inténtalo de nuevo.";
+    return t("auth.verification.rate_limited");
   }
-  return "No fue posible verificar el código. Inténtalo de nuevo.";
+  return t("auth.verification.failed");
 }
 
 /** Errores al pedir o actualizar la contraseña. */
-function recoveryErrorMessage(error) {
+function recoveryErrorMessage(error, t) {
   const details = errorDetails(error);
   if (details.includes("rate limit") || details.includes("over_email_send_rate_limit") || details.includes("too many")) {
-    return "Se enviaron demasiados correos. Espera unos minutos e inténtalo de nuevo.";
+    return t("auth.recovery.rate_limited");
   }
   if (details.includes("user not found") || details.includes("unable to validate email")) {
-    return "Si el correo está registrado, te enviaremos un enlace. Revisa también la carpeta de spam.";
+    return t("auth.recovery.neutral_message");
   }
   if (details.includes("same_password") || details.includes("should be different")) {
-    return "La nueva contraseña debe ser distinta a la anterior.";
+    return t("auth.recovery.password_same");
   }
   if (details.includes("password")) {
-    return "La contraseña no cumple los requisitos. Usa al menos 6 caracteres.";
+    return t("auth.error.password_requirements");
   }
   if (details.includes("session") || details.includes("auth session missing")) {
-    return "El enlace de recuperación expiró o ya se usó. Solicita uno nuevo desde «¿Olvidaste tu contraseña?».";
+    return t("auth.recovery.link_expired");
   }
-  return "No fue posible completar la recuperación. Inténtalo de nuevo.";
+  return t("auth.recovery.failed");
 }
 
 /** URL absoluta de la app (incluye /PRYECTO-PPI en GitHub Pages). */
@@ -121,7 +121,8 @@ function appUrl(path) {
  * Pantalla de autenticación: login, registro, verificación OTP y recuperación.
  * Recibe callbacks del padre (App) para entrar, volver o abrir el modo demo.
  */
-function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang = "es", onLangChange }) {
+function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo }) {
+  const { lang, setLang, t } = useI18n();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRecovery, setIsRecovery] = useState(recovery);
   const [email, setEmail] = useState("");
@@ -139,11 +140,11 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
   const requestRecovery = async (event) => {
     event.preventDefault();
     if (!isValidEmail(email)) {
-      setMessage("Escribe un correo electrónico válido.");
+      setMessage(t("auth.error.email_invalid"));
       return;
     }
     if (!hasSupabaseConfig) {
-      setMessage("La recuperación de contraseña requiere configurar Supabase.");
+      setMessage(t("auth.recovery.supabase_required"));
       return;
     }
     setLoading(true);
@@ -154,11 +155,11 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
       // Mensaje neutro: no revelamos si el correo existe.
       setMessage(
         error
-          ? recoveryErrorMessage(error)
-          : "Si el correo está registrado, te enviamos un enlace para recuperar tu contraseña. Revisa también spam."
+          ? recoveryErrorMessage(error, t)
+          : t("auth.recovery.sent_neutral")
       );
     } catch {
-      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+      setMessage(t("auth.error.connection"));
     } finally {
       setLoading(false);
     }
@@ -167,25 +168,25 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
   const updatePassword = async (event) => {
     event.preventDefault();
     if (newPassword.length < 6) {
-      setMessage("La contraseña debe tener mínimo 6 caracteres.");
+      setMessage(t("auth.error.password_min"));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setMessage("Las contraseñas no coinciden.");
+      setMessage(t("auth.error.password_mismatch"));
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        setMessage(recoveryErrorMessage(error));
+        setMessage(recoveryErrorMessage(error, t));
       } else {
-        setMessage("Contraseña actualizada correctamente. Ya puedes usar la agenda.");
+        setMessage(t("auth.recovery.password_updated"));
         setIsRecovery(false);
         onRecoveryDone?.();
       }
     } catch {
-      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+      setMessage(t("auth.error.connection"));
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
     event.preventDefault();
     setMessage("");
     if (!/^\d{6}$/.test(verificationCode)) {
-      setMessage("Escribe el código de verificación de 6 dígitos.");
+      setMessage(t("auth.verification.enter_code"));
       return;
     }
     setLoading(true);
@@ -206,16 +207,16 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
         type: "signup",
       });
       if (error) {
-        setMessage(verificationErrorMessage(error));
+        setMessage(verificationErrorMessage(error, t));
       } else if (data.session) {
         onLogin(data.session);
       } else {
-        setMessage("Correo verificado. Ahora puedes iniciar sesión.");
+        setMessage(t("auth.verification.email_confirmed"));
         setNeedsVerification(false);
         setIsSignUp(false);
       }
     } catch {
-      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+      setMessage(t("auth.error.connection"));
     } finally {
       setLoading(false);
     }
@@ -229,9 +230,9 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
         type: "signup",
         email: verificationEmail,
       });
-      setMessage(error ? verificationErrorMessage(error) : "Te enviamos un nuevo código de verificación. Revisa tu correo y spam.");
+      setMessage(error ? verificationErrorMessage(error, t) : t("auth.verification.resent"));
     } catch {
-      setMessage("No fue posible reenviar el código. Inténtalo de nuevo.");
+      setMessage(t("auth.verification.resend_failed"));
     } finally {
       setLoading(false);
     }
@@ -241,23 +242,23 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
     event.preventDefault();
     setMessage("");
     if (!hasSupabaseConfig) {
-      setMessage("La autenticación requiere configurar Supabase. Puedes explorar la demostración mientras tanto.");
+      setMessage(t("auth.error.supabase_required"));
       return;
     }
     if (isSignUp && !fullName.trim()) {
-      setMessage("Escribe tu nombre para crear la cuenta.");
+      setMessage(t("auth.error.name_required"));
       return;
     }
     if (!isValidEmail(email)) {
-      setMessage("Escribe un correo electrónico válido.");
+      setMessage(t("auth.error.email_invalid"));
       return;
     }
     if (password.length < 6) {
-      setMessage("La contraseña debe tener mínimo 6 caracteres.");
+      setMessage(t("auth.error.password_min"));
       return;
     }
     if (isSignUp && password !== confirmPassword) {
-      setMessage("Las contraseñas no coinciden.");
+      setMessage(t("auth.error.password_mismatch"));
       return;
     }
     setLoading(true);
@@ -276,19 +277,19 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
             password,
           });
       if (result.error) {
-        setMessage(isSignUp ? signupErrorMessage(result.error) : loginErrorMessage(result.error));
+        setMessage(isSignUp ? signupErrorMessage(result.error, t) : loginErrorMessage(result.error, t));
       } else if (result.data.session) {
         onLogin(result.data.session);
       } else if (isSignUp) {
         setVerificationEmail(email.trim());
         setVerificationCode("");
         setNeedsVerification(true);
-        setMessage("Te enviamos un código de 6 dígitos a tu correo. Revisa también la carpeta de spam.");
+        setMessage(t("auth.verification.sent"));
       } else {
-        setMessage("No se pudo abrir la sesión. Inténtalo de nuevo.");
+        setMessage(t("auth.login.session_failed"));
       }
     } catch {
-      setMessage("No fue posible conectar con el servicio. Inténtalo de nuevo.");
+      setMessage(t("auth.error.connection"));
     } finally {
       setLoading(false);
     }
@@ -297,7 +298,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
   const handleGoogleSignIn = async () => {
     setMessage("");
     if (!hasSupabaseConfig) {
-      setMessage("El inicio con Google requiere configurar Supabase.");
+      setMessage(t("auth.google.supabase_required"));
       return;
     }
     setLoading(true);
@@ -313,13 +314,13 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
         const details = errorDetails(error);
         setMessage(
           details.includes("provider is not enabled") || details.includes("unsupported provider")
-            ? "El inicio con Google aún no está habilitado en Supabase. Avisa al administrador del proyecto."
-            : loginErrorMessage(error),
+            ? t("auth.google.not_enabled")
+            : loginErrorMessage(error, t),
         );
         setLoading(false);
       }
     } catch {
-      setMessage("No fue posible conectar con el inicio de Google. Inténtalo de nuevo.");
+      setMessage(t("auth.google.connection_failed"));
       setLoading(false);
     }
   };
@@ -334,56 +335,56 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
       <div className="auth-aside">
         <div className="auth-aside-top">
           <button className="back-link" type="button" onClick={onBack}>
-            <ArrowLeft size={16} /> Volver al inicio
+            <ArrowLeft size={16} /> {t("auth.nav.back_home")}
           </button>
-          <LanguageSwitcher lang={lang} onChange={onLangChange} />
+          <LanguageSwitcher lang={lang} onChange={setLang} />
         </div>
         <Brand light />
         <LogoMark />
         <div className="auth-quote">
-          <span className="eyebrow">Tu espacio académico</span>
+          <span className="eyebrow"> {t("auth.hero.eyebrow")} </span>
           <h1>
-            Lo importante, <em><DiaTextReveal text="en el momento correcto." delay={0.2} /></em>
+            {t("auth.hero.title_prefix")}<em>{t("auth.hero.title_suffix")}</em>
           </h1>
-          <p>Una agenda clara para que puedas concentrarte en aprender.</p>
+          <p> {t("auth.hero.description")} </p>
         </div>
-        <span className="auth-footer">RECORDATE · PPI IE La Candelaria</span>
+        <span className="auth-footer" translate="no">RECORDATE · PPI IE La Candelaria</span>
       </div>
       <section className="auth-panel" aria-busy={loading}>
         <div className="mobile-auth-brand">
           <Brand size="lg" />
-          <LanguageSwitcher lang={lang} onChange={onLangChange} />
+          <LanguageSwitcher lang={lang} onChange={setLang} />
         </div>
         <span className="eyebrow accent-label">
-          {needsVerification ? "Confirma tu correo" : isRecovery ? "Recupera tu acceso" : isSignUp ? "Comienza hoy" : "Bienvenido de nuevo"}
+          {needsVerification ? t("auth.verification.heading") : isRecovery ? t("auth.recovery.eyebrow") : isSignUp ? t("auth.signup.eyebrow") : t("auth.login.eyebrow")}
         </span>
         <h2>
           {needsVerification
-            ? "Verifica tu cuenta."
+            ? t("auth.verification.title")
             : isRecovery
               ? recovery
-                ? "Crea una nueva contraseña."
-                : "Recupera tu contraseña."
+                ? t("auth.recovery.new_password_title")
+                : t("auth.recovery.title")
               : isSignUp
-                ? "Crea tu cuenta."
-                : "Entra a tu agenda."}
+                ? t("auth.signup.title")
+                : t("auth.login.title")}
         </h2>
         <p className="auth-subtitle">
           {needsVerification
-            ? `Escribe el código que enviamos a ${verificationEmail}.`
+            ? t("auth.verification.code_sent_to", { email: verificationEmail })
             : isRecovery
               ? recovery
-                ? "Elige una contraseña nueva para volver a entrar."
-                : "Te enviaremos un enlace seguro a tu correo."
+                ? t("auth.recovery.choose_password")
+                : t("auth.recovery.description")
               : isSignUp
-                ? "Organiza tus actividades académicas desde el primer día."
-                : "Tus tareas y recordatorios te están esperando."}
+                ? t("auth.signup.description")
+                : t("auth.login.description")}
         </p>
         {needsVerification ? (
           <>
             <form onSubmit={verifyCode} noValidate>
               <label>
-                Código de verificación
+                {t("auth.verification.code_label")}
                 <input
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -399,11 +400,11 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
                 </p>
               )}
               <button className="primary-button auth-submit" type="submit" disabled={loading}>
-                {loading ? "Verificando..." : "Verificar código"} <ArrowRight size={16} />
+                {loading ? t("auth.verification.verifying") : t("auth.verification.verify")} <ArrowRight size={16} />
               </button>
             </form>
             <button className="switch-button" type="button" onClick={resendCode} disabled={loading}>
-              Reenviar código
+              {t("auth.verification.resend")}
             </button>
             <button
               className="switch-button"
@@ -413,13 +414,13 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
                 setMessage("");
               }}
             >
-              Volver al registro
+              {t("auth.verification.back_signup")}
             </button>
           </>
         ) : isRecovery && recovery ? (
           <form onSubmit={updatePassword} noValidate>
             <label>
-              Nueva contraseña
+              {t("auth.recovery.new_password")}
               <input
                 type="password"
                 minLength="6"
@@ -430,7 +431,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               />
             </label>
             <label>
-              Confirmar nueva contraseña
+              {t("auth.recovery.confirm_new_password")}
               <input
                 type="password"
                 minLength="6"
@@ -446,13 +447,13 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               </p>
             )}
             <button className="primary-button auth-submit" type="submit" disabled={loading}>
-              {loading ? "Actualizando..." : "Actualizar contraseña"}
+              {loading ? t("auth.recovery.updating") : t("auth.recovery.update_password")}
             </button>
           </form>
         ) : isRecovery ? (
           <form onSubmit={requestRecovery} noValidate>
             <label>
-              Correo electrónico
+              {t("auth.form.email")}
               <input
                 type="email"
                 autoComplete="email"
@@ -467,14 +468,14 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               </p>
             )}
             <button className="primary-button auth-submit" type="submit" disabled={loading}>
-              {loading ? "Enviando..." : "Enviar enlace"}
+              {loading ? t("auth.recovery.sending") : t("auth.recovery.send_link")}
             </button>
           </form>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             {isSignUp && (
               <label>
-                Nombre
+                {t("auth.form.name")}
                 <input
                   autoComplete="name"
                   value={fullName}
@@ -484,7 +485,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               </label>
             )}
             <label>
-              Correo electrónico
+              {t("auth.form.email")}
               <input
                 type="email"
                 autoComplete="email"
@@ -494,7 +495,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               />
             </label>
             <label>
-              Contraseña
+              {t("auth.form.password")}
               <input
                 type="password"
                 autoComplete={isSignUp ? "new-password" : "current-password"}
@@ -506,7 +507,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
             </label>
             {isSignUp && (
               <label>
-                Confirmar contraseña
+                {t("auth.form.confirm_password")}
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -523,13 +524,20 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               </p>
             )}
             <button className="primary-button auth-submit" type="submit" disabled={loading}>
-              {loading ? "Conectando..." : isSignUp ? "Crear mi cuenta" : "Iniciar sesión"}
+              {loading ? t("auth.login.connecting") : isSignUp ? t("auth.signup.create_account") : t("auth.login.submit")}
               <ArrowRight size={16} />
             </button>
-            <div className="auth-divider"><span>o continúa con</span></div>
-            <button className="outline-button auth-google-button" type="button" onClick={handleGoogleSignIn} disabled={loading}>
-              <span className="google-mark" aria-hidden="true">G</span>
-              {loading ? "Conectando con Google..." : "Continuar con Google"}
+            <div className="auth-divider"><span> {t("auth.login.or_continue")} </span></div>
+            <button className="outline-button auth-google-button" type="button" onClick={handleGoogleSignIn} disabled={loading} aria-busy={loading}>
+              <span className="google-mark-wrap" translate="no">
+                <svg className="google-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                </svg>
+              </span>
+              {loading ? t("auth.google.connecting") : t("auth.google.continue")}
             </button>
           </form>
         )}
@@ -542,12 +550,12 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
               setMessage("");
             }}
           >
-            ¿Olvidaste tu contraseña?
+            {t("auth.recovery.forgot_password")}
           </button>
         )}
         {onDemo && !needsVerification && !isRecovery && (
           <button className="switch-button demo-button" type="button" onClick={onDemo}>
-            Explorar demostración
+            {t("auth.demo.explore")}
           </button>
         )}
         {!needsVerification && (
@@ -565,16 +573,16 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
             }}
           >
             {isSignUp
-              ? "¿Ya tienes cuenta? Inicia sesión"
+              ? t("auth.signup.have_account")
               : isRecovery
-                ? "Volver al inicio de sesión"
-                : "¿No tienes cuenta? Regístrate"}
+                ? t("auth.recovery.back_login")
+                : t("auth.login.no_account")}
           </button>
         )}
         <p className="auth-note">
           {hasSupabaseConfig
-            ? "No guardamos contraseñas en este navegador. El acceso lo gestiona Supabase de forma segura."
-            : "Supabase no está configurado en este entorno. La demostración guarda datos solo en este dispositivo."}
+            ? t("auth.note.supabase")
+            : t("auth.note.demo")}
         </p>
       </section>
     </main>

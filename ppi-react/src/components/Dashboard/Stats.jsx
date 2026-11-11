@@ -1,13 +1,15 @@
 // @ts-nocheck
 
+import { useI18n } from "../../i18n";
 export default function Stats({ stats }) {
+  const { t } = useI18n();
   return (
     <section className="stats-grid">
       {[
-        ["Pendientes", stats.pending, "Actividades por completar", "green"],
-        ["Para hoy", stats.today, "Fecha m\u00e1s cercana", "gold"],
-        ["Alta prioridad", stats.high, "Requieren atenci\u00f3n", "coral"],
-        ["Completadas", stats.done, "Tu avance acumulado", "ink"],
+        [t("tasks.stats.pending"), stats.pending, t("tasks.stats.pendingCaption"), "green"],
+        [t("tasks.stats.today"), stats.today, "Fecha m\u00e1s cercana", "gold"],
+        [t("tasks.stats.high"), stats.high, "Requieren atenci\u00f3n", "coral"],
+        [t("tasks.stats.done"), stats.done, t("tasks.stats.doneCaption"), "ink"],
       ].map(([label, value, caption, tone]) => (
         <div className="stat-card" key={label}>
           <div className={`stat-icon ${tone}`} aria-hidden="true" />

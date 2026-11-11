@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
 const COURSES_SCOPE = "https://www.googleapis.com/auth/classroom.courses.readonly";
 const STUDENT_WORK_SCOPE = "https://www.googleapis.com/auth/classroom.coursework.me.readonly";
@@ -99,11 +100,11 @@ function loadGoogleIdentityScript() {
     const handleLoad = () =>
       getGoogleApi()?.accounts?.oauth2
         ? finish()
-        : finish(new Error("Google Identity Services no está disponible."));
+        : finish(new Error(localizeService("services.google.scriptUnavailable")));
     const handleError = () =>
-      finish(new Error("No se pudo cargar Google Identity Services."));
+      finish(new Error(localizeService("services.google.scriptLoadFailed")));
     timeoutId = window.setTimeout(
-      () => finish(new Error("Google Identity Services tardó más de 15 segundos en cargar. Revisa tu conexión o el bloqueador del navegador y vuelve a intentar.")),
+      () => finish(new Error(localizeService("services.google.scriptTimeout"))),
       SCRIPT_LOAD_TIMEOUT_MS,
     );
     script.addEventListener("load", handleLoad, { once: true });
@@ -126,11 +127,11 @@ export function prepareGoogleClassroom() {
 
 export function connectGoogleClassroom({ staff = false, selectAccount = true } = {}) {
   if (!isGoogleClassroomConfigured) {
-    return Promise.reject(new Error("Configura VITE_GOOGLE_CLIENT_ID para habilitar Google Classroom."));
+    return Promise.reject(new Error(localizeService("services.google.classroomConfig")));
   }
   if (!getGoogleApi()?.accounts?.oauth2) {
     return loadGoogleIdentityScript().then(() => {
-      throw new Error("Google Identity Services ya está listo. Pulsa de nuevo para abrir la autorización de forma segura.");
+      throw new Error(localizeService("services.google.readyRetry"));
     });
   }
   const google = getGoogleApi();
@@ -141,7 +142,7 @@ export function connectGoogleClassroom({ staff = false, selectAccount = true } =
       if (settled) return;
       settled = true;
       tokenClient = null;
-      reject(new Error("Google no respondió en 60 segundos. Revisa si el navegador bloqueó la ventana de autorización y vuelve a intentar."));
+      reject(new Error(localizeService("services.google.authTimeout")));
     }, OAUTH_TIMEOUT_MS);
     const finish = (callback, value) => {
       if (settled) return false;
@@ -162,7 +163,7 @@ export function connectGoogleClassroom({ staff = false, selectAccount = true } =
             return;
           }
           if (response?.error || !response?.access_token) {
-            finish(reject, new Error(response?.error_description || "Google no concedió acceso a Classroom."));
+            finish(reject, new Error(response?.error_description || localizeService("services.google.classroomAccess")));
             return;
           }
           accessToken = response.access_token;
@@ -171,12 +172,12 @@ export function connectGoogleClassroom({ staff = false, selectAccount = true } =
           finish(resolve, { token: accessToken, scope: response.scope || scope });
         },
         error_callback: (error) =>
-          finish(reject, new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
+          finish(reject, new Error(error?.message || localizeService("services.google.consentFailed"))),
       });
       const prompt = selectAccount ? "select_account consent" : accessToken ? "" : "consent";
       tokenClient.requestAccessToken({ prompt });
     } catch (error) {
-      finish(reject, error instanceof Error ? error : new Error("No se pudo abrir el consentimiento de Google."));
+      finish(reject, error instanceof Error ? error : new Error(localizeService("services.google.consentFailed")));
     }
   });
 }
@@ -185,7 +186,7 @@ function requireToken() {
   if (!accessToken) restoreGoogleClassroomSession();
   if (!accessToken || Date.now() >= expiresAt) {
     clearStoredSession();
-    throw new Error("La autorización de Google expiró. Vuelve a conectar Classroom.");
+    throw new Error(localizeService("services.google.classroomExpired"));
   }
   return accessToken;
 }
@@ -245,7 +246,7 @@ async function mapSettled(items, worker, concurrency = 5) {
 }
 
 function describeCourseError(error) {
-  const message = String(error?.message || "No se pudieron consultar las actividades de este curso.").trim();
+  const message = String(error?.message || localizeService("services.google.courseQueryFailed")).trim();
   const status = Number(error?.status);
   return {
     status: Number.isFinite(status) && status > 0 ? status : null,
@@ -316,7 +317,7 @@ function normalizeClassroomAssignment(item, course) {
     id: `classroom:${course.id}:${item.id}`,
     source: "google_classroom",
     externalId: `${course.id}:${item.id}`,
-    title: item.title || "Actividad de Google Classroom",
+    title: item.title || localizeService("services.google.classroomActivity"),
     subject: course.name || "Google Classroom",
     date,
     time,

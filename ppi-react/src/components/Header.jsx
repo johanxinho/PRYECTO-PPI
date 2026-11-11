@@ -1,16 +1,18 @@
+import { useI18n } from "../i18n";
+
 function Header() {
+    const { t } = useI18n();
     return (
         <header className="site-header">
             <div className="header-inner">
-                <div className="brand-mark" aria-hidden="true">P</div>
+                <div className="brand-mark" aria-hidden="true" translate="no">P</div>
                 <div>
-                    <p className="eyebrow">Plataforma de perfiles</p>
-                    <h1>PPI <span>Conecta</span></h1>
+                    <p className="eyebrow">{t("public.header.eyebrow")}</p>
+                    <h1><span translate="no">PPI Conecta</span></h1>
                 </div>
-                <div className="header-note">Tu próximo paso empieza aquí <span aria-hidden="true">↗</span></div>
+                <div className="header-note">{t("public.header.note")} <span aria-hidden="true">↗</span></div>
             </div>
         </header>
     );
 }
-
 export default Header;

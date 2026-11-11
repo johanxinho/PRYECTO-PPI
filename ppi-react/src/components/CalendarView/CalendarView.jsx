@@ -1,5 +1,7 @@
 // @ts-nocheck
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useI18n } from "../../i18n";
 import { TaskList } from "../Tasks";
 
 const today = () => {
@@ -8,6 +10,7 @@ const today = () => {
 };
 
 export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit, onDelete, onAttachmentDelete }) {
+  const { t, lang } = useI18n();
   const [selected, setSelected] = useState(today());
   const [month, setMonth] = useState(today().slice(0, 7));
   const [year, monthNumber] = month.split("-").map(Number);
@@ -30,17 +33,17 @@ export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit,
     <section className="calendar-view">
       <div className="section-title">
         <div>
-          <span className="eyebrow">Vista de agenda</span>
-          <h2>Calendario acad\u00e9mico</h2>
+          <span className="eyebrow">{t("tasks.calendar.agenda")}</span>
+          <h2>{t("tasks.calendar.title")}</h2>
         </div>
         <div className="calendar-controls">
-          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior">
+          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label={t("tasks.calendar.previousMonth")}>
             <ChevronLeft size={16} />
           </button>
           <span className="calendar-month">
-            {new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(firstDay)}
+            {new Intl.DateTimeFormat(lang === "es" ? "es-CO" : "en-US", { month: "long", year: "numeric" }).format(firstDay)}
           </span>
-          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente">
+          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label={t("tasks.calendar.nextMonth")}>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -48,8 +51,8 @@ export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit,
       <div className="calendar-layout">
         <div>
           <div className="calendar-weekdays" aria-hidden="true">
-            {["Lun", "Mar", "Mi\u00e9", "Jue", "Vie", "S\u00e1b", "Dom"].map((day) => (
-              <span key={day}>{day}</span>
+            {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((day) => (
+              <span key={day}>{t(`tasks.calendar.weekday.${day}`)}</span>
             ))}
           </div>
           <div className="calendar-days">
@@ -58,7 +61,7 @@ export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit,
             ))}
             {days.map((day) => (
               <button className={selected === day ? "calendar-day selected" : "calendar-day"} key={day} onClick={() => setSelected(day)}>
-                <span>{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span>
+                <span>{new Intl.DateTimeFormat(lang === "es" ? "es-CO" : "en-US", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span>
                 <b>{new Date(`${day}T12:00:00`).getDate()}</b>
                 <i className={tasks.some((task) => task.date === day && !task.completed) ? "has-task" : ""} />
               </button>
@@ -67,7 +70,7 @@ export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit,
         </div>
         <div className="calendar-tasks">
           <TaskList
-            title={`Tareas para ${new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${selected}T12:00:00`))}`}
+            title={t("tasks.calendar.tasksFor", { date: new Intl.DateTimeFormat(lang === "es" ? "es-CO" : "en-US", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${selected}T12:00:00`)) })}
             tasks={dayTasks}
             userId={userId}
             onToggle={onToggle}
@@ -75,13 +78,10 @@ export default function CalendarView({ tasks, onFocus, userId, onToggle, onEdit,
             onDelete={onDelete}
             onFocus={onFocus}
             onAttachmentDelete={onAttachmentDelete}
-            empty="No hay actividades para este d\u00eda"
+            empty={t("tasks.calendar.empty")}
           />
         </div>
       </div>
     </section>
   );
 }
-
-// Add useState import
-import { useState } from "react";

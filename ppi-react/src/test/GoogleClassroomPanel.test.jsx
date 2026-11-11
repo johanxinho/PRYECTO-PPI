@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as testingRender, screen, waitFor } from "@testing-library/react";
+import { I18nProvider } from "../i18n/I18nProvider";
+const render = (ui, options) => testingRender(<I18nProvider>{ui}</I18nProvider>, options);
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockListAssignments, mockConnectGoogleClassroom, mockDisconnectGoogleClassroom, mockPrepareGoogleClassroom, mockRestoreGoogleClassroomSession } = vi.hoisted(() => ({
@@ -32,6 +34,7 @@ const assignment = {
 };
 
 beforeEach(() => {
+  window.localStorage.setItem("recordate_language", "es");
   mockListAssignments.mockReset();
   mockConnectGoogleClassroom.mockReset().mockResolvedValue({ token: "test-token" });
   mockDisconnectGoogleClassroom.mockReset();
@@ -92,7 +95,7 @@ describe("GoogleClassroomPanel", () => {
     render(<GoogleClassroomPanel profile={{ role: "estudiante" }} tasks={[]} onImport={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
     await screen.findByText("Entrega de ecosistemas");
-    fireEvent.click(screen.getByRole("button", { name: /cambiar cuenta o rol/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /cambiar cuenta o rol/i }));
 
     await waitFor(() => {
       expect(mockDisconnectGoogleClassroom).toHaveBeenCalledTimes(1);
@@ -131,10 +134,10 @@ describe("GoogleClassroomPanel", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent(/carga parcial/i);
     expect(screen.getByRole("status")).toHaveTextContent(/1 curso no se pudo consultar/);
-    expect(screen.getByRole("status")).toHaveTextContent(/2 fuera del límite/);
+    expect(screen.getByRole("status")).toHaveTextContent(/2 cursos fuera del límite de consulta/);
   });
 
-  it("muestra el error real del curso y no lo confunde con una materia sin tareas", async () => {
+  it("muestra un error 403 localizado y accionable sin exponer el mensaje bruto de Google", async () => {
     mockListAssignments.mockResolvedValue({
       courses: [{ id: "biology", name: "Biología" }],
       assignments: [],
@@ -150,8 +153,10 @@ describe("GoogleClassroomPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /conectar google classroom/i }));
 
-    expect(await screen.findByText(/HTTP 403: Request had insufficient authentication scopes/)).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/Cambiar cuenta o rol/);
+    expect(await screen.findByRole("status")).toHaveTextContent(/Google negó el acceso de lectura/i);
+    expect(screen.getByText(/No se pudieron cargar las tareas/)).toHaveTextContent(/Google negó el acceso de lectura/i);
+    expect(screen.queryByText(/insufficient authentication scopes/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cambiar cuenta o rol/ })).toBeInTheDocument();
     expect(screen.queryByText("No hay tareas publicadas en esta materia.")).not.toBeInTheDocument();
   });
 

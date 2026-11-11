@@ -1,3 +1,4 @@
+import { localizeService } from "./localize.js";
 const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
@@ -27,8 +28,8 @@ function loadGoogleIdentityScript() {
     script.onload = () =>
       getGoogleApi()?.accounts?.oauth2
         ? resolve()
-        : reject(new Error("Google Identity Services no está disponible."));
-    script.onerror = () => reject(new Error("No se pudo cargar Google Identity Services."));
+        : reject(new Error(localizeService("services.google.scriptUnavailable")));
+    script.onerror = () => reject(new Error(localizeService("services.google.scriptLoadFailed")));
     if (!existing) document.head.appendChild(script);
   }).catch((error) => {
     scriptPromise = null;
@@ -39,7 +40,7 @@ function loadGoogleIdentityScript() {
 
 export async function connectGoogleDrive() {
   if (!isGoogleDriveConfigured) {
-    throw new Error("Configura VITE_GOOGLE_CLIENT_ID para habilitar Google Drive.");
+    throw new Error(localizeService("services.driveConfig"));
   }
   await loadGoogleIdentityScript();
   const google = getGoogleApi();
@@ -49,7 +50,7 @@ export async function connectGoogleDrive() {
       scope: DRIVE_SCOPE,
       callback: (response) => {
         if (response?.error || !response?.access_token) {
-          reject(new Error(response?.error_description || "Google no concedió acceso a Drive."));
+          reject(new Error(response?.error_description || localizeService("services.driveAccess")));
           return;
         }
         accessToken = response.access_token;
@@ -57,7 +58,7 @@ export async function connectGoogleDrive() {
         resolve({ scope: response.scope || DRIVE_SCOPE, expiresAt });
       },
       error_callback: (error) =>
-        reject(new Error(error?.message || "No se pudo abrir el consentimiento de Google.")),
+        reject(new Error(error?.message || localizeService("services.google.consentFailed"))),
     });
     tokenClient.requestAccessToken({ prompt: accessToken ? "" : "consent" });
   });
@@ -67,7 +68,7 @@ function requireToken() {
   if (!accessToken || Date.now() >= expiresAt) {
     accessToken = null;
     expiresAt = 0;
-    throw new Error("La autorización de Google Drive expiró. Vuelve a conectar Drive.");
+    throw new Error(localizeService("services.driveExpired"));
   }
   return accessToken;
 }
@@ -84,16 +85,19 @@ function buildDriveQuery(search) {
 
 async function readDriveError(response) {
   const payload = await response.json().catch(() => ({}));
+  console.warn("Google Drive API request failed", { status: response.status, error: payload?.error });
   if (response.status === 401) {
     accessToken = null;
     expiresAt = 0;
+    throw new Error(localizeService("services.driveExpired"));
   }
   if (response.status === 403) {
     throw new Error(
-      "Google rechazó el permiso para esta acción. Comprueba que Drive API esté activada y que la app tenga la verificación OAuth requerida."
+      localizeService("services.drive.permissionRejected")
     );
   }
-  throw new Error(payload?.error?.message || `Google Drive respondió ${response.status}.`);
+  if (response.status === 429) throw new Error(localizeService("services.drive.rateLimited"));
+  throw new Error(localizeService("services.drive.errorStatus", { status: response.status }));
 }
 
 async function driveRequest(
@@ -146,7 +150,7 @@ const exportMimeTypes = {
 export async function downloadDriveFile(file) {
   const mimeType = exportMimeTypes[file?.mimeType];
   if (file?.mimeType?.startsWith("application/vnd.google-apps.") && !mimeType) {
-    throw new Error("Este tipo de archivo de Google debe abrirse desde Drive.");
+    throw new Error(localizeService("services.drive.openFileType"));
   }
   const path = mimeType
     ? `files/${encodeURIComponent(file.id)}/export`
@@ -167,7 +171,7 @@ export async function downloadDriveFile(file) {
 }
 
 export async function uploadDriveFile(file) {
-  if (!file) throw new Error("Selecciona un archivo para subir.");
+  if (!file) throw new Error(localizeService("services.drive.selectFile"));
   const mimeType =
     String(file.type || "application/octet-stream").replace(/[^\w.+/-]/g, "") ||
     "application/octet-stream";
@@ -210,10 +214,10 @@ async function uploadDriveFileResumable(file, mimeType) {
   });
   if (!startResponse.ok) return readDriveError(startResponse);
   const uploadUrl = startResponse.headers?.get("Location");
-  if (!uploadUrl) throw new Error("Google no devolvió la URL para iniciar la carga del archivo.");
+  if (!uploadUrl) throw new Error(localizeService("services.drive.uploadUrlMissing"));
   const sessionUrl = new URL(uploadUrl);
   if (sessionUrl.protocol !== "https:" || !sessionUrl.hostname.endsWith(".googleapis.com")) {
-    throw new Error("Google devolvió una URL de carga no válida; no se enviaron tus datos.");
+    throw new Error(localizeService("services.drive.uploadUrlInvalid"));
   }
   const uploadResponse = await fetch(sessionUrl, {
     method: "PUT",
@@ -231,7 +235,7 @@ async function uploadDriveFileResumable(file, mimeType) {
 
 export async function renameDriveFile(fileId, name) {
   const safeName = String(name || "").trim();
-  if (!safeName || safeName.length > 255) throw new Error("Escribe un nombre de archivo válido.");
+  if (!safeName || safeName.length > 255) throw new Error(localizeService("services.drive.filenameInvalid"));
   return driveRequest(`files/${encodeURIComponent(fileId)}`, {
     method: "PATCH",
     params: { fields: "id,name,mimeType,modifiedTime,webViewLink" },
