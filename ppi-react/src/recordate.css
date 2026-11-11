@@ -94,7 +94,7 @@
   --motion-quick: 120ms;
   --motion-fast: 220ms;
   --motion-medium: 420ms;
-  --sidebar: 232px;
+  --sidebar: 248px;
   --header: 92px;
   --green: var(--lilac);
   --green-dark: var(--navy);
@@ -723,8 +723,19 @@ body > .skiptranslate,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 0 8px;
 }
+.sidebar-head .brand { flex: 0 0 auto; min-width: 0 }
+.sidebar-head .brand-word {
+  flex: 0 0 auto;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-head .language-switcher { flex: 0 0 auto }
 .sidebar-caption {
   margin: 14px 12px 6px;
   color: var(--muted);
