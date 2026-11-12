@@ -1,10 +1,13 @@
 // @ts-nocheck
 import { ListTodo } from "lucide-react";
+import { useI18n } from "../../i18n";
 import PriorityBadge from "./PriorityBadge";
 import TaskCard from "./TaskCard";
 
-const formatDate = (date) =>
-  new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
+const localeFor = (lang) => (lang === "en" ? "en-US" : "es-CO");
+
+const formatDate = (date, lang) =>
+  new Intl.DateTimeFormat(localeFor(lang), { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
   );
 
@@ -12,7 +15,7 @@ export default function TaskList({
   tasks,
   title,
   subtitle,
-  empty = "No hay actividades registradas.",
+  empty,
   userId,
   compact = false,
   focusOnly = false,
@@ -22,6 +25,7 @@ export default function TaskList({
   onFocus,
   onAttachmentDelete,
 }) {
+  const { t, lang } = useI18n();
   return (
     <section className={`task-list-section ${compact ? "compact-list" : ""}`}>
       {title && (
@@ -40,7 +44,7 @@ export default function TaskList({
                 <span className="focus-choice-icon"><ListTodo size={18} /></span>
                 <span>
                   <b>{task.title}</b>
-                  <small>{task.subject} \u00b7 {formatDate(task.date)} \u00b7 {task.time}</small>
+                  <small>{task.subject} \u00b7 {formatDate(task.date, lang)} \u00b7 {task.time}</small>
                 </span>
                 <PriorityBadge priority={task.priority} />
               </button>
@@ -61,8 +65,8 @@ export default function TaskList({
       ) : (
         <div className="empty-state">
           <ListTodo size={28} />
-          <h3>{empty}</h3>
-          <p>Las actividades que agregues aparecer\u00e1n aqu\u00ed.</p>
+          <h3>{empty || t("tasks.list.emptyDefault")}</h3>
+          <p>{t("tasks.list.emptyHint")}</p>
         </div>
       )}
     </section>

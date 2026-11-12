@@ -1,16 +1,19 @@
+import { useI18n } from "../i18n";
+
 // Renderiza la sección informativa de la comunidad PPI Conecta.
 function AcercaDe() {
+    const { t } = useI18n();
     const usuarios = [
-        { inicial: "01", nombre: "Encuentra tu espacio", descripcion: "Un lugar para mostrar lo que sabes hacer y hacia dónde quieres crecer." },
-        { inicial: "02", nombre: "Conecta con personas", descripcion: "Comparte ideas, descubre talento y crea oportunidades que sí importan." },
+        { inicial: "01", nombre: t("public.about.featureOneTitle"), descripcion: t("public.about.featureOneDescription") },
+        { inicial: "02", nombre: t("public.about.featureTwoTitle"), descripcion: t("public.about.featureTwoDescription") },
     ];
 
     return (
         <main className="about-section" aria-labelledby="about-title">
             <div className="about-intro">
-                <p className="eyebrow accent-label">Una comunidad en movimiento</p>
-                <h2 id="about-title">Haz que tu perfil<br /><em>hable por ti.</em></h2>
-                <p className="intro-copy">PPI Conecta reúne personas con ganas de aprender, colaborar y convertir sus ideas en algo real.</p>
+                <p className="eyebrow accent-label">{t("public.about.eyebrow")}</p>
+                <h2 id="about-title">{t("public.about.headingLineOne")}<br /><em>{t("public.about.headingLineTwo")}</em></h2>
+                <p className="intro-copy">{t("public.about.intro")}</p>
             </div>
             <div className="feature-list">
                 {usuarios.map((usuario) => (
