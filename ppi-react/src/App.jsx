@@ -132,12 +132,6 @@ const priorityKeys = {
   Media: "core.priority.medium",
   Baja: "core.priority.low",
 };
-const alarmSoundKeys = {
-  classic: "services.alarm.classic",
-  digital: "services.alarm.digital",
-  chime: "services.alarm.chime",
-  gentle: "services.alarm.gentle",
-};
 const reminderKeys = {
   "Al momento": ["tasks.form.reminderNow"],
   "5 minutos antes": ["tasks.form.reminderMinutes", 5],
@@ -1897,6 +1891,7 @@ function Calendar({ tasks, onSelect }) {
 }
 
 function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, onRevoke, onOpenAttachment }) {
+  const { t } = useI18n();
   const [sharingTaskId, setSharingTaskId] = useState(null);
   const [shareTab, setShareTab] = useState("recibidas");
   const shareableTasks = tasks.filter((task) => task.userId === currentUserId && !task.completed);
@@ -2007,6 +2002,7 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
 }
 
 function Chat({ message, setMessage, userId, demo = false }) {
+  const { t } = useI18n();
   const [messages, setMessages] = useState([]);
   const [tab, setTab] = useState("recibidos");
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -2287,6 +2283,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
 }
 
 function Profile({ view, userName, email, profile, demo = false, onSettingsChange, onLogout, onEnableNotifications, onTestNotification, onPreviewAlarm, onAvatarUpload, onOpenClassroom, onOpenDrive }) {
+  const { t, lang } = useI18n();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef(null);
   const onPickAvatar = async (event) => {
@@ -2302,20 +2299,20 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
   };
   return (
     <section className="panel-view profile-view">
-      <span className="eyebrow accent-label">Tu cuenta</span>
-      <h2>{NAV_LABEL_KEYS[view] ? t(NAV_LABEL_KEYS[view]) : view}</h2>
+      <span className="eyebrow accent-label">{t("core.profile.eyebrow")}</span>
+      <h2>{viewLabelKeys[view] ? t(viewLabelKeys[view]) : view}</h2>
       <div className="profile-card">
         <div className="profile-avatar-wrap">
           <UserAvatar name={userName} url={profile?.avatar_url} size="lg" />
           <button
             type="button"
             className="avatar-upload-button"
-            aria-label="Cambiar foto de perfil"
+            aria-label={t("core.profile.changePhotoAria")}
             disabled={uploadingAvatar}
             onClick={() => fileRef.current?.click()}
           >
             <Icons.Camera size={14} />
-            {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
+            {uploadingAvatar ? t("core.profile.uploading") : t("core.profile.changePhoto")}
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickAvatar} />
         </div>
@@ -2335,7 +2332,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
             <label>
               <span><b>{t("core.profile.role")}</b><small>{t("core.profile.roleHelp")}</small></span>
               <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label={t("core.profile.selectRole")} disabled={isStaffRole(profile?.role)}>
-                {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{roleKeys[option.value] ? t(roleKeys[option.value]) : option.label}</option>)}
               </select>
             </label>
             <label>
@@ -2414,7 +2411,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
               disabled={isStaffRole(profile?.role)}
             >
               {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value}>{roleKeys[option.value] ? t(roleKeys[option.value]) : option.label}</option>
               ))}
             </select>
           </div>

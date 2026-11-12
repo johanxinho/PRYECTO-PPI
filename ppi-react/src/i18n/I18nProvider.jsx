@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- el hook y las constantes comparten archivo con el proveedor. */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import esMessages from "./messages/es.js";

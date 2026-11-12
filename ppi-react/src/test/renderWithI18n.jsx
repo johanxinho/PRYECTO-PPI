@@ -7,5 +7,3 @@ export function renderWithI18n(ui, options) {
   window.localStorage.setItem("recordate_language", "es");
   return render(<I18nProvider>{ui}</I18nProvider>, options);
 }
-
-export * from "@testing-library/react";
