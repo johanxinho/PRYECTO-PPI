@@ -8,6 +8,9 @@ const AiChat = lazy(() => import("./components/AiChat")); // Carga diferida: sol
 const GoogleDrivePanel = lazy(() => import("./components/GoogleDrivePanel"));
 import UsersDirectory from "./components/UsersDirectory";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import HomeView from "./components/home/HomeView";
+import LandingView from "./components/landing/LandingView";
+import { m, AnimatePresence } from "./motion/kit";
 import { Brand } from "./Brand";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
@@ -162,223 +165,6 @@ const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
   }
   return <span className={`${sizeClass} ${className}`.trim()}>{initial}</span>;
 };
-
-function NextActivityCard({ task, lang, t, onOpen, onComplete }) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const update = () => {
-      if (document.visibilityState !== "hidden") setNow(Date.now());
-    };
-    const timer = window.setInterval(update, 60_000);
-    document.addEventListener("visibilitychange", update);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", update);
-    };
-  }, []);
-  if (!task) {
-    return (
-      <section className="next-activity-card next-activity-empty">
-        <span className="eyebrow">{t("core.app.dashboard.nextUp")}</span>
-        <p>{t("core.app.dashboard.nextEmpty")}</p>
-      </section>
-    );
-  }
-  const dueAt = taskDueAtMs(task);
-  const remainingMinutes = Math.ceil((dueAt - now) / 60_000);
-  let relative = t("core.app.dashboard.overdue");
-  if (remainingMinutes >= 0) {
-    const amount = remainingMinutes < 60
-      ? [Math.max(1, remainingMinutes), "minute"]
-      : remainingMinutes < 1_440
-        ? [Math.ceil(remainingMinutes / 60), "hour"]
-        : [Math.ceil(remainingMinutes / 1_440), "day"];
-    relative = new Intl.RelativeTimeFormat(localeFor(lang), { numeric: "auto" }).format(amount[0], amount[1]);
-  }
-  return (
-    <section className="next-activity-card">
-      <span className="eyebrow">{t("core.app.dashboard.nextUp")}</span>
-      <div className="next-activity-content">
-        <div className="next-activity-details">
-          <span className="next-activity-subject">{task.subject}</span>
-          <h2>{task.title}</h2>
-          <p><time dateTime={`${task.date}T${task.time}`}>{formatDate(task.date, lang)} · {task.time}</time><span aria-hidden="true"> · </span><strong>{relative}</strong></p>
-        </div>
-        <div className="next-activity-actions">
-          <button className="outline-button" type="button" onClick={() => onOpen(task)}>{t("core.app.dashboard.openNext")}</button>
-          <button className="next-complete-button" type="button" onClick={() => onComplete(task.id)}><Icons.Check size={15} />{t("core.app.dashboard.completeNext")}</button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* Portada pública: hero, características y FAQ. */
-function Landing({ onStart, lang = "es", onLangChange }) {
-  const { t } = useI18n();
-  return (
-    <div className="landing">
-      <header className="landing-header">
-        <Brand light />
-        <nav className="landing-nav">
-          <a href="#caracteristicas">{t("core.landing.features")}</a>
-          <a href="#como-funciona">{t("core.landing.howItWorks")}</a>
-          <a href="#beneficios">{t("core.landing.benefits")}</a>
-          <a href="#preguntas">{t("core.landing.questions")}</a>
-          <a href="#manuales">{t("core.landing.manuals")}</a>
-        </nav>
-        <div className="landing-header-actions">
-          <LanguageSwitcher lang={lang} onChange={onLangChange} />
-          <button className="outline-button" onClick={onStart}>
-            {t("core.action.signIn")}
-          </button>
-        </div>
-      </header>
-      <main className="landing-main">
-      <section className="hero" id="inicio">
-        <div className="hero-copy">
-          <span className="eyebrow accent-label">
-            {t("core.landing.eyebrow")}
-          </span>
-          <h1 className="hero-static">{t("core.landing.heroTitle")}</h1>
-          <p className="hero-tagline">{t("core.landing.heroTagline")}</p>
-          <p>
-            {t("core.landing.heroDescription")}
-          </p>
-          <div className="hero-actions">
-            <button className="primary-button" onClick={onStart}>
-              {t("core.landing.startNow")} <Icons.ArrowRight size={16} />
-            </button>
-            <a className="text-button" href="#como-funciona">
-              {t("core.action.learnMore")} <Icons.ArrowDown size={16} />
-            </a>
-          </div>
-          <p className="demo-note">{t("core.landing.demoNote")}</p>
-        </div>
-        <div className="hero-visual">
-          <div className="planner-preview" role="img" aria-label={t("core.landing.preview.aria")}>
-            <header className="planner-preview-header">
-              <span>{t("core.landing.preview.today")}</span>
-              <Icons.CalendarDays size={17} aria-hidden="true" />
-            </header>
-            <div className="planner-preview-next">
-              <span>{t("core.landing.preview.next")}</span>
-              <time>14:00</time>
-              <b>{t("core.landing.preview.math")}</b>
-              <strong>{t("core.landing.preview.workshop")}</strong>
-            </div>
-            <ol className="planner-preview-agenda">
-              <li><time>07:00</time><i className="preview-dot subject-teal" /><span><b>{t("core.landing.preview.english")}</b> · {t("core.landing.preview.quiz")}</span></li>
-              <li><time>10:30</time><i className="preview-dot subject-blue" /><span><b>{t("core.landing.preview.physics")}</b> · {t("core.landing.preview.lab")}</span></li>
-            </ol>
-            <footer className="planner-preview-footer"><span>{t("core.landing.preview.week")}</span><div aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div></footer>
-          </div>
-        </div>
-      </section>
-      <section className="problem-band" id="como-funciona">
-        <div>
-          <span className="eyebrow">{t("core.landing.challenge")}</span>
-          <h2>{t("core.landing.challengeTitle")}</h2>
-        </div>
-        <p>
-          {t("core.landing.challengeBody")}
-        </p>
-      </section>
-      <section className="feature-section" id="caracteristicas">
-        <div className="section-heading">
-          <span className="eyebrow accent-label">{t("core.landing.featuresEyebrow")}</span>
-          <h2>{t("core.landing.featuresTitle")}</h2>
-        </div>
-        <div className="feature-grid">
-          {[
-            ["01", t("core.landing.feature1Title"), t("core.landing.feature1Body")],
-            ["02", t("core.landing.feature2Title"), t("core.landing.feature2Body")],
-            ["03", t("core.landing.feature3Title"), t("core.landing.feature3Body")],
-            ["04", t("core.landing.feature4Title"), t("core.landing.feature4Body")],
-            ["05", t("core.landing.feature5Title"), t("core.landing.feature5Body")],
-            ["06", t("core.landing.feature6Title"), t("core.landing.feature6Body")],
-          ].map(([number, title, description]) => (
-            <article className="feature-item" key={number}>
-              <span>{number}</span>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="benefit-band" id="beneficios">
-        <div>
-          <span className="eyebrow">{t("core.landing.benefitEyebrow")}</span>
-          <h2>{t("core.landing.benefitTitle")}</h2>
-        </div>
-        <button className="primary-button" onClick={onStart}>
-          {t("core.action.openRecordate")} <Icons.ArrowRight size={16} />
-        </button>
-      </section>
-      <section className="landing-faq" id="preguntas">
-        <span className="eyebrow">{t("core.landing.faqTitle")}</span>
-        <div className="faq-grid">
-          <div>
-            <h3>{t("core.landing.faqAccountQ")}</h3>
-            <p>{t("core.landing.faqAccountA")}</p>
-          </div>
-          <div>
-            <h3>{t("core.landing.faqMobileQ")}</h3>
-            <p>{t("core.landing.faqMobileA")}</p>
-          </div>
-          <div>
-            <h3>{t("core.landing.faqShareQ")}</h3>
-            <p>{t("core.landing.faqShareA")}</p>
-          </div>
-          <div>
-            <h3>{t("core.landing.faqRemindersQ")}</h3>
-            <p>{t("core.landing.faqRemindersA")}</p>
-          </div>
-        </div>
-      </section>
-      <section className="manuals-section" id="manuales">
-        <div className="section-heading">
-          <span className="eyebrow accent-label">{t("core.landing.docsEyebrow")}</span>
-          <h2>{t("core.landing.docsTitle")}</h2>
-        </div>
-        <div className="manuals-list">
-          {[
-            ["MANUAL-DE-USUARIO.md", t("core.landing.manualUser"), t("core.landing.manualUserDesc")],
-            ["EXPLICACION-EQUIPO-RECORDATE.md", t("core.landing.manualTechnical"), t("core.landing.manualTechnicalDesc")],
-            ["PROJECT-DOCUMENTATION.md", t("core.landing.manualProject"), t("core.landing.manualProjectDesc")],
-          ].map(([fileName, title, description]) => (
-            <article className="manual-item" key={fileName}>
-              <div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </div>
-              <a
-                className="manual-download"
-                href={`${import.meta.env.BASE_URL}docs/${fileName}?v=${import.meta.env.VITE_DOCS_VERSION || "dev"}`}
-                download
-              >
-                <Icons.Download size={16} aria-hidden="true" />
-                {t("core.action.downloadMd")}
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
-      </main>
-      <footer className="landing-footer">
-        <Brand light />
-        <p>{t("core.landing.footerTagline")}</p>
-        <p className="footer-credit">
-          {t("core.landing.createdBy")}{" "}
-          <a translate="no" href="https://northboundbrothers.netlify.app/" target="_blank" rel="noopener noreferrer">
-            Northbound Brothers
-          </a>
-        </p>
-        <span>© 2026 PPI</span>
-      </footer>
-    </div>
-  );
-}
 
 function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
   const { t } = useI18n();
@@ -1249,7 +1035,7 @@ function App() {
     </div>
   );
   /* Landing → login/demo → panel. */
-  if (screen === "landing") return frame(<Landing onStart={() => setScreen("auth")} lang={lang} onLangChange={setLang} />);
+  if (screen === "landing") return frame(<LandingView onStart={() => setScreen("auth")} lang={lang} onLangChange={setLang} />);
   if (!session || passwordRecovery) {
     return frame(
       <Login
@@ -1531,69 +1317,28 @@ function App() {
     const nextTask = datedPending.find((task) => taskDueAtMs(task) >= Date.now())
       || datedPending.find((task) => task.date === today)
       || null;
-    const undatedTasks = visibleTasks.filter((task) => !task.completed && !task.date).slice(0, 3);
-    const selectedDayLabel = new Intl.DateTimeFormat(localeFor(lang), { weekday: "long", day: "numeric", month: "long" })
-      .format(new Date(`${selectedAgendaDate}T12:00:00`));
     return (
-      <div className="planner-home">
-        <header className="planner-home-header">
-          <div>
-            <span className="eyebrow">{new Intl.DateTimeFormat(localeFor(lang), { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span>
-            <h1>{t(greetingKey())}, {userName}.</h1>
-          </div>
-          <button className="primary-button planner-new-task" onClick={openNewTask}><Icons.Plus size={17} />{t("core.app.dashboard.newActivity")}</button>
-        </header>
-        <div className="planner-columns">
-          <div className="planner-main-column">
-            <NextActivityCard task={nextTask} lang={lang} t={t} onOpen={setFocusTask} onComplete={toggleTask} />
-            <section className="planner-agenda-section">
-              <header className="planner-section-heading">
-                <div><span className="eyebrow">{t("core.app.dashboard.dayAgenda")}</span><h2>{selectedDayLabel}</h2></div>
-                <button className="text-button" type="button" onClick={() => navigate("Calendario")}>{t("core.app.dashboard.openCalendar")} <Icons.ArrowRight size={14} /></button>
-              </header>
-              <div className="search-wrap planner-search"><Icons.Search size={16} /><input aria-label={t("core.app.dashboard.searchTasks")} placeholder={t("core.app.dashboard.searchTasks")} value={query} onChange={(event) => setQuery(event.target.value)} /></div>
-              {dayTasks.length ? (
-                <ol className="agenda-timeline">
-                  {dayTasks.map((task) => (
-                    <li className="agenda-timeline-item" key={task.id}>
-                      <time dateTime={`${task.date}T${task.time}`}>{task.time}</time>
-                      <span className="agenda-timeline-marker" aria-hidden="true" />
-                      <TaskCard task={task} {...taskHandlers} />
-                    </li>
-                  ))}
-                </ol>
-              ) : <p className="planner-empty">{t("core.app.dashboard.noDayTasks")}</p>}
-            </section>
-          </div>
-          <aside className="planner-side-column">
-            <section className="week-planner" aria-label={t("core.app.dashboard.week")}>
-              <h2>{t("core.app.dashboard.week")}</h2>
-              <div className="week-strip">
-                {weekDays.map((day) => {
-                  const date = new Date(`${day}T12:00:00`);
-                  const hasTasks = pending.some((task) => task.date === day);
-                  return (
-                    <button key={day} className={`week-day ${selectedAgendaDate === day ? "is-selected" : ""} ${day === today ? "is-today" : ""}`} type="button" aria-label={t("core.app.dashboard.selectDay", { date: new Intl.DateTimeFormat(localeFor(lang), { weekday: "long", day: "numeric", month: "long" }).format(date) })} aria-pressed={selectedAgendaDate === day} onClick={() => setSelectedAgendaDate(day)}>
-                      <span>{new Intl.DateTimeFormat(localeFor(lang), { weekday: "short" }).format(date).replace(".", "")}</span>
-                      <b>{date.getDate()}</b>
-                      <i className={hasTasks ? "has-agenda" : ""} aria-hidden="true" />
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-            <section className="undated-panel">
-              <header><h2>{t("core.app.dashboard.noDate")}</h2><span>{pending.filter((task) => !task.date).length}</span></header>
-              {undatedTasks.length ? <TaskList {...taskHandlers} tasks={undatedTasks} empty={t("core.app.dashboard.noDateEmpty")} compact /> : <p className="planner-empty">{t("core.app.dashboard.noDateEmpty")}</p>}
-              <button className="text-button" type="button" onClick={() => navigate("Mis tareas")}>{t("core.app.dashboard.viewAll")} <Icons.ArrowRight size={14} /></button>
-            </section>
-          </aside>
-        </div>
-        <section className="planner-summary" aria-label={t("core.app.dashboard.progress")}>
-          <div><span className="eyebrow">{t("core.app.dashboard.progress")}</span><strong>{progress}%</strong><span>{t("core.app.dashboard.progressCaption")}</span><div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${progress}%` }} /></div></div>
-          <Stats stats={stats} />
-        </section>
-      </div>
+      <HomeView
+        userName={userName}
+        tasks={visibleTasks}
+        pending={pending}
+        nextTask={nextTask}
+        dayTasks={dayTasks}
+        progress={progress}
+        weekDays={weekDays}
+        selectedDate={selectedAgendaDate}
+        onSelectDate={setSelectedAgendaDate}
+        query={query}
+        onQuery={setQuery}
+        onNew={openNewTask}
+        onOpen={setFocusTask}
+        onToggle={taskHandlers.onToggle}
+        onEdit={taskHandlers.onEdit}
+        onDelete={taskHandlers.onDelete}
+        onFocus={taskHandlers.onFocus}
+        onNavigate={navigate}
+        today={today}
+      />
     );
   };
   return frame(
@@ -1611,6 +1356,7 @@ function App() {
               <p className="sidebar-caption">{t(`core.app.nav.groups.${({ Agenda: "agenda", Seguimiento: "tracking", Conecta: "connect" })[group.label] || "agenda"}`)}</p>
               {group.items.map(([item, Icon]) => (
                 <button className={view === item ? "nav-item active" : "nav-item"} key={item} onClick={() => navigate(item)}>
+                  {view === item && <m.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 320, damping: 30 }} aria-hidden="true" />}
                   <span className="nav-symbol" aria-hidden="true"><Icon size={16} /></span>
                   {t(`core.app.nav.items.${({ "Inicio": "home", "Mis tareas": "tasks", Calendario: "calendar", Recordatorios: "reminders", Prioridades: "priorities", "Modo enfoque": "focus", "Compartir agendas": "share", Mensajes: "messages", "Google Classroom": "classroom", "Google Drive": "drive" })[item] || "home"}`)}
                 </button>
@@ -1620,16 +1366,18 @@ function App() {
           {(admin || teacher) && (
             <div className="nav-group">
               <p className="sidebar-caption">{t("core.app.nav.management")}</p>
-              {admin && <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}><span className="nav-symbol"><Icons.Shield size={16} /></span> {t("core.app.nav.administration")}</button>}
-              {teacher && <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}><span className="nav-symbol"><Icons.Users size={16} /></span> {t("core.app.nav.assignTasks")}</button>}
+              {admin && <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}>{view === "Administración" && <m.span layoutId="nav-indicator" className="nav-indicator" aria-hidden="true" />}<span className="nav-symbol"><Icons.Shield size={16} /></span> {t("core.app.nav.administration")}</button>}
+              {teacher && <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}>{view === "Asignar tareas" && <m.span layoutId="nav-indicator" className="nav-indicator" aria-hidden="true" />}<span className="nav-symbol"><Icons.Users size={16} /></span> {t("core.app.nav.assignTasks")}</button>}
             </div>
           )}
         </nav>
         <div className="sidebar-bottom">
           <button className={view === "Perfil" ? "nav-item active" : "nav-item"} onClick={() => navigate("Perfil")}>
+            {view === "Perfil" && <m.span layoutId="nav-indicator" className="nav-indicator" aria-hidden="true" />}
             <span className="nav-symbol"><Icons.User size={16} /></span> {t("core.app.nav.profile")}
           </button>
           <button className={view === "Configuración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Configuración")}>
+            {view === "Configuración" && <m.span layoutId="nav-indicator" className="nav-indicator" aria-hidden="true" />}
             <span className="nav-symbol"><Icons.Settings size={16} /></span> {t("core.app.nav.settings")}
           </button>
           <button className="nav-item logout" onClick={logout}>
@@ -1642,10 +1390,13 @@ function App() {
         {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
           <button ref={menuToggleRef} className="menu-toggle" onClick={() => setMobileNav(true)} aria-label={t("core.app.aria.openMenu")} aria-expanded={mobileNav} aria-controls="app-sidebar"><Icons.Menu size={18} /></button>
-          <div>
-            <p className="eyebrow">{t("core.app.header.school")}{demo ? ` · ${t("core.app.header.demo")}` : ""}</p>
-            <h1>{view === "Inicio" ? t("core.app.nav.today") : t(`core.app.nav.items.${({ "Mis tareas": "tasks", Calendario: "calendar", Recordatorios: "reminders", Prioridades: "priorities", "Modo enfoque": "focus", "Compartir agendas": "share", Mensajes: "messages", "Google Classroom": "classroom", "Google Drive": "drive", Administración: "administration", "Asignar tareas": "assignTasks", Perfil: "profile", "Configuración": "settings" })[view] || "home"}`)}</h1>
-          </div>
+          {view === "Inicio" ? (
+            <span className="workspace-header__spacer" aria-hidden="true" />
+          ) : (
+            <div>
+              <h1>{t(`core.app.nav.items.${({ "Mis tareas": "tasks", Calendario: "calendar", Recordatorios: "reminders", Prioridades: "priorities", "Modo enfoque": "focus", "Compartir agendas": "share", Mensajes: "messages", "Google Classroom": "classroom", "Google Drive": "drive", Administración: "administration", "Asignar tareas": "assignTasks", Perfil: "profile", "Configuración": "settings" })[view] || "home"}`)}</h1>
+            </div>
+          )}
           <div className="header-user">
             <button ref={notificationButtonRef} className="notification-button" aria-label={t("core.app.aria.notifications")} onClick={() => setNotificationsOpen((current) => !current)}>
               <Icons.Bell size={16} />
@@ -1679,7 +1430,19 @@ function App() {
               <span className="loading-spinner" />
               {t("core.app.loading")}
             </div>
-          ) : renderMain()}
+          ) : (
+            <AnimatePresence mode="wait" initial={false}>
+              <m.div
+                key={view}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {renderMain()}
+              </m.div>
+            </AnimatePresence>
+          )}
         </div>
       </section>
       <nav className="bottom-nav" aria-label={t("core.app.aria.mobileNavigation")} inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
@@ -1749,26 +1512,6 @@ function App() {
         </div>
       )}
     </main>
-  );
-}
-
-function Stats({ stats }) {
-  const { t } = useI18n();
-  return (
-    <section className="stats-grid">
-      {[
-        [t("core.stats.pending"), stats.pending, t("core.stats.pendingCaption"), "green"],
-        [t("core.stats.today"), stats.today, t("core.stats.todayCaption"), "gold"],
-        [t("core.stats.high"), stats.high, t("core.stats.highCaption"), "coral"],
-        [t("core.stats.done"), stats.done, t("core.stats.doneCaption"), "ink"],
-      ].map(([label, value, caption, tone]) => (
-        <article className={`stat-card stat-${tone}`} key={label}>
-          <span>{label}</span>
-          <strong>{value}</strong>
-          <small>{caption}</small>
-        </article>
-      ))}
-    </section>
   );
 }
 
