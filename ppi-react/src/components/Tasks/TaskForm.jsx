@@ -1,7 +1,23 @@
 // @ts-nocheck
 import { useState } from "react";
+import { useI18n } from "../../i18n";
+
+// Los valores de prioridad y recordatorio se guardan tal cual en la actividad;
+// estas tablas solo traducen la etiqueta visible.
+const priorityKeys = { Alta: "tasks.priority.high", Media: "tasks.priority.medium", Baja: "tasks.priority.low" };
+const reminderLabelKeys = {
+  "Al momento": ["tasks.form.reminderNow"],
+  "5 minutos antes": ["tasks.form.reminderMinutes", 5],
+  "10 minutos antes": ["tasks.form.reminderMinutes", 10],
+  "30 minutos antes": ["tasks.form.reminderMinutes", 30],
+  "1 hora antes": ["tasks.form.reminderHour", 1],
+  "3 horas antes": ["tasks.form.reminderHours", 3],
+  "12 horas antes": ["tasks.form.reminderHours", 12],
+  "1 d\u00eda antes": ["tasks.form.reminderDay"],
+};
 
 export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
+  const { t } = useI18n();
   const [form, setForm] = useState({
     title: task?.title || "",
     description: task?.description || "",
@@ -46,35 +62,35 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
     <form className="task-form" onSubmit={handleSubmit}>
       <div className="form-grid">
         <div className="form-group">
-          <label htmlFor="task-title">T\u00edtulo *</label>
+          <label htmlFor="task-title">{t("tasks.form.title")}</label>
           <input
             id="task-title"
             autoFocus
             value={form.title}
             onChange={(event) => update("title", event.target.value)}
-            placeholder="Ej. Entrega de taller"
+            placeholder={t("tasks.form.titlePlaceholder")}
             maxLength={120}
             required
           />
         </div>
         <div className="form-group">
-          <label htmlFor="task-subject">Asignatura *</label>
+          <label htmlFor="task-subject">{t("tasks.form.subject")}</label>
           <input
             id="task-subject"
             value={form.subject}
             onChange={(event) => update("subject", event.target.value)}
-            placeholder="Ej. Matem\u00e1ticas"
+            placeholder={t("tasks.form.subjectPlaceholder")}
             maxLength={60}
             required
           />
         </div>
         <div className="form-group full-width">
-          <label htmlFor="task-description">Descripci\u00f3n (opcional)</label>
+          <label htmlFor="task-description">{t("tasks.form.description")}</label>
           <textarea
             id="task-description"
             value={form.description}
             onChange={(event) => update("description", event.target.value)}
-            placeholder="Ej. Resolver los ejercicios 4 a 9 y adjuntar el procedimiento."
+            placeholder={t("tasks.form.descriptionPlaceholder")}
             rows={3}
             maxLength={500}
           />
@@ -82,7 +98,7 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="task-date">Fecha</label>
+            <label htmlFor="task-date">{t("tasks.form.date")}</label>
             <input
               id="task-date"
               type="date"
@@ -93,7 +109,7 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="task-time">Hora</label>
+            <label htmlFor="task-time">{t("tasks.form.time")}</label>
             <input
               id="task-time"
               type="time"
@@ -105,7 +121,7 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="task-priority">Prioridad</label>
+            <label htmlFor="task-priority">{t("tasks.form.priority")}</label>
             <select
               id="task-priority"
               value={form.priority}
@@ -113,41 +129,44 @@ export default function TaskForm({ task, assignTarget, onSave, onCancel }) {
             >
               {priorityOptions.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {t(priorityKeys[option])}
                 </option>
               ))}
             </select>
           </div>
           <div className="form-group">
-            <label htmlFor="task-reminder">Recordatorio</label>
+            <label htmlFor="task-reminder">{t("tasks.form.reminder")}</label>
             <select
               id="task-reminder"
               value={form.reminder}
               onChange={(event) => update("reminder", event.target.value)}
             >
-              {reminderOptions.map(([label]) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
-              ))}
+              {reminderOptions.map(([label]) => {
+                const [key, count] = reminderLabelKeys[label] || [];
+                return (
+                  <option key={label} value={label}>
+                    {count === undefined ? t(key) : t(key, { count })}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
         {assignTarget && (
           <div className="form-group">
-            <label>Asignado a: {assignTarget.full_name || assignTarget.email}</label>
+            <label>{t("tasks.form.assignedTo", { name: assignTarget.full_name || assignTarget.email })}</label>
           </div>
         )}
         <div className="form-actions">
           <button type="button" className="text-button" onClick={onCancel}>
-            Cancelar
+            {t("tasks.form.cancel")}
           </button>
           <button
             type="submit"
             className="primary-button"
             disabled={!canSave}
           >
-            {task ? "Guardar cambios" : "Crear actividad"}
+            {task ? t("tasks.form.save") : t("tasks.form.create")}
           </button>
         </div>
       </div>

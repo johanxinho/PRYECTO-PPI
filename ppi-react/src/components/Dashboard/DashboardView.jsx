@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { CalendarDays, ArrowRight, ListTodo } from "lucide-react";
+import { useI18n } from "../../i18n";
 import Stats from "./Stats";
 import QuickActions from "./QuickActions";
 import { TaskList } from "../Tasks";
@@ -22,6 +23,7 @@ export default function DashboardView({
   onFocusTask,
   onNavigate,
 }) {
+  const { t } = useI18n();
   const todayTasks = tasks.filter(
     (task) => task.date === localDate() && !task.completed,
   );
@@ -35,11 +37,11 @@ export default function DashboardView({
       {/* Bienvenida */}
       <header className="welcome-header">
         <div className="welcome-content">
-          <span className="eyebrow">Bienvenido a RECORDATE</span>
+          <span className="eyebrow">{t("tasks.dashboard.welcome")}</span>
           <h1>
-            {profile?.full_name || "Estudiante"}, ¡vamos a organizar tu d\u00eda!
+            {profile?.full_name || t("tasks.dashboard.student")}, {t("tasks.dashboard.organize")}
           </h1>
-          <p>Administra tus actividades acad\u00e9micas de manera sencilla y efectiva.</p>
+          <p>{t("tasks.dashboard.intro")}</p>
         </div>
       </header>
 
@@ -56,8 +58,8 @@ export default function DashboardView({
       {/* Tareas de hoy */}
       {todayTasks.length > 0 && (
         <TaskList
-          title="Hoy"
-          subtitle="Tus actividades para hoy"
+          title={t("tasks.dashboard.today")}
+          subtitle={t("tasks.dashboard.todaySubtitle")}
           tasks={todayTasks}
           userId={profile?.id}
           onToggle={onToggleTask}
@@ -71,15 +73,15 @@ export default function DashboardView({
       {/* Pr\u00f3ximas tareas */}
       {recentTasks.length > 0 && (
         <TaskList
-          title="Pr\u00f3ximamente"
-          subtitle="Tus pr\u00f3ximas actividades"
+          title={t("tasks.dashboard.upcoming")}
+          subtitle={t("tasks.dashboard.upcomingSubtitle")}
           tasks={recentTasks}
           userId={profile?.id}
           onToggle={onToggleTask}
           onEdit={onEditTask}
           onDelete={onDeleteTask}
           onFocus={onFocusTask}
-          empty="No hay actividades pr\u00f3ximas"
+          empty={t("tasks.dashboard.noUpcoming")}
           compact
         />
       )}
@@ -88,12 +90,12 @@ export default function DashboardView({
       <section className="dashboard-nav">
         <button className="nav-card" onClick={() => onNavigate("Mis tareas")}>
           <ListTodo size={24} />
-          <span>Ver todas las tareas</span>
+          <span>{t("tasks.dashboard.allTasks")}</span>
           <ArrowRight size={16} />
         </button>
         <button className="nav-card" onClick={() => onNavigate("Calendario")}>
           <CalendarDays size={24} />
-          <span>Ver calendario completo</span>
+          <span>{t("tasks.dashboard.fullCalendar")}</span>
           <ArrowRight size={16} />
         </button>
       </section>

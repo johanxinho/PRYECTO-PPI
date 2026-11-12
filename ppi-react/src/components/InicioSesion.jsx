@@ -1,24 +1,27 @@
+import { useI18n } from "../i18n";
+
 // Renderiza el formulario visual heredado para iniciar sesión.
 function InicioSesion(){
+const { t } = useI18n();
 
 return(
 
 <div className="container">
 
-<h2>Iniciar sesión</h2>
+<h2>{t("auth.login.title")}</h2>
 
 <input 
 className="form-control mb-2"
-placeholder="Correo"
+placeholder={t("auth.form.email")}
 />
 
 <input 
 className="form-control mb-2"
-placeholder="Contraseña"
+placeholder={t("auth.form.password")}
 />
 
 <button className="btn btn-primary">
-Ingresar
+{t("auth.login.submit")}
 </button>
 
 </div>

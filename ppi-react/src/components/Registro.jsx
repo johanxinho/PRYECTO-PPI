@@ -1,24 +1,27 @@
+import { useI18n } from "../i18n";
+
 // Renderiza el formulario visual heredado para registrar un usuario.
 function Registro(){
+const { t } = useI18n();
 
 return(
 
 <div className="container">
 
-<h2>Registro</h2>
+<h2>{t("auth.signup.title")}</h2>
 
 <input 
 className="form-control mb-2"
-placeholder="Nombre"
+placeholder={t("auth.form.name")}
 />
 
 <input 
 className="form-control mb-2"
-placeholder="Correo"
+placeholder={t("auth.form.email")}
 />
 
 <button className="btn btn-success">
-Registrar
+{t("auth.signup.register")}
 </button>
 
 </div>

@@ -1,0 +1,17 @@
+export default {
+  "public.about.eyebrow": "Una comunidad en movimiento",
+  "public.about.headingLineOne": "Haz que tu perfil",
+  "public.about.headingLineTwo": "hable por ti.",
+  "public.about.intro": "PPI Conecta reúne personas con ganas de aprender, colaborar y convertir sus ideas en algo real.",
+  "public.about.featureOneTitle": "Encuentra tu espacio",
+  "public.about.featureOneDescription": "Un lugar para mostrar lo que sabes hacer y hacia dónde quieres crecer.",
+  "public.about.featureTwoTitle": "Conecta con personas",
+  "public.about.featureTwoDescription": "Comparte ideas, descubre talento y crea oportunidades que sí importan.",
+  "public.header.eyebrow": "Plataforma de perfiles",
+  "public.header.note": "Tu próximo paso empieza aquí",
+  "public.navigation.ariaLabel": "Navegación principal",
+  "public.navigation.explore": "Explora",
+  "public.navigation.home": "Inicio",
+  "public.navigation.account": "Mi cuenta",
+  "public.footer.tagline": "Construyendo oportunidades",
+};

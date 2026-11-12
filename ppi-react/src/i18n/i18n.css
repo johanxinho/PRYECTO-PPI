@@ -1,0 +1,16 @@
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 140ms;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0s;
+  }
+}
+
+/* Logo oficial de Google en el botón de acceso. */
+.google-mark-wrap { display: inline-flex; align-items: center; }
+.google-mark { width: 18px; height: 18px; flex: 0 0 auto; }

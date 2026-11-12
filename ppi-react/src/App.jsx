@@ -7,6 +7,7 @@ const AiChat = lazy(() => import("./components/AiChat")); // Carga diferida: sol
 const GoogleDrivePanel = lazy(() => import("./components/GoogleDrivePanel"));
 import UsersDirectory from "./components/UsersDirectory";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import { useI18n } from "./i18n";
 import { Brand } from "./Brand";
 import WebGLBackground from "./components/WebGLBackground";
 import AsciiEffect from "./components/AsciiEffect";
@@ -97,6 +98,66 @@ const viewRoutes = {
   Perfil: "/perfil",
   Configuración: "/configuracion",
 };
+const navGroupKeys = {
+  Agenda: "core.app.nav.groups.agenda",
+  Seguimiento: "core.app.nav.groups.tracking",
+  Conecta: "core.app.nav.groups.connect",
+};
+const viewLabelKeys = {
+  Inicio: "core.app.nav.items.home",
+  "Mis tareas": "core.app.nav.items.tasks",
+  Calendario: "core.app.nav.items.calendar",
+  Recordatorios: "core.app.nav.items.reminders",
+  Prioridades: "core.app.nav.items.priorities",
+  "Modo enfoque": "core.app.nav.items.focus",
+  "Compartir agendas": "core.app.nav.items.share",
+  Mensajes: "core.app.nav.items.messages",
+  "Google Classroom": "core.app.nav.items.classroom",
+  "Google Drive": "core.app.nav.items.drive",
+  Administración: "core.app.nav.items.administration",
+  "Asignar tareas": "core.app.nav.items.assignTasks",
+  Perfil: "core.app.nav.items.profile",
+  Configuración: "core.app.nav.items.settings",
+};
+const roleKeys = {
+  estudiante: "core.app.roles.student",
+  profesor: "core.app.roles.teacher",
+  administrador: "core.app.roles.administrator",
+  padre: "core.app.roles.father",
+  madre: "core.app.roles.mother",
+  trabajador: "core.app.roles.worker",
+};
+const priorityKeys = {
+  Alta: "core.priority.high",
+  Media: "core.priority.medium",
+  Baja: "core.priority.low",
+};
+const alarmSoundKeys = {
+  classic: "services.alarm.classic",
+  digital: "services.alarm.digital",
+  chime: "services.alarm.chime",
+  gentle: "services.alarm.gentle",
+};
+const reminderKeys = {
+  "Al momento": ["tasks.form.reminderNow"],
+  "5 minutos antes": ["tasks.form.reminderMinutes", 5],
+  "10 minutos antes": ["tasks.form.reminderMinutes", 10],
+  "30 minutos antes": ["tasks.form.reminderMinutes", 30],
+  "1 hora antes": ["tasks.form.reminderHour", 1],
+  "3 horas antes": ["tasks.form.reminderHours", 3],
+  "12 horas antes": ["tasks.form.reminderHours", 12],
+  "24 horas antes": ["tasks.form.reminderHours", 24],
+  "1 día antes": ["tasks.form.reminderDay"],
+};
+const localeFor = (lang) => (lang === "en" ? "en-US" : "es-CO");
+const viewLabel = (t, name) => (viewLabelKeys[name] ? t(viewLabelKeys[name]) : name);
+const roleText = (t, role) => t(roleKeys[role] || "core.app.roles.student");
+const priorityText = (t, value) => (priorityKeys[value] ? t(priorityKeys[value]) : value);
+const reminderLabel = (t, label) => {
+  const entry = reminderKeys[label];
+  if (!entry) return label;
+  return entry.length > 1 ? t(entry[0], { count: entry[1] }) : t(entry[0]);
+};
 const localDate = (date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -119,17 +180,17 @@ const reminderOffsets = new Map([
   ...reminderOptions,
   ["24 horas antes", 24 * 60 * 60 * 1000],
 ]);
-const formatDate = (date) =>
-  new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
+const formatDate = (date, locale = "es-CO") =>
+  new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(
     new Date(`${date}T12:00:00`),
   );
-const formatStamp = (value) =>
-  new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
-const greeting = () => {
+const formatStamp = (value, locale = "es-CO") =>
+  new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+const greeting = (t) => {
   const hour = new Date().getHours();
-  if (hour < 12) return "Buenos días";
-  if (hour < 18) return "Buenas tardes";
-  return "Buenas noches";
+  if (hour < 12) return t("core.app.greeting.morning");
+  if (hour < 18) return t("core.app.greeting.afternoon");
+  return t("core.app.greeting.evening");
 };
 const vapidKey = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (character) => character.charCodeAt(0));
 const supabaseErrorMessage = (error, fallback) => {
@@ -142,6 +203,7 @@ const supabaseErrorMessage = (error, fallback) => {
 };
 
 const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
+  const { t } = useI18n();
   const initial = (name || "?").charAt(0).toUpperCase();
   const sizeClass = size === "lg" ? "profile-avatar" : size === "sm" ? "small-avatar" : "avatar";
   if (url) {
@@ -150,6 +212,7 @@ const UserAvatar = ({ name = "?", url, size = "md", className = "" }) => {
         className={`avatar-image ${sizeClass} ${className}`.trim()}
         src={url}
         alt={`Foto de ${name}`}
+        alt={t("core.app.aria.avatar", { name })}
         referrerPolicy="no-referrer"
       />
     );
@@ -163,49 +226,49 @@ const HERO_MORPH_TEXTS = {
   en: ["Remember.", "Organize.", "Prioritize.", "Advance."],
 };
 function Landing({ onStart, lang = "es", onLangChange }) {
+  const { t } = useI18n();
   const gazeSrc = `${import.meta.env.BASE_URL}brand/electric-gaze.jpg`;
   return (
     <div className="landing">
       <header className="landing-header">
         <Brand light />
         <nav className="landing-nav">
-          <a href="#caracteristicas">Características</a>
-          <a href="#como-funciona">Cómo funciona</a>
-          <a href="#beneficios">Beneficios</a>
-          <a href="#preguntas">Preguntas</a>
-          <a href="#manuales">Manuales</a>
+          <a href="#caracteristicas">{t("core.landing.features")}</a>
+          <a href="#como-funciona">{t("core.landing.howItWorks")}</a>
+          <a href="#beneficios">{t("core.landing.benefits")}</a>
+          <a href="#preguntas">{t("core.landing.questions")}</a>
+          <a href="#manuales">{t("core.landing.manuals")}</a>
         </nav>
         <div className="landing-header-actions">
           <LanguageSwitcher lang={lang} onChange={onLangChange} />
           <button className="outline-button" onClick={onStart}>
-            Iniciar sesión
+            {t("core.action.signIn")}
           </button>
         </div>
       </header>
       <section className="hero" id="inicio">
         <div className="hero-copy">
           <span className="eyebrow accent-label">
-            <DiaTextReveal text="PPI · IE La Candelaria · Grado 11" />
+            <DiaTextReveal text={t("core.landing.eyebrow")} />
           </span>
-          <h1 className="hero-static">Tu día académico.</h1>
+          <h1 className="hero-static">{t("core.landing.heroTitle")}</h1>
           <MorphingText
             className="hero-morph notranslate"
             translate="no"
             texts={HERO_MORPH_TEXTS[lang] || HERO_MORPH_TEXTS.es}
           />
           <p>
-            RECORDATE es la agenda académica para estudiantes que quieren claridad:
-            tareas, fechas, prioridades y recordatorios en un solo espacio.
+            {t("core.landing.heroDescription")}
           </p>
           <div className="hero-actions">
             <button className="primary-button" onClick={onStart}>
-              Comenzar ahora <Icons.ArrowRight size={16} />
+              {t("core.landing.startNow")} <Icons.ArrowRight size={16} />
             </button>
             <a className="text-button" href="#como-funciona">
-              Conocer más <Icons.ArrowDown size={16} />
+              {t("core.action.learnMore")} <Icons.ArrowDown size={16} />
             </a>
           </div>
-          <p className="demo-note">Puedes explorar la experiencia con el acceso de demostración.</p>
+          <p className="demo-note">{t("core.landing.demoNote")}</p>
         </div>
         <div className="hero-visual">
           <div className="ascii-stage">
@@ -224,81 +287,80 @@ function Landing({ onStart, lang = "es", onLangChange }) {
       </section>
       <section className="problem-band" id="como-funciona">
         <div>
-          <span className="eyebrow">El reto del día a día</span>
-          <h2>Menos olvido. Más control sobre tu tiempo.</h2>
+          <span className="eyebrow">{t("core.landing.challenge")}</span>
+          <h2>{t("core.landing.challengeTitle")}</h2>
         </div>
         <p>
-          Cuando se acumulan tareas, trabajos y fechas importantes, priorizar se vuelve difícil.
-          RECORDATE convierte esa carga en una agenda clara, pensada para estudiantes de la IE La Candelaria.
+          {t("core.landing.challengeBody")}
         </p>
       </section>
       <section className="feature-section" id="caracteristicas">
         <div className="section-heading">
-          <span className="eyebrow accent-label">Todo en un mismo lugar</span>
-          <h2>Una herramienta hecha para tu ritmo académico.</h2>
+          <span className="eyebrow accent-label">{t("core.landing.featuresEyebrow")}</span>
+          <h2>{t("core.landing.featuresTitle")}</h2>
         </div>
         <div className="feature-grid">
           {[
-            ["01", "Registra tus actividades", "Crea tareas con materia, fecha, hora, descripción y prioridad."],
-            ["02", "Recibe recordatorios", "Configura avisos para llegar a tiempo a cada entrega."],
-            ["03", "Concéntrate mejor", "El modo enfoque deja frente a ti una sola actividad."],
-            ["04", "Coordina con tu equipo", "Comparte agendas y conversa con tus compañeros."],
-            ["05", "Encuentra rápido", "Busca por título, materia o descripción en tiempo real."],
-            ["06", "Marca tu avance", "Completa actividades y visualiza tu progreso real."],
+            ["01", "core.landing.feature1Title", "core.landing.feature1Body"],
+            ["02", "core.landing.feature2Title", "core.landing.feature2Body"],
+            ["03", "core.landing.feature3Title", "core.landing.feature3Body"],
+            ["04", "core.landing.feature4Title", "core.landing.feature4Body"],
+            ["05", "core.landing.feature5Title", "core.landing.feature5Body"],
+            ["06", "core.landing.feature6Title", "core.landing.feature6Body"],
           ].map(([number, title, description]) => (
             <article className="feature-item" key={number}>
               <span>{number}</span>
-              <h3>{title}</h3>
-              <p>{description}</p>
+              <h3>{t(title)}</h3>
+              <p>{t(description)}</p>
             </article>
           ))}
         </div>
       </section>
       <section className="benefit-band" id="beneficios">
         <div>
-          <span className="eyebrow">Una idea del PPI hecha producto</span>
-          <h2>Claridad para estudiar. Tranquilidad para avanzar.</h2>
+          <span className="eyebrow">{t("core.landing.benefitEyebrow")}</span>
+          <h2>{t("core.landing.benefitTitle")}</h2>
         </div>
         <button className="primary-button" onClick={onStart}>
-          Abrir RECORDATE <Icons.ArrowRight size={16} />
+          {t("core.action.openRecordate")} <Icons.ArrowRight size={16} />
         </button>
       </section>
       <section className="landing-faq" id="preguntas">
-        <span className="eyebrow">Preguntas frecuentes</span>
+        <span className="eyebrow">{t("core.landing.faqTitle")}</span>
         <div className="faq-grid">
           <div>
-            <h3>¿Necesito crear una cuenta?</h3>
-            <p>Sí, para guardar tu agenda en la nube con Supabase. También puedes explorar una demostración local.</p>
+            <h3>{t("core.landing.faqAccountQ")}</h3>
+            <p>{t("core.landing.faqAccountA")}</p>
           </div>
           <div>
-            <h3>¿Funciona en el celular?</h3>
-            <p>Sí. La navegación se adapta a iPhone y Android con un menú inferior y pantallas pensadas para una mano.</p>
+            <h3>{t("core.landing.faqMobileQ")}</h3>
+            <p>{t("core.landing.faqMobileA")}</p>
           </div>
           <div>
-            <h3>¿Puedo compartir tareas?</h3>
-            <p>Puedes compartir actividades con compañeros registrados y revocar el acceso cuando lo necesites.</p>
+            <h3>{t("core.landing.faqShareQ")}</h3>
+            <p>{t("core.landing.faqShareA")}</p>
           </div>
           <div>
-            <h3>¿Hay recordatorios?</h3>
-            <p>Configura avisos por actividad. Las alarmas suenan mientras RECORDATE está abierto.</p>
+            <h3>{t("core.landing.faqRemindersQ")}</h3>
+            <p>{t("core.landing.faqRemindersA")}</p>
           </div>
         </div>
       </section>
       <section className="manuals-section" id="manuales">
         <div className="section-heading">
-          <span className="eyebrow accent-label">Documentación RECORDATE</span>
-          <h2>Manuales para consultar y descargar.</h2>
+          <span className="eyebrow accent-label">{t("core.landing.docsEyebrow")}</span>
+          <h2>{t("core.landing.docsTitle")}</h2>
         </div>
         <div className="manuals-list">
           {[
-            ["MANUAL-DE-USUARIO.md", "Manual de usuario", "Guía para crear una cuenta, organizar actividades y usar las funciones de RECORDATE."],
-            ["EXPLICACION-EQUIPO-RECORDATE.md", "Manual técnico del equipo", "Arquitectura, flujos de trabajo, Supabase y despliegue del proyecto."],
-            ["PROJECT-DOCUMENTATION.md", "Documentación del proyecto", "Referencia técnica del repositorio y el estado de sus funciones."],
+            ["MANUAL-DE-USUARIO.md", "core.landing.manualUser", "core.landing.manualUserDesc"],
+            ["EXPLICACION-EQUIPO-RECORDATE.md", "core.landing.manualTechnical", "core.landing.manualTechnicalDesc"],
+            ["PROJECT-DOCUMENTATION.md", "core.landing.manualProject", "core.landing.manualProjectDesc"],
           ].map(([fileName, title, description]) => (
             <article className="manual-item" key={fileName}>
               <div>
-                <h3>{title}</h3>
-                <p>{description}</p>
+                <h3>{t(title)}</h3>
+                <p>{t(description)}</p>
               </div>
               <a
                 className="manual-download"
@@ -306,7 +368,7 @@ function Landing({ onStart, lang = "es", onLangChange }) {
                 download
               >
                 <Icons.Download size={16} aria-hidden="true" />
-                Descargar .md
+                {t("core.action.downloadMd")}
               </a>
             </article>
           ))}
@@ -314,9 +376,9 @@ function Landing({ onStart, lang = "es", onLangChange }) {
       </section>
       <footer className="landing-footer">
         <Brand light />
-        <p>Sistema de recordatorio de actividades académicas · Medellín, Antioquia</p>
+        <p>{t("core.landing.footerTagline")}</p>
         <p className="footer-credit">
-          Creado por{" "}
+          {t("core.landing.createdBy")}{" "}
           <a href="https://northboundbrothers.netlify.app/" target="_blank" rel="noopener noreferrer">
             Northbound Brothers
           </a>
@@ -328,6 +390,7 @@ function Landing({ onStart, lang = "es", onLangChange }) {
 }
 
 function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
+  const { t } = useI18n();
   const [form, setForm] = useState(
     task || {
       title: "",
@@ -346,11 +409,11 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
   const submit = (event) => {
     event.preventDefault();
     if (!form.title.trim() || !form.subject.trim() || !form.date || !form.time) {
-      setError("Completa título, materia, fecha y hora para guardar la actividad.");
+      setError(t("core.taskForm.required"));
       return;
     }
     if (form.title.trim().length > 120 || form.subject.trim().length > 60 || form.description.trim().length > 1000) {
-      setError("Título, materia o descripción superan el límite permitido.");
+      setError(t("core.taskForm.limit"));
       return;
     }
     setSaving(true);
@@ -365,51 +428,51 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
     <form className="task-form" onSubmit={submit} noValidate>
       {assignTarget && (
         <p className="assign-banner">
-          Se asignará a <b>{assignTarget.full_name}</b> · {assignTarget.email}
+          {t("core.app.taskForm.assignBanner", { name: assignTarget.full_name, email: assignTarget.email })}
         </p>
       )}
       <div className="form-grid">
         <label>
-          Título
-          <input data-modal-initial-focus maxLength={120} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ej. Entrega de taller" />
+          {t("core.taskForm.title")}
+          <input data-modal-initial-focus maxLength={120} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder={t("tasks.form.titlePlaceholder")} />
         </label>
         <label>
-          Materia
-          <input maxLength={60} value={form.subject} onChange={(event) => update("subject", event.target.value)} placeholder="Ej. Matemáticas" />
+          {t("core.taskForm.subject")}
+          <input maxLength={60} value={form.subject} onChange={(event) => update("subject", event.target.value)} placeholder={t("tasks.form.subjectPlaceholder")} />
         </label>
         <label>
-          Fecha
+          {t("core.taskForm.date")}
           <input type="date" value={form.date} onChange={(event) => update("date", event.target.value)} />
         </label>
         <label>
-          Hora
+          {t("core.taskForm.time")}
           <input type="time" value={form.time} onChange={(event) => update("time", event.target.value)} />
         </label>
         <label>
-          Prioridad
+          {t("core.taskForm.priority")}
           <select value={form.priority} onChange={(event) => update("priority", event.target.value)}>
-            <option>Alta</option>
-            <option>Media</option>
-            <option>Baja</option>
+            <option value="Alta">{t("core.priority.high")}</option>
+            <option value="Media">{t("core.priority.medium")}</option>
+            <option value="Baja">{t("core.priority.low")}</option>
           </select>
         </label>
         <label>
-          Recordatorio
+          {t("core.taskForm.reminder")}
           <select value={form.reminder} onChange={(event) => update("reminder", event.target.value)}>
-            {reminderOptions.map(([label]) => <option key={label}>{label}</option>)}
+            {reminderOptions.map(([label]) => <option key={label} value={label}>{reminderLabel(t, label)}</option>)}
           </select>
         </label>
       </div>
       <label>
-        Descripción
-        <textarea maxLength={1000} value={form.description} onChange={(event) => update("description", event.target.value)} rows="3" placeholder="Agrega detalles para recordar qué debes hacer..." />
+        {t("core.taskForm.description")}
+        <textarea maxLength={1000} value={form.description} onChange={(event) => update("description", event.target.value)} rows="3" placeholder={t("core.taskForm.descriptionPlaceholder")} />
       </label>
       <label>
-        Adjuntar imagen
+        {t("core.taskForm.attach")}
         <input type="file" accept="image/*" onChange={(event) => {
           const file = event.target.files?.[0] || null;
           if (file && file.size > 5 * 1024 * 1024) {
-            setError("La imagen no puede superar los 5 MB.");
+            setError(t("services.task.imageMax"));
             setAttachmentFile(null);
             event.target.value = "";
             return;
@@ -421,19 +484,21 @@ function TaskForm({ task, onSave, onCancel, assignTarget = null }) {
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={saving}>
-          {saving ? "Guardando..." : task ? "Guardar cambios" : assignTarget ? "Asignar tarea" : "Crear tarea"}
+          {saving ? t("core.taskForm.saving") : task ? t("core.taskForm.save") : assignTarget ? t("core.taskForm.assign") : t("core.taskForm.create")}
         </button>
-        <button className="text-button" type="button" onClick={onCancel}>Cancelar</button>
+        <button className="text-button" type="button" onClick={onCancel}>{t("core.taskForm.cancel")}</button>
       </div>
     </form>
   );
 }
 
 function PriorityBadge({ priority }) {
-  return <span className={`priority priority-${priority.toLowerCase()}`}>{priority}</span>;
+  const { t } = useI18n();
+  return <span className={`priority priority-${priority.toLowerCase()}`}>{priorityText(t, priority)}</span>;
 }
 
 function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachmentDelete }) {
+  const { t, lang } = useI18n();
   const canManage = task.userId === userId || task.assignedBy === userId;
   const [attachmentError, setAttachmentError] = useState("");
   const openAttachment = async (attachment) => {
@@ -442,7 +507,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       const url = await getAttachmentUrl(attachment.storage_path);
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (error) {
-      setAttachmentError(supabaseErrorMessage(error, "No fue posible abrir la imagen."));
+      setAttachmentError(supabaseErrorMessage(error, t("core.taskCard.openError")));
     }
   };
   return (
@@ -450,7 +515,7 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
       <button
         className="check-button"
         disabled={!canManage}
-        aria-label={task.completed ? "Marcar como pendiente" : "Marcar como completada"}
+        aria-label={task.completed ? t("core.taskCard.markPending") : t("core.taskCard.markComplete")}
         onClick={() => onToggle(task.id)}
       >
         {task.completed ? <Icons.Check size={12} /> : ""}
@@ -459,23 +524,23 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
         <div className="task-heading">
           <h3>{task.title}</h3>
           <div className="task-heading-badges">
-            {!canManage && <span className="shared-badge">Compartida</span>}
-            {task.assignedBy && <span className="shared-badge">Asignada</span>}
+            {!canManage && <span className="shared-badge">{t("core.taskCard.shared")}</span>}
+            {task.assignedBy && <span className="shared-badge">{t("core.taskCard.assigned")}</span>}
             {task.source === "google_classroom" && <span className="shared-badge">Classroom</span>}
             <PriorityBadge priority={task.priority} />
           </div>
         </div>
         <p className="task-meta">
-          {task.subject} <span>·</span> {formatDate(task.date)} <span>·</span> {task.time}
+          {task.subject} <span>·</span> {formatDate(task.date, localeFor(lang))} <span>·</span> {task.time}
         </p>
         {task.description && <p className="task-description">{task.description}</p>}
         {task.attachments?.map((attachment) => (
           <span className="task-attachment" key={attachment.id}>
             <button className="text-button" onClick={() => openAttachment(attachment)}>
-              <Icons.Paperclip size={14} /> Ver imagen
+              <Icons.Paperclip size={14} /> {t("core.taskCard.viewImage")}
             </button>
             {canManage && (
-              <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={`Eliminar ${attachment.file_name}`}>
+              <button className="text-button" onClick={() => onAttachmentDelete(task.id, attachment)} aria-label={t("core.taskCard.deleteAttachment", { name: attachment.file_name })}>
                 <Icons.X size={14} />
               </button>
             )}
@@ -484,16 +549,16 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
         {attachmentError && <small className="form-error" role="alert">{attachmentError}</small>}
       </div>
       <div className="task-actions">
-        <button className="icon-button" aria-label="Abrir modo enfoque" title="Modo enfoque" onClick={() => onFocus(task)}>
+        <button className="icon-button" aria-label={t("core.taskCard.openFocus")} title={t("core.taskCard.focus")} onClick={() => onFocus(task)}>
           <Icons.Focus size={16} />
         </button>
         {canManage && (
-          <button className="icon-button" aria-label="Editar tarea" title="Editar tarea" onClick={() => onEdit(task)}>
+          <button className="icon-button" aria-label={t("core.taskCard.edit")} title={t("core.taskCard.edit")} onClick={() => onEdit(task)}>
             <Icons.Pencil size={16} />
           </button>
         )}
         {canManage && (
-          <button className="icon-button danger" aria-label="Eliminar tarea" title="Eliminar tarea" onClick={() => onDelete(task.id)}>
+          <button className="icon-button danger" aria-label={t("core.taskCard.delete")} title={t("core.taskCard.delete")} onClick={() => onDelete(task.id)}>
             <Icons.Trash2 size={16} />
           </button>
         )}
@@ -503,12 +568,12 @@ function TaskCard({ task, userId, onToggle, onEdit, onDelete, onFocus, onAttachm
 }
 
 function App() {
+  const { t, lang, setLang } = useI18n();
   /* Sesión, vista actual y datos de la agenda. */
   const [session, setSession] = useState(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [profile, setProfile] = useState(null);
   const [screen, setScreen] = useState("landing");
-  const [lang, setLang] = useState("es");
   const [view, setView] = useState("Inicio");
   const [tasks, setTasks] = useState([]);
   const [query, setQuery] = useState("");
@@ -596,22 +661,22 @@ function App() {
   }, [mobileNav]);
   const enableBrowserNotifications = async () => {
     if (demo) {
-      setNotice("Las notificaciones del sistema no están disponibles en la demostración local.");
+      setNotice(t("core.app.demoNotifications"));
       return false;
     }
     if (!canUseBrowserNotifications()) {
       const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       setNotice(isIos
-        ? "En iPhone/iPad, agrega RECORDATE a la pantalla de inicio y abre esa app para habilitar notificaciones."
-        : "Este navegador no admite notificaciones nativas. Prueba Safari, Chrome o Edge en una conexión HTTPS.");
+        ? t("core.app.iosNotifications")
+        : t("core.app.unsupportedNotifications"));
       return false;
     }
     if (Notification.permission === "denied") {
-      setNotice("Las notificaciones están bloqueadas para RECORDATE. Actívalas en los ajustes del navegador y vuelve a probar.");
+      setNotice(t("core.app.blockedNotifications"));
       return false;
     }
     if (!(await requestBrowserNotificationPermission())) {
-      setNotice("El navegador no concedió permiso para mostrar notificaciones.");
+      setNotice(t("core.app.permissionDenied"));
       return false;
     }
     void unlockAlarmAudio();
@@ -620,9 +685,9 @@ function App() {
     let serviceWorkerRegistration = null;
     try {
       serviceWorkerRegistration = await registerRecordateServiceWorker();
-      if (!serviceWorkerRegistration) setNotice("El navegador no pudo registrar el Service Worker. Los avisos solo se intentarán mientras la pestaña esté abierta.");
+      if (!serviceWorkerRegistration) setNotice(t("core.app.serviceWorkerFailNotice"));
     } catch {
-      setNotice("El Service Worker no pudo registrarse; se intentará mostrar avisos mientras la pestaña esté abierta.");
+      setNotice(t("core.app.serviceWorkerFailCatch"));
     }
     if ("serviceWorker" in navigator && "PushManager" in window && import.meta.env.VITE_VAPID_PUBLIC_KEY && serviceWorkerRegistration) {
       try {
@@ -637,11 +702,11 @@ function App() {
       pushSetupFailed = true;
     }
     if (pushReady) {
-      setNotice("Notificaciones y Web Push activados en este dispositivo. El sistema decide si muestra un banner y qué tono o vibración utiliza.");
+      setNotice(t("core.app.pushEnabled"));
     } else if (pushSetupFailed) {
-      setNotice("El permiso local quedó activo, pero no se pudo registrar Web Push para avisos con la página cerrada. Revisa permisos y vuelve a intentar.");
+      setNotice(t("core.app.pushSetupFailed"));
     } else {
-      setNotice("Notificaciones locales activadas. Este navegador no admite Web Push en este dispositivo; las alertas requieren la página abierta.");
+      setNotice(t("core.app.localNotificationsEnabled"));
     }
     return true;
   };
@@ -695,7 +760,7 @@ function App() {
           await supabase.auth.signOut();
           setSession(null);
           setScreen("auth");
-          setNotice("Tu cuenta está dada de baja. Habla con el administrador de RECORDATE.");
+          setNotice(t("core.app.accountDisabled"));
           return;
         }
         throw settled[0].reason;
@@ -706,7 +771,7 @@ function App() {
       const currentShares = fulfilled(settled[2], []);
       const currentNotifications = fulfilled(settled[3], []);
       if (settled[2].status === "rejected" || settled[3].status === "rejected") {
-        setNotice("Tu agenda se cargó, pero algunas secciones extra no respondieron. Puedes seguir usando RECORDATE.");
+        setNotice(t("core.app.partialLoad"));
       }
       setProfile(
         currentProfile,
@@ -715,7 +780,7 @@ function App() {
         if (!isDemoSession(current) && supabase) await supabase.auth.signOut();
         setSession(null);
         setScreen("auth");
-        setNotice("Tu cuenta está dada de baja. Habla con el administrador de RECORDATE.");
+        setNotice(t("core.app.accountDisabled"));
         return;
       }
       setTasks(currentTasks);
@@ -724,7 +789,7 @@ function App() {
           const localTask = currentTasks.find((task) => task.id === share.task_id);
           return {
             ...share,
-            task: share.task_title || share.task || localTask?.title || "Tarea compartida",
+            task: share.task_title || share.task || localTask?.title || t("core.share.taskFallback"),
             taskDetails: share.taskDetails
               ? {
                   ...share.taskDetails,
@@ -750,7 +815,7 @@ function App() {
       setNotifications(currentNotifications);
       setScreen("app");
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible cargar tu agenda."));
+      setNotice(supabaseErrorMessage(error, t("core.app.loadError")));
     } finally {
       setLoadingData(false);
     }
@@ -769,7 +834,7 @@ function App() {
     supabase.auth.getSession().then(({ data: { session: current }, error }) => {
       if (cancelled) return;
       if (error) {
-        setNotice("No se pudo recuperar la sesión. Vuelve a iniciar sesión.");
+        setNotice(t("core.app.sessionError"));
         return;
       }
       clearAuthParams();
@@ -799,8 +864,8 @@ function App() {
       setNotifications((current) => current.some((notification) => notification.id === item.id) ? current : [item, ...current]);
       if (profile?.browser_notifications_enabled && item.type !== "system") {
         void showBrowserNotification({
-          title: item.title || "Nueva notificación de RECORDATE",
-          body: item.body || "Tienes una novedad en tu agenda.",
+          title: item.title || t("core.app.notificationTitle"),
+          body: item.body || t("core.app.notificationBody"),
           taskId: item.task_id,
           tag: `recordate-${item.id}`,
         });
@@ -824,8 +889,8 @@ function App() {
         if (profile.alarms_enabled) dueAlarms.push(task);
         if (profile.browser_notifications_enabled) {
           void showBrowserNotification({
-            title: "Alarma de RECORDATE",
-            body: `${task.title} · ${task.subject} · Prioridad ${task.priority}`,
+            title: t("core.app.alarmTitle"),
+            body: t("core.app.alarmBody", { title: task.title, subject: task.subject, priority: priorityText(t, task.priority) }),
             taskId: task.id,
             tag: `recordate-alarm-${task.id}`,
           });
@@ -858,7 +923,7 @@ function App() {
           return;
         }
         activeAlarm.current = handle;
-        if (!handle) setNotice("El navegador bloqueó el audio. Toca «Reintentar sonido» en la alarma o activa el sonido desde Configuración.");
+        if (!handle) setNotice(t("core.app.alarmBlocked"));
       });
     return () => {
       cancelled = true;
@@ -866,7 +931,7 @@ function App() {
       activeAlarm.current = null;
     };
   }, [activeAlarmTaskId, profile?.alarms_enabled, profile?.alarm_sound, profile?.alarm_volume]);
-  const userName = profile?.full_name || session?.user?.email?.split("@")[0] || "estudiante";
+  const userName = profile?.full_name || session?.user?.email?.split("@")[0] || t("core.app.roles.student");
   const visibleTasks = useMemo(
     () =>
       (profile?.show_completed === false ? tasks.filter((task) => !task.completed) : tasks)
@@ -924,15 +989,15 @@ function App() {
           : [savedTask, ...current],
       );
       closeTaskForm();
-      setNotice(assignTarget ? `Actividad asignada a ${assignTarget.full_name}.` : "Actividad guardada correctamente.");
+      setNotice(assignTarget ? t("core.app.taskAssigned", { name: assignTarget.full_name }) : t("core.app.taskSaved"));
       return true;
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible guardar la actividad."));
+      setNotice(supabaseErrorMessage(error, t("core.app.saveError")));
       return false;
     }
   };
   const removeTask = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar esta tarea?")) return;
+    if (!window.confirm(t("core.app.confirmDeleteTask"))) return;
     try {
       if (demo) demoApi.deleteTask(id);
       else await deleteTask(id);
@@ -940,9 +1005,9 @@ function App() {
       setAlarmQueue((current) => removeAlarmTask(current, id));
       alarmedTasks.current.delete(id);
       snoozedUntil.current.delete(id);
-      setNotice("Actividad eliminada.");
+      setNotice(t("core.app.taskDeleted"));
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible eliminar la actividad."));
+      setNotice(supabaseErrorMessage(error, t("core.app.deleteTaskError")));
     }
   };
   const toggleTask = async (id) => {
@@ -960,7 +1025,7 @@ function App() {
       }
       return true;
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible actualizar la actividad."));
+      setNotice(supabaseErrorMessage(error, t("core.app.updateTaskError")));
       return false;
     }
   };
@@ -979,7 +1044,7 @@ function App() {
     snoozedUntil.current.set(alarmTask.id, Date.now() + 5 * 60 * 1000);
     alarmedTasks.current.delete(alarmTask.id);
     setAlarmQueue((current) => removeAlarmTask(current, alarmTask.id));
-    setNotice("Alarma pospuesta 5 minutos. Mantén RECORDATE abierta para que vuelva a sonar.");
+    setNotice(t("core.app.alarmSnoozed"));
   };
   const dismissAlarmTask = () => {
     activeAlarm.current?.stop();
@@ -991,11 +1056,11 @@ function App() {
     activeAlarm.current = null;
     const handle = await startAlarm(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME);
     if (!handle) {
-      setNotice("No se pudo iniciar el audio. Revisa el volumen del dispositivo y prueba «Escuchar y activar sonido» en Configuración.");
+      setNotice(t("core.app.alarmStartError"));
       return;
     }
     activeAlarm.current = handle;
-    setNotice("Sonido de alarma activado para este aviso.");
+    setNotice(t("core.app.alarmSoundEnabled"));
   };
   useEffect(() => {
     if (!activeAlarmTaskId) {
@@ -1038,25 +1103,25 @@ function App() {
   const previewAlarm = async (sound, volume) => {
     const played = await playAlarm(sound, volume);
     setNotice(played
-      ? "Vista previa reproducida; el audio quedó habilitado para esta sesión del navegador."
-      : (Number(volume) === 0 ? "El volumen está en 0%; súbelo para escuchar la alarma." : "El navegador bloqueó el audio. Toca de nuevo para activarlo y revisa el volumen del dispositivo."));
+      ? t("core.app.alarmPreviewSuccess")
+      : (Number(volume) === 0 ? t("core.app.alarmVolumeZero") : t("core.app.alarmPreviewBlocked")));
   };
   const testBrowserNotification = async () => {
     if (!(await enableBrowserNotifications())) return;
     const shown = await showBrowserNotification({
-      title: "Notificación de prueba",
-      body: "Notificación de prueba. El sistema decide si aparece como banner y qué sonido reproduce.",
+      title: t("core.app.testNotificationTitle"),
+      body: t("core.app.testNotificationBody"),
       tag: "recordate-test-notification",
     });
-    if (!shown) setNotice("No se pudo mostrar el aviso. Revisa los permisos de notificación del navegador y del sistema.");
+    if (!shown) setNotice(t("core.app.testNotificationError"));
   };
   const importClassroomTask = async (assignment, reminder = "30 minutos antes") => {
     if (demo) {
-      setNotice("La importación de Google Classroom requiere una cuenta conectada.");
+      setNotice(t("core.app.classroomLoginRequired"));
       return false;
     }
     if (tasks.some((task) => task.source === "google_classroom" && task.externalId === assignment.externalId)) {
-      setNotice("Esta actividad de Classroom ya está en tu agenda.");
+      setNotice(t("core.app.classroomDuplicate"));
       return false;
     }
     try {
@@ -1064,25 +1129,25 @@ function App() {
       setTasks((current) => [imported, ...current]);
       const alarmsActive = (profile?.reminders_enabled ?? true) && (profile?.alarms_enabled ?? true);
       setNotice(alarmsActive
-        ? `Alarma agregada: ${assignment.title}, ${reminder}.`
-        : `Actividad agregada: ${assignment.title}. Activa Recordatorios y Alarmas en Configuración para que suene.`);
+        ? t("core.app.classroomAlarmAdded", { title: assignment.title, reminder: reminderLabel(t, reminder) })
+        : t("core.app.classroomTaskAdded", { title: assignment.title }));
       return true;
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible importar la actividad de Classroom."));
+      setNotice(supabaseErrorMessage(error, t("core.app.classroomImportError")));
       return false;
     }
   };
   const removeAttachment = async (taskId, attachment) => {
     if (demo) {
-      setNotice("Los adjuntos no están disponibles en la demostración local.");
+      setNotice(t("core.app.attachmentsDemo"));
       return;
     }
     try {
       await deleteTaskAttachment(attachment);
       setTasks((current) => current.map((task) => task.id === taskId ? { ...task, attachments: task.attachments.filter((item) => item.id !== attachment.id) } : task));
-      setNotice("Imagen eliminada correctamente.");
+      setNotice(t("core.app.imageDeleted"));
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible eliminar la imagen."));
+      setNotice(supabaseErrorMessage(error, t("core.app.imageDeleteError")));
     }
   };
   const logout = async () => {
@@ -1108,7 +1173,7 @@ function App() {
       else await markAllNotificationsRead();
       setNotifications((current) => current.map((item) => ({ ...item, read_at: new Date().toISOString() })));
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible marcar las notificaciones."));
+      setNotice(supabaseErrorMessage(error, t("core.app.markAllNotificationsError")));
     } finally {
       setNotificationAction(false);
     }
@@ -1120,7 +1185,7 @@ function App() {
       else await markNotificationRead(notification.id);
       setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read_at: new Date().toISOString() } : item));
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "No fue posible marcar la notificación."));
+      setNotice(supabaseErrorMessage(error, t("core.app.markNotificationError")));
     }
   };
   const openTaskForm = (task = null, target = null, previousFocus = document.activeElement) => {
@@ -1137,7 +1202,7 @@ function App() {
     const task = tasks.find((item) => item.id === notification.task_id);
     navigate("Mis tareas");
     if (!task) {
-      setNotice("No se encontró la tarea asociada. Actualiza tu agenda e inténtalo de nuevo.");
+      setNotice(t("core.app.notificationTaskMissing"));
       return;
     }
     openTaskForm(task, null, opener);
@@ -1157,7 +1222,7 @@ function App() {
       const rows = demo ? demoApi.listUsers() : await listManagedUsers();
       setDirectory(rows);
     } catch (error) {
-      setNotice(supabaseErrorMessage(error, "Aún no se puede abrir el directorio. Pide que ejecuten el SQL de roles en Supabase o recarga en unos minutos."));
+      setNotice(supabaseErrorMessage(error, t("core.app.directoryError")));
     } finally {
       setDirectoryLoading(false);
     }
@@ -1210,15 +1275,15 @@ function App() {
       return (
         <section className="focus-panel">
           <div className="focus-orbit"><Icons.Focus size={28} /></div>
-          <span className="eyebrow accent-label">Modo enfoque</span>
+          <span className="eyebrow accent-label">{t("core.app.focus.eyebrow")}</span>
           <h2>{focusTask.title}</h2>
-          <p className="task-meta">{focusTask.subject} · {formatDate(focusTask.date)} · {focusTask.time}</p>
-          <p>{focusTask.description || "Concéntrate en completar esta actividad."}</p>
+          <p className="task-meta">{focusTask.subject} · {formatDate(focusTask.date, localeFor(lang))} · {focusTask.time}</p>
+          <p>{focusTask.description || t("core.app.focus.description")}</p>
           <div className="focus-status">
             <PriorityBadge priority={focusTask.priority} />
-            <span>{focusTask.completed ? "Actividad completada" : "Pendiente de completar"}</span>
+            <span>{focusTask.completed ? t("core.app.focus.completed") : t("core.app.focus.pending")}</span>
           </div>
-          <button className="primary-button" onClick={() => setFocusTask(null)}>Salir del modo enfoque</button>
+          <button className="primary-button" onClick={() => setFocusTask(null)}>{t("core.app.focus.exit")}</button>
         </section>
       );
     }
@@ -1230,40 +1295,40 @@ function App() {
         <>
           <section className="section-title">
             <div>
-              <span className="eyebrow">Tu agenda completa</span>
-              <h2>Mis tareas</h2>
+              <span className="eyebrow">{t("core.app.tasks.subtitle")}</span>
+              <h2>{t("core.app.tasks.title")}</h2>
             </div>
-            <button className="primary-button" onClick={openNewTask}><Icons.Plus size={16} /> Nueva actividad</button>
+            <button className="primary-button" onClick={openNewTask}><Icons.Plus size={16} /> {t("core.app.tasks.newActivity")}</button>
           </section>
-          <div className="search-wrap" aria-label="Filtros de tareas">
-            <select aria-label="Filtrar por prioridad" value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}>
-              <option value="">Todas las prioridades</option>
-              <option>Alta</option>
-              <option>Media</option>
-              <option>Baja</option>
+          <div className="search-wrap" aria-label={t("core.app.tasks.filters")}>
+            <select aria-label={t("core.app.tasks.filterPriority")} value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}>
+              <option value="">{t("core.app.tasks.allPriorities")}</option>
+              <option value="Alta">{t("core.priority.high")}</option>
+              <option value="Media">{t("core.priority.medium")}</option>
+              <option value="Baja">{t("core.priority.low")}</option>
             </select>
-            <select aria-label="Filtrar por estado" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
-              <option value="">Todos los estados</option>
-              <option>Pendiente</option>
-              <option>Completada</option>
+            <select aria-label={t("core.app.tasks.filterStatus")} value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
+              <option value="">{t("core.app.tasks.allStatuses")}</option>
+              <option value="Pendiente">{t("core.app.tasks.pending")}</option>
+              <option value="Completada">{t("core.app.tasks.completed")}</option>
             </select>
-            <input type="date" aria-label="Filtrar por fecha" value={filters.date} onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))} />
+            <input type="date" aria-label={t("core.app.tasks.filterDate")} value={filters.date} onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))} />
           </div>
-          <TaskList {...taskHandlers} tasks={visibleTasks} empty="No tienes actividades registradas." />
+          <TaskList {...taskHandlers} tasks={visibleTasks} empty={t("core.app.tasks.empty")} />
         </>
       );
     }
     if (view === "Recordatorios") {
-      return <TaskList {...taskHandlers} title="Recordatorios" subtitle="Las próximas fechas que merecen tu atención." tasks={pending} empty="No tienes recordatorios pendientes." />;
+      return <TaskList {...taskHandlers} title={t("core.app.reminders.title")} subtitle={t("core.app.reminders.subtitle")} tasks={pending} empty={t("core.app.reminders.empty")} />;
     }
     if (view === "Prioridades") {
       return (
         <TaskList
           {...taskHandlers}
-          title="Prioridades"
-          subtitle="Ordena tu energía empezando por lo más importante."
+          title={t("core.app.priorities.title")}
+          subtitle={t("core.app.priorities.subtitle")}
           tasks={[...pending].sort((a, b) => ["Alta", "Media", "Baja"].indexOf(a.priority) - ["Alta", "Media", "Baja"].indexOf(b.priority))}
-          empty="No tienes actividades priorizadas."
+          empty={t("core.app.priorities.empty")}
         />
       );
     }
@@ -1271,12 +1336,12 @@ function App() {
       return (
         <TaskList
           {...taskHandlers}
-          title="Modo enfoque"
-          subtitle="Elige una actividad para trabajar sin distracciones."
+          title={t("core.app.focus.eyebrow")}
+          subtitle={t("core.app.focus.subtitle")}
           tasks={pending}
           onEdit={() => {}}
           onDelete={() => {}}
-          empty="No hay actividades disponibles para enfocar."
+          empty={t("core.app.focus.empty")}
           focusOnly
         />
       );
@@ -1294,7 +1359,7 @@ function App() {
               const url = await getAttachmentUrl(attachment.storage_path);
               window.open(url, "_blank", "noopener,noreferrer");
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible abrir la imagen compartida."));
+              setNotice(supabaseErrorMessage(error, t("core.app.share.openImageError")));
             }
           }}
           onRevoke={async (share) => {
@@ -1302,15 +1367,15 @@ function App() {
               if (demo) demoApi.revoke(share.id);
               else await revokeSharedTask(share.id);
               setShared((current) => current.filter((item) => item.id !== share.id));
-              setNotice("Acceso compartido revocado.");
+              setNotice(t("core.app.share.revoked"));
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible revocar el acceso compartido."));
+              setNotice(supabaseErrorMessage(error, t("core.app.share.revokeError")));
             }
           }}
           onShare={async (task) => {
             const normalizedEmail = shareEmail.trim().toLowerCase();
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-              setNotice("Escribe un correo válido para compartir.");
+              setNotice(t("core.app.share.invalidEmail"));
               return false;
             }
             try {
@@ -1318,20 +1383,20 @@ function App() {
                 const createdShare = demoApi.share(task.id, normalizedEmail);
                 setShared((current) => [...current, createdShare]);
                 setShareEmail("");
-                setNotice("Agenda compartida en la demostración local.");
+                setNotice(t("core.app.share.demoSuccess"));
                 return true;
               }
               const recipient = await findUserByEmail(normalizedEmail);
               if (!recipient) {
-                setNotice("No existe un usuario registrado con ese correo.");
+                setNotice(t("core.app.share.userMissing"));
                 return false;
               }
               if (recipient.id === session.user.id) {
-                setNotice("No puedes compartir una actividad contigo mismo.");
+                setNotice(t("core.app.share.selfError"));
                 return false;
               }
               if (shared.some((share) => share.task_id === task.id && share.recipient_id === recipient.id)) {
-                setNotice("Esta actividad ya está compartida con ese usuario.");
+                setNotice(t("core.app.share.duplicate"));
                 return false;
               }
               const createdShare = await shareTask(task.id, recipient.email);
@@ -1340,10 +1405,10 @@ function App() {
                 { ...createdShare, task: task.title, recipient_email: recipient.email, recipient_name: recipient.full_name },
               ]);
               setShareEmail("");
-              setNotice("Agenda compartida correctamente.");
+              setNotice(t("core.app.share.success"));
               return true;
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible compartir la agenda."));
+              setNotice(supabaseErrorMessage(error, t("core.app.share.error")));
               return false;
             }
           }}
@@ -1358,7 +1423,7 @@ function App() {
     }
     if (view === "Google Drive") {
       return (
-        <Suspense fallback={<p className="empty-copy" role="status">Preparando Google Drive...</p>}>
+        <Suspense fallback={<p className="empty-copy" role="status">{t("core.app.drive.loading")}</p>}>
           <GoogleDrivePanel demo={demo} />
         </Suspense>
       );
@@ -1373,28 +1438,28 @@ function App() {
           busyId={busyUserId}
           onAssign={(user) => openTaskForm(null, user)}
           onSetRole={async (user, role) => {
-            if (!window.confirm(`¿Cambiar el rol de ${user.full_name} a ${roleLabel(role)}?`)) return;
+            if (!window.confirm(t("core.app.admin.confirmRole", { name: user.full_name, role: roleText(t, role) }))) return;
             setBusyUserId(user.id);
             try {
               const updated = demo ? demoApi.setUserRole(user.id, role) : await setUserRole(user.id, role);
               setDirectory((current) => current.map((item) => (item.id === user.id ? { ...item, ...updated, role } : item)));
-              setNotice(`${user.full_name} ahora es ${roleLabel(role).toLowerCase()}.`);
+              setNotice(t("core.app.admin.roleChanged", { name: user.full_name, role: roleText(t, role).toLowerCase() }));
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible cambiar el rol."));
+              setNotice(supabaseErrorMessage(error, t("core.app.admin.roleError")));
             } finally {
               setBusyUserId(null);
             }
           }}
           onSetStatus={async (user, status) => {
-            const label = status === "baja" ? "dar de baja" : "reactivar";
-            if (!window.confirm(`¿Seguro que quieres ${label} a ${user.full_name}?`)) return;
+            const label = status === "baja" ? t("core.app.admin.deactivate") : t("core.app.admin.reactivate");
+            if (!window.confirm(t("core.app.admin.confirmStatus", { action: label, name: user.full_name }))) return;
             setBusyUserId(user.id);
             try {
               const updated = demo ? demoApi.setUserStatus(user.id, status) : await setUserStatus(user.id, status);
               setDirectory((current) => current.map((item) => (item.id === user.id ? { ...item, ...updated, status } : item)));
-              setNotice(status === "baja" ? `${user.full_name} quedó dada de baja.` : `${user.full_name} volvió a estar activa.`);
+              setNotice(status === "baja" ? t("core.app.admin.deactivated", { name: user.full_name }) : t("core.app.admin.reactivated", { name: user.full_name }));
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible actualizar el estado de la cuenta."));
+              setNotice(supabaseErrorMessage(error, t("core.app.admin.statusError")));
             } finally {
               setBusyUserId(null);
             }
@@ -1426,23 +1491,23 @@ function App() {
                 });
                 const updatedProfile = demoApi.saveAvatar(dataUrl);
                 setProfile(updatedProfile);
-                setNotice("Foto de perfil actualizada.");
+                setNotice(t("core.app.profile.avatarUpdated"));
                 return;
               }
               const updatedProfile = await uploadAvatar(file);
               setProfile(updatedProfile);
-              setNotice("Foto de perfil actualizada.");
+              setNotice(t("core.app.profile.avatarUpdated"));
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible actualizar la foto de perfil."));
+              setNotice(supabaseErrorMessage(error, t("core.app.profile.avatarError")));
             }
           }}
           onSettingsChange={async (settings) => {
             try {
               const updatedProfile = demo ? demoApi.saveProfile(settings) : await updateProfileSettings(settings);
               setProfile(updatedProfile);
-              setNotice("Configuración guardada correctamente.");
+              setNotice(t("core.app.profile.settingsSaved"));
             } catch (error) {
-              setNotice(supabaseErrorMessage(error, "No fue posible guardar la configuración."));
+              setNotice(supabaseErrorMessage(error, t("core.app.profile.settingsError")));
             }
           }}
           onLogout={logout}
@@ -1454,43 +1519,43 @@ function App() {
       <>
         <section className="dash-hero">
           <div>
-            <span className="eyebrow">{new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span>
-            <h1>{greeting()}, {userName}.</h1>
+            <span className="eyebrow">{new Intl.DateTimeFormat(localeFor(lang), { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span>
+            <h1>{greeting(t)}, {userName}.</h1>
             <p>
               {stats.today
-                ? `Tienes ${stats.today} ${stats.today === 1 ? "actividad" : "actividades"} para hoy.`
-                : "Hoy no tienes entregas. Revisa lo que viene."}
+                ? t(stats.today === 1 ? "core.app.dashboard.oneToday" : "core.app.dashboard.manyToday", { count: stats.today })
+                : t("core.app.dashboard.noneToday")}
             </p>
           </div>
           <button className="primary-button add-task-button" onClick={openNewTask}>
-            <Icons.Plus size={16} /> Nueva actividad
+            <Icons.Plus size={16} /> {t("core.app.dashboard.newActivity")}
           </button>
         </section>
         <Stats stats={stats} />
         <div className="panel-card progress-card">
-          <span className="eyebrow">Progreso</span>
+          <span className="eyebrow">{t("core.app.dashboard.progress")}</span>
           <strong>{progress}%</strong>
-          <p className="lead">de tu agenda está completa.</p>
+          <p className="lead">{t("core.app.dashboard.progressCaption")}</p>
           <div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
         </div>
         <div className="dash-grid">
           <div>
             <section className="section-title">
               <div>
-                <span className="eyebrow">Tu agenda</span>
-                <h2>{query ? "Resultados de búsqueda" : "Tareas importantes"}</h2>
+                <span className="eyebrow">{t("core.app.dashboard.planner")}</span>
+                <h2>{query ? t("core.app.dashboard.searchResults") : t("core.app.dashboard.importantTasks")}</h2>
               </div>
-              <button className="text-button" onClick={() => navigate("Mis tareas")}>Ver todas <Icons.ArrowRight size={14} /></button>
+              <button className="text-button" onClick={() => navigate("Mis tareas")}>{t("core.app.dashboard.viewAll")} <Icons.ArrowRight size={14} /></button>
             </section>
             <div className="search-wrap">
               <Icons.Search size={16} />
-              <input aria-label="Buscar por título o materia" placeholder="Buscar por título o materia" value={query} onChange={(event) => setQuery(event.target.value)} />
+              <input aria-label={t("core.app.dashboard.searchLabel")} placeholder={t("core.app.dashboard.searchLabel")} value={query} onChange={(event) => setQuery(event.target.value)} />
             </div>
-            <TaskList {...taskHandlers} tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)} empty="No tienes tareas pendientes." compact />
+            <TaskList {...taskHandlers} tasks={visibleTasks.filter((task) => !task.completed).slice(0, 4)} empty={t("core.app.dashboard.noPending")} compact />
           </div>
           <aside className="panel-card">
-            <span className="eyebrow">Hoy</span>
-            <h2>Agenda del día</h2>
+            <span className="eyebrow">{t("core.app.dashboard.today")}</span>
+            <h2>{t("core.app.dashboard.todayAgenda")}</h2>
             {todayTasks.length ? todayTasks.map((task) => (
               <button className="agenda-task" key={task.id} onClick={() => setFocusTask(task)}>
                 <span>
@@ -1499,27 +1564,27 @@ function App() {
                 </span>
                 <PriorityBadge priority={task.priority} />
               </button>
-            )) : <p className="empty-copy">Nada programado para hoy.</p>}
+            )) : <p className="empty-copy">{t("core.app.dashboard.nothingScheduled")}</p>}
             <button className="text-button calendar-link" onClick={() => navigate("Calendario")}>
-              Abrir calendario <Icons.ArrowRight size={14} />
+              {t("core.app.dashboard.openCalendar")} <Icons.ArrowRight size={14} />
             </button>
           </aside>
         </div>
         <div className="quick-actions">
           <button className="quick-action" onClick={openNewTask}>
             <Icons.Plus size={18} />
-            <b>Crear tarea</b>
-            <small>Registra una entrega en segundos.</small>
+            <b>{t("core.app.dashboard.createTask")}</b>
+            <small>{t("core.app.dashboard.createTaskHint")}</small>
           </button>
           <button className="quick-action" onClick={() => navigate("Modo enfoque")}>
             <Icons.Focus size={18} />
-            <b>Modo enfoque</b>
-            <small>Una sola actividad en pantalla.</small>
+            <b>{t("core.app.dashboard.focusMode")}</b>
+            <small>{t("core.app.dashboard.focusHint")}</small>
           </button>
           <button className="quick-action" onClick={() => navigate("Mensajes")}>
             <Icons.MessageCircle size={18} />
-            <b>Escribir</b>
-            <small>Coordina con un compañero.</small>
+            <b>{t("core.app.dashboard.writeMessage")}</b>
+            <small>{t("core.app.dashboard.messageHint")}</small>
           </button>
         </div>
       </>
@@ -1528,41 +1593,41 @@ function App() {
   return frame(
     <main className="app-shell">
       {/* Menú lateral con grupos para que las funciones nuevas sean fáciles de encontrar. */}
-      <aside id="app-sidebar" ref={sidebarRef} className={`sidebar ${mobileNav ? "is-open" : ""}`} inert={modalOpen} aria-hidden={modalOpen ? "true" : undefined} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav ? "true" : undefined} aria-label="Menú principal">
+      <aside id="app-sidebar" ref={sidebarRef} className={`sidebar ${mobileNav ? "is-open" : ""}`} inert={modalOpen} aria-hidden={modalOpen ? "true" : undefined} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav ? "true" : undefined} aria-label={t("core.app.aria.mainMenu")}>
         <div className="sidebar-head">
           <Brand light size="sm" />
           <LanguageSwitcher lang={lang} onChange={setLang} />
-          <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Cerrar menú"><Icons.X size={18} /></button>
+          <button className="close-nav" onClick={() => setMobileNav(false)} aria-label={t("core.app.aria.closeMenu")}><Icons.X size={18} /></button>
         </div>
-        <nav aria-label="Navegación principal">
+        <nav aria-label={t("core.app.aria.primaryNavigation")}>
           {navGroups.map((group) => (
             <div className="nav-group" key={group.label}>
-              <p className="sidebar-caption">{group.label}</p>
+              <p className="sidebar-caption">{navGroupKeys[group.label] ? t(navGroupKeys[group.label]) : group.label}</p>
               {group.items.map(([item, Icon]) => (
                 <button className={view === item ? "nav-item active" : "nav-item"} key={item} onClick={() => navigate(item)}>
                   <span className="nav-symbol" aria-hidden="true"><Icon size={16} /></span>
-                  {item}
+                  {viewLabel(t, item)}
                 </button>
               ))}
             </div>
           ))}
           {(admin || teacher) && (
             <div className="nav-group">
-              <p className="sidebar-caption">Gestión</p>
-              {admin && <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}><span className="nav-symbol"><Icons.Shield size={16} /></span> Administración</button>}
-              {teacher && <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}><span className="nav-symbol"><Icons.Users size={16} /></span> Asignar tareas</button>}
+              <p className="sidebar-caption">{t("core.app.nav.management")}</p>
+              {admin && <button className={view === "Administración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Administración")}><span className="nav-symbol"><Icons.Shield size={16} /></span> {t("core.app.nav.administration")}</button>}
+              {teacher && <button className={view === "Asignar tareas" ? "nav-item active" : "nav-item"} onClick={() => navigate("Asignar tareas")}><span className="nav-symbol"><Icons.Users size={16} /></span> {t("core.app.nav.assignTasks")}</button>}
             </div>
           )}
         </nav>
         <div className="sidebar-bottom">
           <button className={view === "Perfil" ? "nav-item active" : "nav-item"} onClick={() => navigate("Perfil")}>
-            <span className="nav-symbol"><Icons.User size={16} /></span> Perfil
+            <span className="nav-symbol"><Icons.User size={16} /></span> {t("core.app.nav.profile")}
           </button>
           <button className={view === "Configuración" ? "nav-item active" : "nav-item"} onClick={() => navigate("Configuración")}>
-            <span className="nav-symbol"><Icons.Settings size={16} /></span> Configuración
+            <span className="nav-symbol"><Icons.Settings size={16} /></span> {t("core.app.nav.settings")}
           </button>
           <button className="nav-item logout" onClick={logout}>
-            <span className="nav-symbol"><Icons.LogOut size={16} /></span> Cerrar sesión
+            <span className="nav-symbol"><Icons.LogOut size={16} /></span> {t("core.app.nav.logout")}
           </button>
         </div>
       </aside>
@@ -1570,21 +1635,21 @@ function App() {
       <section className="workspace" inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
         {/* Encabezado + campana de avisos. */}
         <header className="workspace-header">
-          <button ref={menuToggleRef} className="menu-toggle" onClick={() => setMobileNav(true)} aria-label="Abrir menú" aria-expanded={mobileNav} aria-controls="app-sidebar"><Icons.Menu size={18} /></button>
+          <button ref={menuToggleRef} className="menu-toggle" onClick={() => setMobileNav(true)} aria-label={t("core.app.aria.openMenu")} aria-expanded={mobileNav} aria-controls="app-sidebar"><Icons.Menu size={18} /></button>
           <div>
-            <p className="eyebrow">IE La Candelaria · PPI grado 11{demo ? " · Demo" : ""}</p>
-            <h1>{view === "Inicio" ? "Hoy" : view}</h1>
+            <p className="eyebrow">{t("core.app.header.school")}{demo ? ` · ${t("core.app.header.demo")}` : ""}</p>
+            <h1>{view === "Inicio" ? t("core.app.nav.today") : viewLabel(t, view)}</h1>
           </div>
           <div className="header-user">
-            <button ref={notificationButtonRef} className="notification-button" aria-label="Ver notificaciones" onClick={() => setNotificationsOpen((current) => !current)}>
+            <button ref={notificationButtonRef} className="notification-button" aria-label={t("core.app.aria.notifications")} onClick={() => setNotificationsOpen((current) => !current)}>
               <Icons.Bell size={16} />
               {notifications.some((item) => !item.read_at) && <span className="notification-dot" />}
             </button>
             {notificationsOpen && (
               <div className="notification-panel">
-                <strong>Notificaciones</strong>
-                <button className="text-button" onClick={markAllRead} disabled={notificationAction}>Marcar todas como leídas</button>
-                <p>{notifications.length ? `${notifications.filter((item) => !item.read_at).length} sin leer.` : "No tienes notificaciones nuevas."}</p>
+                <strong>{t("core.profile.notifications")}</strong>
+                <button className="text-button" onClick={markAllRead} disabled={notificationAction}>{t("core.app.notifications.markAllRead")}</button>
+                <p>{notifications.length ? t("core.app.notifications.unread", { count: notifications.filter((item) => !item.read_at).length }) : t("core.app.notifications.none")}</p>
                 {notifications.slice(0, 5).map((item) => (
                   <button className="notification-item" key={item.id} onClick={() => openNotification(item)}>
                     {item.title}<small>{item.body || ""}</small>
@@ -1598,7 +1663,7 @@ function App() {
         {notice && (
           <div className="notice" role="status">
             {notice}
-            <button aria-label="Cerrar mensaje" onClick={() => setNotice("")}><Icons.X size={16} /></button>
+            <button aria-label={t("core.app.aria.closeMessage")} onClick={() => setNotice("")}><Icons.X size={16} /></button>
           </div>
         )}
         <div className="content-area">
@@ -1606,12 +1671,12 @@ function App() {
           {loadingData ? (
             <div className="empty-state loading-state" role="status">
               <span className="loading-spinner" />
-              Cargando tu agenda...
+              {t("core.app.loading")}
             </div>
           ) : renderMain()}
         </div>
       </section>
-      <nav className="bottom-nav" aria-label="Navegación móvil" inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
+      <nav className="bottom-nav" aria-label={t("core.app.aria.mobileNavigation")} inert={mobileNav || modalOpen} aria-hidden={mobileNav || modalOpen ? "true" : undefined}>
         {[
           ["Inicio", Icons.House],
           ["Mis tareas", Icons.ListTodo],
@@ -1620,12 +1685,12 @@ function App() {
         ].map(([item, Icon]) => (
           <button key={item} className={view === item ? "active" : ""} onClick={() => navigate(item)}>
             <Icon size={18} />
-            {item === "Mis tareas" ? "Tareas" : item}
+            {viewLabel(t, item)}
           </button>
         ))}
-        <button className={!mobilePrimaryViews.includes(view) ? "active" : ""} aria-label="Abrir más secciones" aria-expanded={mobileNav} aria-controls="app-sidebar" onClick={() => setMobileNav(true)}>
+        <button className={!mobilePrimaryViews.includes(view) ? "active" : ""} aria-label={t("core.app.aria.moreSections")} aria-expanded={mobileNav} aria-controls="app-sidebar" onClick={() => setMobileNav(true)}>
           <Icons.MoreHorizontal size={18} />
-          Más
+          {t("core.app.nav.more")}
         </button>
       </nav>
       {showForm && (
@@ -1633,10 +1698,10 @@ function App() {
           <section ref={taskDialogRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" tabIndex={-1}>
             <div className="modal-header">
               <div>
-                <span className="eyebrow accent-label">Agenda académica</span>
-                <h2 id="task-modal-title">{editingTask ? "Editar actividad" : assignTarget ? "Asignar actividad" : "Nueva actividad"}</h2>
+                <span className="eyebrow accent-label">{t("core.app.taskForm.eyebrow")}</span>
+                <h2 id="task-modal-title">{editingTask ? t("core.app.taskForm.edit") : assignTarget ? t("core.app.taskForm.assign") : t("core.app.taskForm.new")}</h2>
               </div>
-              <button className="icon-button" onClick={closeTaskForm} aria-label="Cerrar formulario"><Icons.X size={16} /></button>
+              <button className="icon-button" onClick={closeTaskForm} aria-label={t("core.app.aria.closeForm")}><Icons.X size={16} /></button>
             </div>
             <TaskForm
               key={editingTask?.id || assignTarget?.id || "new-task"}
@@ -1655,7 +1720,7 @@ function App() {
               enabled
               onTaskCreated={(task) => {
                 setTasks((current) => [task, ...current.filter((item) => item.id !== task.id)]);
-                setNotice(`Alarma creada: ${task.title}`);
+                setNotice(t("core.app.alarmCreated", { title: task.title }));
               }}
             />
           </Suspense>
@@ -1664,15 +1729,15 @@ function App() {
       {alarmTask && (
         <div className="modal-backdrop">
           <section ref={alarmDialogRef} className="modal alarm-modal" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title" tabIndex={-1}>
-            <span className="eyebrow accent-label">Alarma de RECORDATE</span>
-            <h2 id="alarm-title">Es hora de realizar esta actividad</h2>
+            <span className="eyebrow accent-label">{t("core.app.alarm.title")}</span>
+            <h2 id="alarm-title">{t("core.app.alarm.prompt")}</h2>
             <h3>{alarmTask.title}</h3>
-            <p>{alarmTask.subject} · Prioridad {alarmTask.priority}</p>
+            <p>{alarmTask.subject} · {t("core.app.priority.label")} {priorityText(t, alarmTask.priority)}</p>
             <div className="form-actions center">
-              <button className="primary-button" onClick={completeAlarmTask}>Marcar como completada</button>
-              <button className="outline-button" onClick={retryAlarmSound}><Icons.Volume2 size={15} /> Reintentar sonido</button>
-              <button className="text-button" onClick={snoozeAlarmTask}>Posponer 5 minutos</button>
-              <button className="text-button" onClick={dismissAlarmTask}>Detener alarma</button>
+              <button className="primary-button" onClick={completeAlarmTask}>{t("core.app.alarm.complete")}</button>
+              <button className="outline-button" onClick={retryAlarmSound}><Icons.Volume2 size={15} /> {t("core.app.alarm.retrySound")}</button>
+              <button className="text-button" onClick={snoozeAlarmTask}>{t("core.app.alarm.snooze")}</button>
+              <button className="text-button" onClick={dismissAlarmTask}>{t("core.app.alarm.stop")}</button>
             </div>
           </section>
         </div>
@@ -1682,18 +1747,19 @@ function App() {
 }
 
 function Stats({ stats }) {
+  const { t } = useI18n();
   return (
     <section className="stats-grid">
       {[
-        ["Pendientes", stats.pending, "Actividades por completar", "green"],
-        ["Para hoy", stats.today, "Fecha más cercana", "gold"],
-        ["Alta prioridad", stats.high, "Requieren atención", "coral"],
-        ["Completadas", stats.done, "Tu avance acumulado", "ink"],
+        ["core.stats.pending", stats.pending, "core.stats.pendingCaption", "green"],
+        ["core.stats.today", stats.today, "core.stats.todayCaption", "gold"],
+        ["core.stats.high", stats.high, "core.stats.highCaption", "coral"],
+        ["core.stats.done", stats.done, "core.stats.doneCaption", "ink"],
       ].map(([label, value, caption, tone]) => (
         <article className={`stat-card stat-${tone}`} key={label}>
-          <span>{label}</span>
+          <span>{t(label)}</span>
           <strong>{value}</strong>
-          <small>{caption}</small>
+          <small>{t(caption)}</small>
         </article>
       ))}
     </section>
@@ -1714,6 +1780,7 @@ function TaskList({
   focusOnly = false,
   onAttachmentDelete,
 }) {
+  const { t, lang } = useI18n();
   return (
     <section className={`task-list-section ${compact ? "compact-list" : ""}`}>
       {title && (
@@ -1732,7 +1799,7 @@ function TaskList({
                 <span className="focus-choice-icon"><Icons.Focus size={18} /></span>
                 <span>
                   <b>{task.title}</b>
-                  <small>{task.subject} · {formatDate(task.date)} · {task.time}</small>
+                  <small>{task.subject} · {formatDate(task.date, localeFor(lang))} · {task.time}</small>
                 </span>
                 <PriorityBadge priority={task.priority} />
               </button>
@@ -1754,7 +1821,7 @@ function TaskList({
         <div className="empty-state">
           <Icons.ListTodo size={28} />
           <h3>{empty}</h3>
-          <p>Las actividades que agregues aparecerán aquí.</p>
+          <p>{t("core.taskList.emptyHint")}</p>
         </div>
       )}
     </section>
@@ -1762,6 +1829,7 @@ function TaskList({
 }
 
 function Calendar({ tasks, onSelect }) {
+  const { t, lang } = useI18n();
   const [selected, setSelected] = useState(today);
   const [month, setMonth] = useState(today.slice(0, 7));
   const [year, monthNumber] = month.split("-").map(Number);
@@ -1781,21 +1849,21 @@ function Calendar({ tasks, onSelect }) {
     <section className="calendar-view">
       <div className="section-title">
         <div>
-          <span className="eyebrow">Vista de agenda</span>
-          <h2>Calendario académico</h2>
+          <span className="eyebrow">{t("core.calendar.view")}</span>
+          <h2>{t("core.calendar.title")}</h2>
         </div>
         <div className="calendar-controls">
-          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior"><Icons.ChevronLeft size={16} /></button>
+          <button className="icon-button" onClick={() => shiftMonth(-1)} aria-label={t("core.calendar.prev")}><Icons.ChevronLeft size={16} /></button>
           <span className="calendar-month">
-            {new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(firstDay)}
+            {new Intl.DateTimeFormat(localeFor(lang), { month: "long", year: "numeric" }).format(firstDay)}
           </span>
-          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente"><Icons.ChevronRight size={16} /></button>
+          <button className="icon-button" onClick={() => shiftMonth(1)} aria-label={t("core.calendar.next")}><Icons.ChevronRight size={16} /></button>
         </div>
       </div>
       <div className="calendar-layout">
         <div>
           <div className="calendar-weekdays" aria-hidden="true">
-            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => <span key={day}>{day}</span>)}
+            {["tasks.calendar.weekday.mon", "tasks.calendar.weekday.tue", "tasks.calendar.weekday.wed", "tasks.calendar.weekday.thu", "tasks.calendar.weekday.fri", "tasks.calendar.weekday.sat", "tasks.calendar.weekday.sun"].map((day) => <span key={day}>{t(day)}</span>)}
           </div>
           <div className="calendar-days">
             {Array.from({ length: firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 }).map((_, index) => (
@@ -1803,7 +1871,7 @@ function Calendar({ tasks, onSelect }) {
             ))}
             {days.map((day) => (
               <button className={selected === day ? "calendar-day selected" : "calendar-day"} key={day} onClick={() => setSelected(day)}>
-                <span>{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span>
+                <span>{new Intl.DateTimeFormat(localeFor(lang), { weekday: "short" }).format(new Date(`${day}T12:00:00`))}</span>
                 <b>{new Date(`${day}T12:00:00`).getDate()}</b>
                 <i className={tasks.some((task) => task.date === day && !task.completed) ? "has-task" : ""} />
               </button>
@@ -1811,8 +1879,8 @@ function Calendar({ tasks, onSelect }) {
           </div>
         </div>
         <div className="day-agenda">
-          <span className="eyebrow">{selected ? formatDate(selected) : "Agenda"}</span>
-          <h3>Actividades del día</h3>
+          <span className="eyebrow">{selected ? formatDate(selected, localeFor(lang)) : t("core.app.nav.groups.agenda")}</span>
+          <h3>{t("core.calendar.day")}</h3>
           {dayTasks.length ? dayTasks.map((task) => (
             <button className="agenda-task" key={task.id} onClick={() => onSelect(task)}>
               <span>
@@ -1821,7 +1889,7 @@ function Calendar({ tasks, onSelect }) {
               </span>
               <PriorityBadge priority={task.priority} />
             </button>
-          )) : <p className="empty-copy">No tienes actividades programadas para este día.</p>}
+          )) : <p className="empty-copy">{t("core.calendar.empty")}</p>}
         </div>
       </div>
     </section>
@@ -1844,16 +1912,16 @@ function SharePanel({ tasks, currentUserId, email, setEmail, shared, onShare, on
   };
   return (
     <section className="panel-view">
-      <span className="eyebrow accent-label">Coordina con tu equipo</span>
-      <h2>Compartir agendas</h2>
-      <p className="panel-intro">Comparte actividades con compañeros registrados y consulta el contenido completo de las que han compartido contigo, incluidas las imágenes.</p>
+      <span className="eyebrow accent-label">{t("core.share.eyebrow")}</span>
+      <h2>{t("core.share.title")}</h2>
+      <p className="panel-intro">{t("core.share.intro")}</p>
       <div className="share-form">
         <label>
-          Correo del compañero
-          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="compañero@ejemplo.com" />
+          {t("core.share.email")}
+          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={t("core.share.emailPlaceholder")} />
         </label>
         {shareableTasks.length ? (
-          <div className="share-list" aria-label="Actividades pendientes para compartir">
+          <div className="share-list" aria-label={t("core.share.pendingLabel")}>
             {shareableTasks.map((task) => (
               <div className="share-row" key={task.id}>
                 <span className="share-row-person">
@@ -2182,7 +2250,7 @@ function Chat({ message, setMessage, userId, demo = false }) {
                   setRecipient(null);
                   setActivePeerId(null);
                 }}
-                placeholder="compañero@ejemplo.com"
+                placeholder={t("core.share.emailPlaceholder")}
               />
             </label>
           )}
@@ -2235,7 +2303,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
   return (
     <section className="panel-view profile-view">
       <span className="eyebrow accent-label">Tu cuenta</span>
-      <h2>{view}</h2>
+      <h2>{NAV_LABEL_KEYS[view] ? t(NAV_LABEL_KEYS[view]) : view}</h2>
       <div className="profile-card">
         <div className="profile-avatar-wrap">
           <UserAvatar name={userName} url={profile?.avatar_url} size="lg" />
@@ -2254,95 +2322,95 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
         <div>
           <h3>{userName}</h3>
           <p>{email}</p>
-          <span className="demo-tag">{email?.includes("recordate.local") || demo ? "CUENTA DEMO" : "CUENTA SUPABASE"}</span>
+          <span className="demo-tag">{email?.includes("recordate.local") || demo ? t("core.profile.demoAccount") : t("core.profile.cloudAccount")}</span>
           <p className="profile-role-line">{roleLabel(isAdminRole(profile?.role) ? "administrador" : profile?.role)}</p>
         </div>
       </div>
       {view === "Configuración" ? (
         <>
-        <p className="settings-intro">Ajusta tus recordatorios y sonidos, controla los avisos del navegador y conecta tus herramientas de estudio.</p>
+        <p className="settings-intro">{t("core.profile.settingsIntro")}</p>
         <div className="settings-list">
           <section className="settings-group">
-            <div className="settings-group-heading"><Icons.UserRound size={17} /><div><h3>Cuenta y agenda</h3><p>Personaliza tu espacio de trabajo.</p></div></div>
+            <div className="settings-group-heading"><Icons.UserRound size={17} /><div><h3>{t("core.profile.accountGroup")}</h3><p>{t("core.profile.personalize")}</p></div></div>
             <label>
-              <span><b>Rol en RECORDATE</b><small>Profesor y administrador los asigna un administrador.</small></span>
-              <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label="Seleccionar rol" disabled={isStaffRole(profile?.role)}>
+              <span><b>{t("core.profile.role")}</b><small>{t("core.profile.roleHelp")}</small></span>
+              <select value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")} onChange={(event) => onSettingsChange({ role: event.target.value })} aria-label={t("core.profile.selectRole")} disabled={isStaffRole(profile?.role)}>
                 {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
             <label>
-              <span><b>Mostrar tareas completadas</b><small>Conserva visible tu avance en la agenda.</small></span>
+              <span><b>{t("core.profile.showCompleted")}</b><small>{t("core.profile.showCompletedHelp")}</small></span>
               <input type="checkbox" checked={profile?.show_completed ?? true} onChange={(event) => onSettingsChange({ show_completed: event.target.checked })} />
             </label>
           </section>
           <section className="settings-group">
-            <div className="settings-group-heading"><Icons.CalendarClock size={17} /><div><h3>Recordatorios</h3><p>Avisos antes de tus fechas de entrega.</p></div></div>
+            <div className="settings-group-heading"><Icons.CalendarClock size={17} /><div><h3>{t("core.profile.reminders")}</h3><p>{t("core.profile.remindersHelp")}</p></div></div>
             <label>
-              <span><b>Recordatorios automáticos</b><small>Activa las alertas de las tareas próximas.</small></span>
+              <span><b>{t("core.profile.autoReminders")}</b><small>{t("core.profile.autoRemindersHelp")}</small></span>
               <input type="checkbox" checked={profile?.reminders_enabled ?? true} onChange={(event) => onSettingsChange({ reminders_enabled: event.target.checked })} />
             </label>
           </section>
           <section className="settings-group">
-            <div className="settings-group-heading"><Icons.Volume2 size={17} /><div><h3>Alarmas</h3><p>Elige un tono y ajusta su volumen.</p></div></div>
+            <div className="settings-group-heading"><Icons.Volume2 size={17} /><div><h3>{t("core.profile.alarms")}</h3><p>{t("core.profile.alarmsHelp")}</p></div></div>
             <label>
-              <span><b>Alarmas sonoras</b><small>Activa también Recordatorios automáticos. El audio necesita un toque previo y RECORDATE abierta.</small></span>
+              <span><b>{t("core.profile.soundAlarms")}</b><small>{t("core.profile.soundAlarmsHelp")}</small></span>
               <input type="checkbox" checked={profile?.alarms_enabled ?? true} onChange={(event) => onSettingsChange({ alarms_enabled: event.target.checked })} />
             </label>
             <div className="alarm-settings">
               <label>
-                <span><b>Sonido de alarma</b><small>Presets locales, sin descargar audio de terceros.</small></span>
+                <span><b>{t("core.profile.alarmSound")}</b><small>{t("core.profile.alarmSoundHelp")}</small></span>
                 <select value={profile?.alarm_sound || DEFAULT_ALARM_SOUND} onChange={(event) => onSettingsChange({ alarm_sound: event.target.value })}>{ALARM_SOUNDS.map((sound) => <option key={sound.value} value={sound.value}>{sound.label}</option>)}</select>
               </label>
               <label>
-                <span><b>Volumen</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
+                <span><b>{t("core.profile.volume")}</b><small>{Math.round((profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME) * 100)}%</small></span>
                 <input type="range" min="0" max="1" step="0.05" value={profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME} onChange={(event) => onSettingsChange({ alarm_volume: normalizeAlarmVolume(event.target.value) })} />
               </label>
-              <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}><Icons.Play size={15} /> Escuchar y activar sonido</button>
+              <button className="text-button" type="button" onClick={() => onPreviewAlarm?.(profile?.alarm_sound || DEFAULT_ALARM_SOUND, profile?.alarm_volume ?? DEFAULT_ALARM_VOLUME)}><Icons.Play size={15} /> {t("core.profile.previewAlarm")}</button>
             </div>
           </section>
           <section className="settings-group">
-            <div className="settings-group-heading"><Icons.BellRing size={17} /><div><h3>Notificaciones</h3><p>El navegador y el sistema operativo controlan cómo aparecen.</p></div></div>
+            <div className="settings-group-heading"><Icons.BellRing size={17} /><div><h3>{t("core.profile.notifications")}</h3><p>{t("core.profile.notificationsHelp")}</p></div></div>
             <label>
-              <span><b>Notificaciones del navegador</b><small>Los avisos nativos dependen del permiso y de los banners del teléfono; con la app cerrada se requiere Web Push.</small></span>
+              <span><b>{t("core.profile.browserNotifications")}</b><small>{t("core.profile.browserNotificationsHelp")}</small></span>
               <input type="checkbox" checked={profile?.browser_notifications_enabled ?? false} onChange={async (event) => { if (event.target.checked && !(await onEnableNotifications())) return; onSettingsChange({ browser_notifications_enabled: event.target.checked }); }} />
             </label>
             <div className="settings-action-row">
-              <span><b>Probar notificación</b><small>Comprueba los permisos de este dispositivo.</small></span>
-              <button className="outline-button" type="button" onClick={onTestNotification}>Probar</button>
+              <span><b>{t("core.profile.testNotification")}</b><small>{t("core.profile.testHelp")}</small></span>
+              <button className="outline-button" type="button" onClick={onTestNotification}>{t("core.profile.test")}</button>
             </div>
-            <p className="settings-hint">Web Push puede avisar con la página cerrada en dispositivos compatibles y suscritos. RECORDATE no puede forzar banners, sonido ni vibración: dependen del navegador y del sistema; en iPhone puede requerirse instalar la app en Inicio.</p>
+            <p className="settings-hint">{t("core.profile.pushHint")}</p>
           </section>
           <section className="settings-group">
-            <div className="settings-group-heading"><Icons.Plug size={17} /><div><h3>Integraciones</h3><p>Conecta tus servicios de estudio.</p></div></div>
+            <div className="settings-group-heading"><Icons.Plug size={17} /><div><h3>{t("core.profile.integrations")}</h3><p>{t("core.profile.integrationsHelp")}</p></div></div>
             <div className="settings-action-row integration-action">
-              <span><b>Google Classroom</b><small>Consulta cursos e importa actividades con fecha límite.</small></span>
-              <button className="outline-button" type="button" onClick={onOpenClassroom}><Icons.BookOpen size={15} /> Abrir</button>
+              <span><b>Google Classroom</b><small>{t("core.profile.classroomHelp")}</small></span>
+              <button className="outline-button" type="button" onClick={onOpenClassroom}><Icons.BookOpen size={15} /> {t("core.profile.open")}</button>
             </div>
             <div className="settings-action-row integration-action">
-              <span><b>Google Drive</b><small>Busca, abre, sube, renombra y organiza tus archivos.</small></span>
-              <button className="outline-button" type="button" onClick={onOpenDrive}><Icons.FolderOpen size={15} /> Abrir</button>
+              <span><b>Google Drive</b><small>{t("core.profile.driveHelp")}</small></span>
+              <button className="outline-button" type="button" onClick={onOpenDrive}><Icons.FolderOpen size={15} /> {t("core.profile.open")}</button>
             </div>
-            {!import.meta.env.VITE_GOOGLE_CLIENT_ID && <p className="settings-hint">Requiere configurar el Client ID web de Google para activar la conexión.</p>}
-            <p className="settings-hint">Gemini ya está integrado en el asistente de RECORDATE. El chat no comparte automáticamente el contenido de Drive ni Classroom.</p>
+            {!import.meta.env.VITE_GOOGLE_CLIENT_ID && <p className="settings-hint">{t("core.profile.clientIdHint")}</p>}
+            <p className="settings-hint">{t("core.profile.geminiHint")}</p>
           </section>
         </div>
         </>
       ) : (
         <div className="profile-info">
-          <span>Institución</span>
+          <span>{t("core.profile.institution")}</span>
           <b>IE La Candelaria · Medellín</b>
-          <span>Rol</span>
+          <span>{t("core.profile.roleShort")}</span>
           <b>{roleLabel(isAdminRole(profile?.role) ? "administrador" : profile?.role)}</b>
-          <span>Fecha de registro</span>
-          <b>{profile?.created_at ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(new Date(profile.created_at)) : "No disponible"}</b>
-          <span>Proyecto</span>
-          <b>Proyecto Pedagógico Integrador · Grado 11</b>
+          <span>{t("core.profile.registrationDate")}</span>
+          <b>{profile?.created_at ? new Intl.DateTimeFormat(localeFor(lang), { dateStyle: "long" }).format(new Date(profile.created_at)) : t("core.profile.unavailable")}</b>
+          <span>{t("core.profile.project")}</span>
+          <b>{t("core.profile.projectTitle")}</b>
           <div className="profile-role-editor">
-            <span>Cambiar rol</span>
+            <span>{t("core.profile.changeRole")}</span>
             <select
               value={SELF_ROLE_OPTIONS.some((item) => item.value === profile?.role) ? profile.role : (isStaffRole(profile?.role) ? profile.role : "estudiante")}
               onChange={(event) => onSettingsChange({ role: event.target.value })}
-              aria-label="Cambiar rol del perfil"
+              aria-label={t("core.profile.changeRoleAria")}
               disabled={isStaffRole(profile?.role)}
             >
               {(isStaffRole(profile?.role) ? ROLE_OPTIONS : SELF_ROLE_OPTIONS).map((option) => (
@@ -2352,7 +2420,7 @@ function Profile({ view, userName, email, profile, demo = false, onSettingsChang
           </div>
         </div>
       )}
-      <button className="outline-button logout-profile" onClick={onLogout}>Cerrar sesión</button>
+      <button className="outline-button logout-profile" onClick={onLogout}>{t("core.profile.logout")}</button>
     </section>
   );
 }
