@@ -1,0 +1,195 @@
+/* RECORDATE · ronda 2
+   Escena continua, superficies y sistema del rediseño editorial. */
+
+:root {
+  --scene-ink: #f4f5ff;
+  --scene-muted: #b3bbd8;
+  --scene-dim: #8f98b8;
+  --marker: #ffd84d;
+  --marker-ink: #10142c;
+  --paper: rgba(9, 13, 32, 0.62);
+  --hairline: rgba(190, 200, 235, 0.16);
+  --hairline-soft: rgba(190, 200, 235, 0.09);
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Escena ---------- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: #070a1a;
+}
+
+.ambient__scene {
+  position: absolute;
+  inset: -4%;
+  will-change: transform;
+  transform: translate3d(0, 0, 0) scale(1.04);
+}
+
+.ambient__base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 85% at 10% 6%, #3a2d72 0%, rgba(58, 45, 114, 0) 58%),
+    radial-gradient(95% 70% at 88% 16%, #233a78 0%, rgba(35, 58, 120, 0) 62%),
+    radial-gradient(85% 65% at 58% 102%, #4a3358 0%, rgba(74, 51, 88, 0) 68%),
+    linear-gradient(180deg, #0c1128 0%, #080b1c 72%);
+}
+
+.ambient__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 900ms var(--spring);
+}
+
+.ambient__scene.is-live .ambient__canvas {
+  opacity: 1;
+}
+
+.ambient__blobs {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 700ms var(--spring);
+}
+
+.ambient__blobs.is-visible {
+  opacity: 1;
+}
+
+.ambient__blob {
+  position: absolute;
+  width: 78vmax;
+  height: 78vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(124, 96, 214, 0.42) 0%, rgba(124, 96, 214, 0) 62%);
+  will-change: transform;
+}
+
+.ambient__blob--a {
+  top: -28%;
+  left: -18%;
+  animation: ambient-drift-a 46s linear infinite;
+}
+
+.ambient__blob--b {
+  right: -24%;
+  top: -12%;
+  background: radial-gradient(circle at center, rgba(58, 102, 190, 0.38) 0%, rgba(58, 102, 190, 0) 64%);
+  animation: ambient-drift-b 58s linear infinite;
+}
+
+.ambient__blob--c {
+  bottom: -34%;
+  left: 22%;
+  background: radial-gradient(circle at center, rgba(196, 128, 92, 0.22) 0%, rgba(196, 128, 92, 0) 66%);
+  animation: ambient-drift-c 52s linear infinite;
+}
+
+@keyframes ambient-drift-a {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(8vw, 5vh, 0) scale(1.12); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes ambient-drift-b {
+  0% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-9vw, 7vh, 0) scale(0.95); }
+  100% { transform: translate3d(0, 0, 0) scale(1.05); }
+}
+
+@keyframes ambient-drift-c {
+  0% { transform: translate3d(0, 0, 0) scale(0.98); }
+  50% { transform: translate3d(-6vw, -8vh, 0) scale(1.1); }
+  100% { transform: translate3d(0, 0, 0) scale(0.98); }
+}
+
+/* Oscurecimiento para legibilidad: más denso donde se lee, abierto en los bordes. */
+.ambient__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 9, 22, 0.40) 0%, rgba(6, 9, 22, 0.18) 30%, rgba(6, 9, 22, 0.42) 100%),
+    radial-gradient(140% 100% at 50% 45%, rgba(6, 9, 22, 0.30) 0%, rgba(6, 9, 22, 0.04) 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient__blob { animation: none; }
+  .ambient__scene { transform: none; }
+}
+
+/* ---------- Superficies sobre la escena ---------- */
+html {
+  background: #070a1a;
+}
+
+/* El body debe quedar transparente: su fondo, al ser opaco, tapaba la escena. */
+body {
+  background: transparent;
+}
+
+.landing,
+.app-shell,
+.auth-page,
+.workspace,
+.content-area {
+  background: transparent;
+}
+
+.sidebar {
+  background: rgba(8, 12, 28, 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backdrop-filter: blur(20px) saturate(120%);
+  border-right: 1px solid var(--hairline-soft);
+}
+
+.workspace-header {
+  background: rgba(8, 12, 28, 0.42);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.bottom-nav {
+  background: rgba(8, 12, 28, 0.78);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+/* En móvil el desenfoque a pantalla completa es caro: se limita a las barras. */
+@media (max-width: 720px) {
+  .sidebar {
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+}
+
+/* ---------- Números ---------- */
+/* Atkinson Hyperlegible tiene un cero que se lee como tachado a tamaño pequeño.
+   Para horas, porcentajes y cifras se usa la tipografía de titulares. */
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 0, "zero" 0;
+  letter-spacing: 0;
+}
+
+/* ---------- Movimiento compartido ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
