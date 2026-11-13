@@ -8,15 +8,20 @@ import {
 import {
   fetchJsonWithTimeout,
   MAX_CHAT_HISTORY,
+  parseModelPreference,
   readBoundedJson,
   recentChronologicalHistory,
 } from "./chatUtils.ts";
 
-const MODEL = "gemini-3.6-flash";
+// El modelo se puede fijar con el secreto GEMINI_MODEL. Si no existe o está
+// saturado, se prueba el siguiente de la lista sin romper el chat.
+const MODEL_PREFERENCE = parseModelPreference(Deno.env.get("GEMINI_MODEL"));
+let preferredModel: string | null = null;
 const MAX_MESSAGE = 4000;
 const RATE_LIMIT = 30;
 const MAX_BODY_BYTES = 13 * 1024 * 1024;
-const GEMINI_TIMEOUT_MS = 25_000;
+const GEMINI_TIMEOUT_MS = 16_000;
+const GEMINI_FALLBACK_TIMEOUT_MS = 8_000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TASK_ACTION_TOOLS = [
   {
@@ -71,6 +76,7 @@ const TASK_ACTION_TOOLS = [
 
 const SYSTEM = `Eres el asistente de Recórdate, una app de la IE La Candelaria (Medellín) para organizar tareas, fechas y recordatorios académicos.
 Responde en español, breve y claro. Ayuda a crear o priorizar tareas, explicar cómo usar la app y resolver dudas del estudiante.
+Responde en 120 palabras o menos salvo que la persona pida más detalle.
 No inventes notas, claves ni datos que el usuario no te dio. Si no sabes algo de la institución, dilo.`;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -111,6 +117,9 @@ function json(
     status,
     headers: {
       "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "no-referrer",
       ...extraHeaders,
     },
   });
@@ -139,6 +148,66 @@ async function consumeRateLimit(
   });
   if (error) throw error;
   if (data !== true) throw new Error("RATE_LIMIT");
+}
+
+class GeminiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "GeminiError";
+    this.status = status;
+  }
+}
+
+function isFallbackModelError(error: unknown) {
+  if (!(error instanceof GeminiError)) return false;
+  if ([404, 429, 500, 503].includes(error.status)) return true;
+  return /not found|not supported|unsupported|does not exist|no longer available|invalid model/i
+    .test(error.message);
+}
+
+async function requestModel(
+  model: string,
+  apiKey: string,
+  bodyFor: (withThinking: boolean) => Record<string, unknown>,
+  timeoutMs: number,
+) {
+  const send = (withThinking: boolean) =>
+    fetchJsonWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify(bodyFor(withThinking)),
+      },
+      timeoutMs,
+    );
+
+  let { response, payload } = await send(true);
+  let detail = (payload as Record<string, any>)?.error?.message ??
+    `Gemini ${response.status}`;
+  // Algunos modelos flash rechazan thinkingConfig; se repite sin él.
+  if (!response.ok && response.status === 400 && /thinking/i.test(detail)) {
+    ({ response, payload } = await send(false));
+    detail = (payload as Record<string, any>)?.error?.message ??
+      `Gemini ${response.status}`;
+  }
+  if (!response.ok) throw new GeminiError(detail, response.status);
+
+  const geminiPayload = payload as Record<string, any>;
+  const parts = geminiPayload?.candidates?.[0]?.content?.parts ?? [];
+  const functionCall =
+    parts.find((part: { functionCall?: unknown }) => part.functionCall)
+      ?.functionCall ?? null;
+  const text = parts
+    ?.map((part: { text?: string }) => part.text ?? "")
+    .join("")
+    .trim();
+  if (!text && !functionCall) throw new Error("EMPTY_REPLY");
+  return { text, functionCall };
 }
 
 async function callGemini(
@@ -175,46 +244,42 @@ async function callGemini(
   const actionInstructions = canCreateReminder
     ? `\n\nLa fecha y hora local actual es ${localNow} (${timeZone}). Si la persona solicita crear una alarma y tienes título, fecha y hora, llama a create_reminder. Interpreta fechas relativas usando esta fecha local. No afirmes que la alarma fue creada hasta recibir el resultado de la herramienta. Si faltan datos, pregunta en texto y no uses la herramienta.`
     : "";
+  const systemText = `${SYSTEM}${actionInstructions}`;
 
-  const { response, payload } = await fetchJsonWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: `${SYSTEM}${actionInstructions}` }],
-        },
-        contents,
-        ...(canCreateReminder ? { tools: TASK_ACTION_TOOLS } : {}),
-        generationConfig: {
-          maxOutputTokens: 1024,
-          thinkingConfig: { thinkingLevel: "low" },
-        },
-      }),
+  const bodyFor = (withThinking: boolean) => ({
+    systemInstruction: { parts: [{ text: systemText }] },
+    contents,
+    ...(canCreateReminder ? { tools: TASK_ACTION_TOOLS } : {}),
+    generationConfig: {
+      maxOutputTokens: 800,
+      ...(withThinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}),
     },
-    GEMINI_TIMEOUT_MS,
-  );
+  });
 
-  const geminiPayload = payload as Record<string, any>;
-  if (!response.ok) {
-    const detail = geminiPayload?.error?.message ?? `Gemini ${response.status}`;
-    throw new Error(detail);
+  const candidates = preferredModel
+    ? [preferredModel, ...MODEL_PREFERENCE.filter((model) => model !== preferredModel)]
+    : MODEL_PREFERENCE;
+  let lastError: unknown = null;
+  for (const [index, model] of candidates.entries()) {
+    try {
+      const result = await requestModel(
+        model,
+        apiKey,
+        bodyFor,
+        index === 0 ? GEMINI_TIMEOUT_MS : GEMINI_FALLBACK_TIMEOUT_MS,
+      );
+      preferredModel = model;
+      return { ...result, model };
+    } catch (error) {
+      lastError = error;
+      if (!isFallbackModelError(error)) throw error;
+      console.warn("[ai-chat] modelo no disponible, se prueba el siguiente", {
+        model,
+        reason: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+      });
+    }
   }
-
-  const parts = geminiPayload?.candidates?.[0]?.content?.parts ?? [];
-  const functionCall =
-    parts.find((part: { functionCall?: unknown }) => part.functionCall)
-      ?.functionCall ?? null;
-  const text = parts
-    ?.map((part: { text?: string }) => part.text ?? "")
-    .join("")
-    .trim();
-  if (!text && !functionCall) throw new Error("EMPTY_REPLY");
-  return { text, functionCall };
+  throw lastError ?? new Error("NO_MODEL_AVAILABLE");
 }
 
 Deno.serve(async (req: Request) => {
@@ -225,6 +290,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST")
     return json({ error: "method_not_allowed" }, 405, headers);
 
+  const startedAt = Date.now();
   let stage = "authentication";
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
@@ -245,13 +311,8 @@ Deno.serve(async (req: Request) => {
     const userId = userData.user.id;
 
     stage = "account_status";
-    const { error: activeAccountError } = await userClient.rpc("assert_active_account");
-    if (activeAccountError) {
-      if (/account_inactive/i.test(activeAccountError.message || "")) {
-        return json({ error: "account_inactive" }, 403, headers);
-      }
-      throw activeAccountError;
-    }
+    // Se lanza ya para resolverla en paralelo con la autorización del hilo.
+    const activeAccountCheck = userClient.rpc("assert_active_account");
 
     stage = "body_parse";
     const body = await readBoundedJson(req, MAX_BODY_BYTES);
@@ -273,6 +334,9 @@ Deno.serve(async (req: Request) => {
     if (images.some((image) => image.data.length > 6 * 1024 * 1024)) {
       return json({ error: "image_too_large" }, 413, headers);
     }
+    if (images.some((image) => !/^[A-Za-z0-9+/=\r\n]+$/.test(image.data))) {
+      return json({ error: "invalid_image" }, 400, headers);
+    }
     if (body.conversation_id !== undefined && body.conversation_id !== null &&
       (typeof body.conversation_id !== "string" || !UUID_PATTERN.test(body.conversation_id))) {
       return json({ error: "invalid_conversation" }, 400, headers);
@@ -284,23 +348,33 @@ Deno.serve(async (req: Request) => {
       return json({ error: "invalid_message" }, 400, headers);
     }
 
-    if (conversationId) {
-      stage = "conversation_authorization";
-      const { data: ownedConversation, error: conversationError } = await userClient
-        .from("ai_conversations")
-        .select("id")
-        .eq("id", conversationId)
-        .maybeSingle();
-      if (conversationError) throw conversationError;
-      if (!ownedConversation) {
-        return json({ error: "conversation_not_found" }, 404, headers);
+    stage = "conversation_authorization";
+    const [activeAccountResult, conversationResult] = await Promise.all([
+      activeAccountCheck,
+      conversationId
+        ? userClient
+          .from("ai_conversations")
+          .select("id")
+          .eq("id", conversationId)
+          .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (activeAccountResult.error) {
+      if (/account_inactive/i.test(activeAccountResult.error.message || "")) {
+        return json({ error: "account_inactive" }, 403, headers);
       }
+      throw activeAccountResult.error;
+    }
+    if (conversationResult.error) throw conversationResult.error;
+    if (conversationId && !conversationResult.data) {
+      return json({ error: "conversation_not_found" }, 404, headers);
     }
 
     stage = "rate_limit";
     await consumeRateLimit(userClient, userId);
 
-    if (!conversationId) {
+    const isNewConversation = !conversationId;
+    if (isNewConversation) {
       stage = "conversation_create";
       const { data: created, error: createError } = await userClient
         .from("ai_conversations")
@@ -312,17 +386,20 @@ Deno.serve(async (req: Request) => {
       conversationId = created.id;
     }
 
-    stage = "history_read";
-    const { data: prior, error: priorError } = await userClient
-      .from("ai_messages")
-      .select("role, content")
-      .eq("conversation_id", conversationId)
-      .in("role", ["user", "assistant"])
-      .order("created_at", { ascending: false })
-      .limit(MAX_CHAT_HISTORY);
-    if (priorError) throw priorError;
-
-    const history = recentChronologicalHistory(prior);
+    // Un hilo recién creado no tiene historial: se evita una consulta.
+    let history: ChatMessage[] = [];
+    if (!isNewConversation) {
+      stage = "history_read";
+      const { data: prior, error: priorError } = await userClient
+        .from("ai_messages")
+        .select("role, content")
+        .eq("conversation_id", conversationId)
+        .in("role", ["user", "assistant"])
+        .order("created_at", { ascending: false })
+        .limit(MAX_CHAT_HISTORY);
+      if (priorError) throw priorError;
+      history = recentChronologicalHistory(prior);
+    }
 
     stage = "gemini";
     const geminiResult = await callGemini(
@@ -386,20 +463,29 @@ Deno.serve(async (req: Request) => {
     if (!reply) reply = "No pude generar una respuesta. Intenta de nuevo.";
 
     stage = "message_save";
-    const { error: saveError } = await userClient.from("ai_messages").insert([
-      {
-        conversation_id: conversationId,
-        user_id: userId,
-        role: "user",
-        content: message,
-      },
-      {
-        conversation_id: conversationId,
-        user_id: userId,
-        role: "assistant",
-        content: reply,
-      },
+    const [saveResult] = await Promise.all([
+      userClient.from("ai_messages").insert([
+        {
+          conversation_id: conversationId,
+          user_id: userId,
+          role: "user",
+          content: message,
+        },
+        {
+          conversation_id: conversationId,
+          user_id: userId,
+          role: "assistant",
+          content: reply,
+        },
+      ]),
+      isNewConversation
+        ? Promise.resolve({ error: null })
+        : userClient
+          .from("ai_conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", conversationId),
     ]);
+    const saveError = saveResult.error;
     if (saveError && !createdTask) throw saveError;
     if (saveError && createdTask) {
       console.error("[ai-chat] task created but chat history save failed", {
@@ -407,23 +493,29 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    await userClient
-      .from("ai_conversations")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversationId);
+    console.log("[ai-chat] reply ready", {
+      model: geminiResult.model,
+      durationMs: Date.now() - startedAt,
+      hasAction: Boolean(createdTask),
+    });
 
     return new Response(
       JSON.stringify({
         reply,
         conversation_id: conversationId,
-        model: MODEL,
+        model: geminiResult.model,
         action: createdTask
           ? { type: "task_created", task: createdTask }
           : null,
       }),
       {
         status: 200,
-        headers: { ...headers, "Content-Type": "application/json" },
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+        },
       },
     );
   } catch (error) {
@@ -453,6 +545,12 @@ Deno.serve(async (req: Request) => {
     }
     if (message === "GEMINI_TIMEOUT") {
       return json({ error: "gemini_timeout" }, 504, headers);
+    }
+    if (message === "NO_MODEL_AVAILABLE") {
+      return json({ error: "model_unavailable" }, 503, headers);
+    }
+    if (message === "EMPTY_REPLY") {
+      return json({ error: "empty_reply" }, 502, headers);
     }
     const errorCode =
       stage === "gemini"

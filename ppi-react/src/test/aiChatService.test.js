@@ -17,6 +17,11 @@ describe("AI client error messages", () => {
     expect(translateAiError({ error: "invalid_conversation" }, "fallback")).toMatch(/chat nuevo/i);
   });
 
+  it("explains unavailable models and empty replies", () => {
+    expect(translateAiError({ error: "model_unavailable" }, "fallback")).toMatch(/no está disponible/i);
+    expect(translateAiError({ error: "empty_reply" }, "fallback")).toMatch(/no devolvió texto/i);
+    expect(translateAiError({ error: "invalid_image" }, "fallback")).toMatch(/foto/i);
+  });
   it("keeps the displayed total upload limit aligned with the server", () => {
     expect(translateAiError({ error: "payload_too_large" }, "fallback")).toMatch(/13 MB/i);
   });

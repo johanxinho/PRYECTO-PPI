@@ -1,4 +1,22 @@
 export const MAX_CHAT_HISTORY = 16;
+export const DEFAULT_MODEL_PREFERENCE = [
+  "gemini-3.5-flash",
+  "gemini-3.6-flash",
+  "gemini-2.5-flash",
+];
+
+/** Normaliza la lista de modelos de GEMINI_MODEL y elimina duplicados. */
+export function parseModelPreference(
+  raw: string | null | undefined,
+  fallback: string[] = DEFAULT_MODEL_PREFERENCE,
+): string[] {
+  const parsed = (raw ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const list = parsed.length ? parsed : fallback;
+  return [...new Set(list)];
+}
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 

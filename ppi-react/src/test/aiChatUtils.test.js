@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_MODEL_PREFERENCE,
   fetchJsonWithTimeout,
   MAX_CHAT_HISTORY,
+  parseModelPreference,
   readBoundedJson,
   recentChronologicalHistory,
 } from "../../../supabase/functions/ai-chat/chatUtils.ts";
@@ -47,5 +49,13 @@ describe("AI chat request safeguards", () => {
     await expect(
       fetchJsonWithTimeout("https://gemini.test", {}, 5, stalledFetch),
     ).rejects.toThrow("GEMINI_TIMEOUT");
+  });
+
+  it("normaliza la lista de modelos y cae en los predeterminados", () => {
+    expect(parseModelPreference(" gemini-3.5-flash, gemini-3.5-flash ,,gemini-2.5-flash "))
+      .toEqual(["gemini-3.5-flash", "gemini-2.5-flash"]);
+    expect(parseModelPreference("")).toEqual(DEFAULT_MODEL_PREFERENCE);
+    expect(parseModelPreference(null)).toEqual(DEFAULT_MODEL_PREFERENCE);
+    expect(DEFAULT_MODEL_PREFERENCE[0]).toBe("gemini-3.5-flash");
   });
 });

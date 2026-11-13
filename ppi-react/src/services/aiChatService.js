@@ -8,6 +8,16 @@ const missingBackend = () => ({
   error: "Supabase no está configurado en este entorno.",
 });
 
+const REQUEST_TIMEOUT_MS = 45_000;
+
+function withTimeout(promise, ms, code) {
+  let timer;
+  const guard = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(code)), ms);
+  });
+  return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
+}
+
 export function translateAiError(payload, fallback) {
   const code = payload?.error || payload?.message || "";
   if (code === "rate_limit") {
@@ -20,7 +30,22 @@ export function translateAiError(payload, fallback) {
     return "No se pudo completar la respuesta de Gemini. Puede ser un problema temporal del proveedor o de su configuración.";
   }
   if (code === "gemini_timeout") {
-    return "Gemini tardó demasiado en responder. Inténtalo de nuevo en unos segundos.";
+    return "El asistente tardó demasiado en responder. Inténtalo de nuevo en unos segundos.";
+  }
+  if (code === "model_unavailable") {
+    return "El modelo de IA no está disponible en este momento. Inténtalo de nuevo en un minuto.";
+  }
+  if (code === "empty_reply") {
+    return "La IA no devolvió texto. Reformula la pregunta e inténtalo otra vez.";
+  }
+  if (code === "invalid_image") {
+    return "Una de las fotos no se pudo leer. Vuelve a adjuntarla.";
+  }
+  if (code === "origin_not_allowed") {
+    return "Este dominio no está autorizado para usar el asistente.";
+  }
+  if (code === "server_misconfigured") {
+    return "El asistente no está bien configurado en el servidor. Avisa al administrador.";
   }
   if (code === "account_inactive") {
     return "Tu cuenta no está activa para usar el asistente. Contacta al administrador de RECORDATE.";
@@ -57,17 +82,16 @@ export function translateAiError(payload, fallback) {
 
 async function signImagePaths(paths = []) {
   if (!supabase || !paths?.length) return [];
-  const signed = [];
-  for (const path of paths) {
-    if (!path) continue;
-    if (/^https?:\/\//i.test(path) || path.startsWith("data:")) {
-      signed.push(path);
-      continue;
-    }
-    const { data, error } = await supabase.storage.from("ai-chat").createSignedUrl(path, 60 * 60);
-    if (!error && data?.signedUrl) signed.push(data.signedUrl);
-  }
-  return signed;
+  const signed = await Promise.all(
+    paths.filter(Boolean).map(async (path) => {
+      if (/^https?:\/\//i.test(path) || path.startsWith("data:")) return path;
+      const { data, error } = await supabase.storage
+        .from("ai-chat")
+        .createSignedUrl(path, 60 * 60);
+      return !error && data?.signedUrl ? data.signedUrl : null;
+    }),
+  );
+  return signed.filter(Boolean);
 }
 
 export const aiChatService = {
@@ -86,7 +110,11 @@ export const aiChatService = {
         }));
       }
 
-      const { data, error } = await supabase.functions.invoke("ai-chat", { body });
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("ai-chat", { body }),
+        REQUEST_TIMEOUT_MS,
+        "client_timeout",
+      );
 
       if (error) {
         let parsed = null;
@@ -134,9 +162,15 @@ export const aiChatService = {
           : data.action || null,
       };
     } catch (error) {
+      if (error?.message === "client_timeout") {
+        return {
+          success: false,
+          error: "El asistente tardó demasiado en responder. Revisa tu conexión e inténtalo de nuevo.",
+        };
+      }
       return {
         success: false,
-        error: error?.message || "No fue posible contactar al asistente.",
+        error: "No fue posible contactar al asistente. Revisa tu conexión e inténtalo de nuevo.",
       };
     }
   },
