@@ -37,7 +37,7 @@ export default {
   "core.landing.manualUser": "Manual de usuario", "core.landing.manualUserDesc": "Guía para crear una cuenta, organizar actividades y usar las funciones de RECORDATE.",
   "core.landing.manualTechnical": "Manual técnico del equipo", "core.landing.manualTechnicalDesc": "Arquitectura, flujos de trabajo, Supabase y despliegue del proyecto.",
   "core.landing.manualProject": "Documentación del proyecto", "core.landing.manualProjectDesc": "Referencia técnica del repositorio y el estado de sus funciones.",
-  "core.action.downloadMd": "Descargar .md", "core.landing.footerTagline": "Sistema de recordatorio de actividades académicas · Medellín, Antioquia", "core.landing.createdBy": "Creado por",
+  "core.action.downloadMd": "Descargar .md", "core.landing.footerTagline": "Sistema de recordatorio de actividades académicas · Medellín, Antioquia", "core.landing.createdBy": "Creado por", "core.landing.privacy": "Política de privacidad", "core.landing.terms": "Términos del servicio",
   "core.taskForm.required": 'Completa título, materia, fecha y hora para guardar la actividad.',
   "core.taskForm.limit": 'Título, materia o descripción superan el límite permitido.',
   "core.taskForm.title": 'Título',

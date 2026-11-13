@@ -578,6 +578,9 @@ html.translated-rtl body {
 .landing-footer .brand { margin-right: auto }
 .footer-credit { white-space: nowrap }
 .footer-credit a { color: var(--lilac); text-decoration: underline; text-underline-offset: 2px }
+.footer-legal { display: inline-flex; gap: 6px; font-size: 12px; color: var(--muted) }
+.footer-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px }
+.footer-legal a:hover { color: var(--lilac) }
 .footer-credit a:hover { color: #fff }
 
 .auth-page {

@@ -37,7 +37,7 @@ export default {
   "core.landing.manualUser": "User guide", "core.landing.manualUserDesc": "A guide to creating an account, organizing activities, and using RECORDATE features.",
   "core.landing.manualTechnical": "Team technical guide", "core.landing.manualTechnicalDesc": "Project architecture, workflows, Supabase, and deployment.",
   "core.landing.manualProject": "Project documentation", "core.landing.manualProjectDesc": "Technical repository reference and current feature status.",
-  "core.action.downloadMd": "Download .md", "core.landing.footerTagline": "Academic activity reminder system · Medellín, Antioquia", "core.landing.createdBy": "Created by",
+  "core.action.downloadMd": "Download .md", "core.landing.footerTagline": "Academic activity reminder system · Medellín, Antioquia", "core.landing.createdBy": "Created by", "core.landing.privacy": "Privacy policy", "core.landing.terms": "Terms of service",
   "core.taskForm.required": 'Complete the title, subject, date, and time to save the activity.',
   "core.taskForm.limit": 'The title, subject, or description exceeds the allowed limit.',
   "core.taskForm.title": 'Title',

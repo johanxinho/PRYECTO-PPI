@@ -15,7 +15,7 @@ import { MorphingText } from "./components/ui/morphing-text";
 import { DiaTextReveal } from "./components/ui/dia-text-reveal";
 import { hasSupabaseConfig, supabase } from "./supabaseClient";
 import { DEMO_SESSION, demoApi, isDemoSession } from "./demoStore";
-import { currentPath, pushRoute, resolveCurrentRoute } from "./paths";
+import { assetUrl, currentPath, pushRoute, resolveCurrentRoute } from "./paths";
 import { ALARM_SOUNDS, DEFAULT_ALARM_SOUND, DEFAULT_ALARM_VOLUME, playAlarm, startAlarm, unlockAlarmAudio, normalizeAlarmVolume } from "./services/alarmService";
 import { canUseBrowserNotifications, registerRecordateServiceWorker, requestBrowserNotificationPermission, showBrowserNotification } from "./services/notificationService";
 import { enqueueAlarmTasks, removeAlarmTask } from "./services/alarmQueue";
@@ -376,6 +376,11 @@ function Landing({ onStart, lang = "es", onLangChange }) {
           <a href="https://northboundbrothers.netlify.app/" target="_blank" rel="noopener noreferrer">
             Northbound Brothers
           </a>
+        </p>
+        <p className="footer-legal">
+          <a href={assetUrl("/privacidad.html")}>{t("core.landing.privacy")}</a>
+          <span aria-hidden="true"> · </span>
+          <a href={assetUrl("/terminos.html")}>{t("core.landing.terms")}</a>
         </p>
         <span>© 2026 PPI</span>
       </footer>
