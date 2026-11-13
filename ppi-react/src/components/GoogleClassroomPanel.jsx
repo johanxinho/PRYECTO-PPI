@@ -343,6 +343,9 @@ export default function GoogleClassroomPanel({ profile, tasks = [], onImport, de
         </div>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
+      {!connected && isGoogleClassroomConfigured && !demo && (
+        <p className="classroom-note">{t("integrations.classroom.verificationNote")}</p>
+      )}
       {partialWarning && <p className="classroom-warning" role="status">{partialWarning}</p>}
       {connected && accessMode !== connectedAccessMode && (
         <p className="classroom-warning" role="status">{t("integrations.classroom.roleChanged")}</p>

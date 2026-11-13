@@ -1,5 +1,9 @@
 const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+// drive.file es un permiso "no sensible": solo da acceso a los archivos que
+// RECORDATE crea o que la persona abre desde la app. El permiso amplio
+// (auth/drive) es restringido y Google lo bloquea mientras la app no complete
+// la verificación y la auditoría de seguridad.
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
 const clientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();

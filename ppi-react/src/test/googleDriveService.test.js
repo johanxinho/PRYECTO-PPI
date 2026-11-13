@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 function installGoogleTokenMock() {
   let tokenConfig;
@@ -40,7 +40,7 @@ describe("googleDriveService", () => {
     vi.unstubAllGlobals();
   });
 
-  it("solicita el alcance completo de Drive y permite buscar en archivos compartidos", async () => {
+  it("solicita el permiso drive.file y permite buscar archivos de la app", async () => {
     const getTokenConfig = installGoogleTokenMock();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
