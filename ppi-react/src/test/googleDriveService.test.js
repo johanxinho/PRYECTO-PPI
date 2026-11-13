@@ -59,7 +59,7 @@ describe("googleDriveService", () => {
     const [request, init] = fetchMock.mock.calls[0];
     const url = new URL(request);
     expect(url.searchParams.get("q")).toContain("fullText contains");
-    expect(url.searchParams.get("includeItemsFromAllDrives")).toBe("true");
+    expect(url.searchParams.get("includeItemsFromAllDrives")).toBe(null);
     expect(init.headers.Authorization).toBe("Bearer test-drive-token");
     expect(init.credentials).toBe("omit");
   });

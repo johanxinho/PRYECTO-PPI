@@ -92,12 +92,32 @@ async function readDriveError(response) {
     accessToken = null;
     expiresAt = 0;
   }
+  const reason = payload?.error?.errors?.[0]?.reason || payload?.error?.status || "";
+  const detail = payload?.error?.message || "";
   if (response.status === 403) {
-    throw new Error(
-      "Google rechazó el permiso para esta acción. Comprueba que Drive API esté activada y que la app tenga la verificación OAuth requerida."
-    );
+    if (reason === "SERVICE_DISABLED" || /has not been used in project|is disabled/i.test(detail)) {
+      throw new Error(
+        "La API de Google Drive no está habilitada en el proyecto de Google Cloud. Actívala y vuelve a intentar."
+      );
+    }
+    if (
+      reason === "insufficientPermissions" ||
+      reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT" ||
+      /insufficient|scope/i.test(detail)
+    ) {
+      throw new Error(
+        "El permiso concedido no alcanza para esta acción. Desconecta Drive, vuelve a conectarlo y acepta el permiso que muestra Google."
+      );
+    }
+    if (/rate ?limit/i.test(reason) || /rate ?limit/i.test(detail)) {
+      throw new Error("Google limitó temporalmente las consultas a Drive. Espera unos segundos y vuelve a intentar.");
+    }
+    throw new Error(detail ? `Google rechazó la acción: ${detail}` : "Google rechazó el permiso para esta acción.");
   }
-  throw new Error(payload?.error?.message || `Google Drive respondió ${response.status}.`);
+  if (response.status === 401) {
+    throw new Error("La autorización de Google Drive expiró. Vuelve a conectar Drive.");
+  }
+  throw new Error(detail || `Google Drive respondió ${response.status}.`);
 }
 
 async function driveRequest(
@@ -129,8 +149,6 @@ export async function listDriveFiles({ search = "", pageToken = "" } = {}) {
       orderBy: "folder,name",
       fields:
         "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,owners(displayName,emailAddress))",
-      includeItemsFromAllDrives: true,
-      supportsAllDrives: true,
     },
   });
   return {
