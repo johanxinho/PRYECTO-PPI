@@ -6,14 +6,18 @@ const GOOGLE_SCRIPT = "https://accounts.google.com/gsi/client";
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
+const PICKER_SCRIPT = "https://apis.google.com/js/api.js";
 const clientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+const pickerApiKey = String(import.meta.env.VITE_GOOGLE_API_KEY || "").trim();
 const MAX_MULTIPART_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 let scriptPromise = null;
+let pickerPromise = null;
 let accessToken = null;
 let expiresAt = 0;
 
 export const isGoogleDriveConfigured = Boolean(clientId && !clientId.includes("tu_client_id"));
+export const isGooglePickerConfigured = Boolean(pickerApiKey && !pickerApiKey.includes("tu_api_key"));
 
 function getGoogleApi() {
   return typeof window !== "undefined" ? window.google : null;
@@ -141,12 +145,15 @@ async function driveRequest(
 }
 
 export async function listDriveFiles({ search = "", pageToken = "" } = {}) {
+  const searching = Boolean(String(search || "").trim());
   const payload = await driveRequest("files", {
     params: {
       q: buildDriveQuery(search),
       pageSize: 100,
       pageToken,
-      orderBy: "folder,name",
+      // Google rechaza orderBy cuando la consulta usa fullText: los resultados
+      // ya vienen ordenados por relevancia.
+      ...(searching ? {} : { orderBy: "folder,name" }),
       fields:
         "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,owners(displayName,emailAddress))",
     },
@@ -278,4 +285,66 @@ export function disconnectGoogleDrive() {
   }
   accessToken = null;
   expiresAt = 0;
+}
+
+function loadPickerScript() {
+  if (typeof window === "undefined") return Promise.reject(new Error("El selector de Google no está disponible."));
+  if (window.google?.picker) return Promise.resolve();
+  if (pickerPromise) return pickerPromise;
+  pickerPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${PICKER_SCRIPT}"]`);
+    const script = existing || document.createElement("script");
+    script.async = true;
+    script.src = PICKER_SCRIPT;
+    script.onload = () => {
+      const gapi = window.gapi;
+      if (!gapi?.load) {
+        reject(new Error("El selector de Google no está disponible."));
+        return;
+      }
+      gapi.load("picker", {
+        callback: () => resolve(),
+        onerror: () => reject(new Error("El selector de Google no está disponible.")),
+      });
+    };
+    script.onerror = () => reject(new Error("No se pudo cargar el selector de Google."));
+    if (!existing) document.head.appendChild(script);
+  }).catch((error) => {
+    pickerPromise = null;
+    throw error;
+  });
+  return pickerPromise;
+}
+
+/**
+ * Abre el selector de Google. Al elegir archivos, Google concede a RECORDATE
+ * acceso a esos archivos concretos mediante el permiso drive.file, sin que la
+ * app pueda leer el resto del Drive.
+ */
+export async function pickDriveFiles({ multiple = true } = {}) {
+  if (!isGooglePickerConfigured) {
+    throw new Error("Configura VITE_GOOGLE_API_KEY para elegir archivos de Drive.");
+  }
+  await loadPickerScript();
+  const token = requireToken();
+  const picker = window.google?.picker;
+  if (!picker) throw new Error("El selector de Google no está disponible.");
+  return new Promise((resolve) => {
+    const view = new picker.View(picker.ViewId.DOCS);
+    if (multiple) view.enableFeature(picker.Feature.MULTISELECT_ENABLED);
+    const builder = new picker.PickerBuilder()
+      .setOAuthToken(token)
+      .setDeveloperKey(pickerApiKey)
+      .addView(view)
+      .setCallback((data) => {
+        if (data?.action === picker.Action.PICKED) {
+          resolve((data.docs || []).map((doc) => ({ id: doc.id, name: doc.name })));
+        } else if (data?.action === picker.Action.CANCEL) {
+          resolve([]);
+        }
+      });
+    const projectNumber = clientId.split("-")[0];
+    if (/^\d+$/.test(projectNumber)) builder.setAppId(projectNumber);
+    builder.build().setVisible(true);
+  });
 }

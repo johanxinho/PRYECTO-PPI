@@ -18,7 +18,9 @@ import {
   disconnectGoogleDrive,
   downloadDriveFile,
   isGoogleDriveConfigured,
+  isGooglePickerConfigured,
   listDriveFiles,
+  pickDriveFiles,
   renameDriveFile,
   trashDriveFile,
   uploadDriveFile,
@@ -57,6 +59,24 @@ export default function GoogleDrivePanel({ demo = false }) {
     setFiles((current) => (append ? [...current, ...result.files] : result.files));
     setActiveQuery(query);
     setNextPageToken(result.nextPageToken);
+  };
+
+  const pickFromDrive = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const picked = await pickDriveFiles();
+      if (!picked.length) {
+        setError(t("integrations.drive.pickEmpty"));
+        return;
+      }
+      setSearch("");
+      await loadFiles({ query: "", pageToken: "" });
+    } catch (cause) {
+      setError(cause?.message || t("integrations.drive.pickError"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const connect = async () => {
@@ -240,6 +260,11 @@ export default function GoogleDrivePanel({ demo = false }) {
                 onChange={upload}
                 hidden
               />
+              {isGooglePickerConfigured && (
+                <button className="outline-button" type="button" onClick={pickFromDrive} disabled={loading}>
+                  <FolderOpen size={16} /> {t("integrations.drive.pick")}
+                </button>
+              )}
               <button className="text-button" type="button" onClick={disconnect} disabled={loading}>
                 <LogOut size={15} /> {t("integrations.common.disconnect")}
               </button>
