@@ -5,6 +5,7 @@ import { Brand, LogoMark } from "../Brand";
 import { DiaTextReveal } from "./ui/dia-text-reveal";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { hasSupabaseConfig, supabase } from "../supabaseClient";
+import { clearOAuthErrorFromLocation, readOAuthErrorFromLocation } from "../services/authService";
 import { appBase } from "../paths";
 import { useI18n } from "../i18n";
 
@@ -20,9 +21,24 @@ function errorDetails(error) {
 
 /** True si el mensaje es un error (para estilo y role=alert). */
 function isErrorMessage(text) {
-  return /no (fue|fue posible|encontramos|existe|está)|error|incorrect|inválid|imposible|falla|falló|requiere|coincide|mínimo|escribe|alcanzó|desactiv|expir|revisa spam/i.test(
+  return /no (fue|fue posible|encontramos|existe|está|autoriz)|error|incorrect|inválid|imposible|falla|falló|requiere|coincide|mínimo|escribe|alcanzó|desactiv|expir|revisa spam|incompleta/i.test(
     text || ""
   );
+}
+
+/** Mensaje inicial cuando Google devuelve un error en la URL de retorno. */
+function oauthMessageFromUrl(t) {
+  const oauthError = readOAuthErrorFromLocation();
+  if (!oauthError) return "";
+  clearOAuthErrorFromLocation();
+  const details = `${oauthError.code} ${oauthError.description}`.toLowerCase();
+  if (/access_denied|org_internal|admin_policy|domain_not_allowed/.test(details)) {
+    return t("auth.google.denied");
+  }
+  if (/redirect_uri|invalid_client|unauthorized_client/.test(details)) {
+    return t("auth.google.misconfigured");
+  }
+  return t("auth.google.connection_failed");
 }
 
 /**
@@ -134,7 +150,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [needsVerification, setNeedsVerification] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(() => oauthMessageFromUrl(t));
   const [loading, setLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -496,6 +512,7 @@ function Login({ onLogin, onBack, recovery = false, onRecoveryDone, onDemo, lang
                 required
               />
             </label>
+            <p className="auth-field-hint">{t("auth.form.email_hint")}</p>
             <label>
               {t("auth.form.password")}
               <input

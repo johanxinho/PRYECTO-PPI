@@ -688,6 +688,7 @@ html.translated-rtl body {
 .auth-google-button { width: 100%; justify-content: center }
 .google-mark { color: #4285f4; font: 800 18px Arial, sans-serif }
 .demo-button { color: var(--blush); font-weight: 700 }
+.auth-field-hint { margin: -2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5 }
 .auth-note { margin-top: 24px; text-align: center; font-size: 12px }
 .auth-message, .form-error {
   padding: 10px 12px;

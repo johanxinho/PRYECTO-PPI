@@ -41,6 +41,48 @@ export function translateAuthError(error) {
   return 'No fue posible completar la operación de autenticación.';
 }
 
+const OAUTH_ERROR_KEYS = ['error', 'error_code', 'error_description', 'state'];
+
+/**
+ * Lee el error que el proveedor (Google) devuelve en la URL de retorno.
+ * Supabase lo coloca en la query o en el hash, según el flujo usado.
+ */
+export function readOAuthErrorFromLocation(loc = typeof window !== 'undefined' ? window.location : null) {
+  if (!loc) return null;
+  for (const raw of [loc.search, loc.hash]) {
+    if (!raw || raw.length < 2) continue;
+    const params = new URLSearchParams(raw.replace(/^[?#]/, ''));
+    const code = params.get('error');
+    if (!code) continue;
+    return {
+      code,
+      description: params.get('error_description') || params.get('error_code') || '',
+    };
+  }
+  return null;
+}
+
+/** Quita los parámetros de error de la URL para que no reaparezcan al recargar. */
+export function clearOAuthErrorFromLocation() {
+  if (typeof window === 'undefined' || !window.history?.replaceState) return;
+  const url = new URL(window.location.href);
+  let changed = false;
+  const search = new URLSearchParams(url.search);
+  if (search.has('error')) {
+    OAUTH_ERROR_KEYS.forEach((key) => search.delete(key));
+    url.search = search.toString();
+    changed = true;
+  }
+  if (url.hash.includes('error=')) {
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+    OAUTH_ERROR_KEYS.forEach((key) => hash.delete(key));
+    url.hash = hash.toString();
+    changed = true;
+  }
+  if (!changed) return;
+  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 export const authService = {
   translateAuthError,
   async signup(email, password, fullName, role = 'estudiante') {
