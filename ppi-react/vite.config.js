@@ -1,6 +1,6 @@
 import { defineConfig } from "vite"; // defineConfig aporta autocompletado al objeto de configuración de Vite.
 import react from "@vitejs/plugin-react"; // Plugin que transforma JSX y habilita Fast Refresh.
-import { copyFileSync, cpSync, createReadStream, existsSync, mkdirSync } from "node:fs"; // APIs de Node para publicar fallback y documentación.
+import { copyFileSync, cpSync, createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"; // APIs de Node para publicar fallback y documentación.
 import process from "node:process"; // Entorno de Node usado para configurar el prefijo base.
 import { resolve, sep } from "node:path"; // Normalizan rutas y evitan servir archivos fuera de docs/.
 import { fileURLToPath, URL } from "node:url"; // Convierten import.meta.url en rutas de archivo reales.
@@ -46,8 +46,20 @@ function copyManuals() {
   };
 }
 
+const buildId = process.env.VITE_BUILD_ID || process.env.GITHUB_SHA || String(Date.now()); // Identifica la compilación publicada.
+
+function emitVersion() { // Publica dist/version.json para detectar paquetes nuevos.
+  return {
+    name: "emit-version-file",
+    closeBundle() {
+      writeFileSync("dist/version.json", JSON.stringify({ id: buildId }), "utf8");
+    },
+  };
+}
+
 export default defineConfig({ // Configuración que Vite lee al hacer npm run dev / build.
-  plugins: [react(), spaFallback(), copyManuals()], // Activa React, fallback SPA y publicación de manuales.
+  define: { __BUILD_ID__: JSON.stringify(buildId) }, // Permite comparar la versión cargada con la publicada.
+  plugins: [react(), spaFallback(), copyManuals(), emitVersion()], // Activa React, fallback SPA y publicación de manuales.
   base: process.env.VITE_BASE || "/", // En Pages vale /PRYECTO-PPI/; en local queda /.
   resolve: { // Alias de importación para escribir @/ en vez de rutas relativas largas.
     alias: { // Mapa de alias.

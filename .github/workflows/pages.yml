@@ -42,6 +42,7 @@ jobs: # Lista de trabajos.
         env: # Variables visibles para Vite durante el build.
           VITE_BASE: /PRYECTO-PPI/ # Prefijo de rutas de GitHub Pages (nombre del repo).
           VITE_DOCS_VERSION: ${{ github.sha }} # Evita reutilizar una respuesta 404 cacheada al publicar manuales.
+          VITE_BUILD_ID: ${{ github.sha }} # Identificador de la compilación publicado en version.json.
       - uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0, Node 24.
         with: # Opciones del action de Pages.
           github_token: ${{ secrets.GITHUB_TOKEN }} # Token del workflow para hacer push.

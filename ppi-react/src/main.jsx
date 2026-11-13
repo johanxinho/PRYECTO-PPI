@@ -6,11 +6,13 @@ import './i18n/i18n.css'
 import App from './App.jsx'
 import { I18nProvider } from './i18n'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import UpdatePrompt from './components/UpdatePrompt.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
       <I18nProvider>
         <App />
+        <UpdatePrompt />
       </I18nProvider>
     </ErrorBoundary>
   </StrictMode>,

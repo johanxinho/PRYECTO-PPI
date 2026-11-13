@@ -4,6 +4,8 @@ export default {
   "meta.ogTitle": "RECORDATE, tu agenda académica",
   "meta.ogDescription": "Organiza tus tareas y fechas importantes con RECORDATE.",
   "core.landing.features": "Características",
+  "core.updateAvailable": "Hay una versión nueva de RECORDATE.",
+  "core.updateReload": "Recargar",
   "core.landing.howItWorks": "Cómo funciona",
   "core.landing.benefits": "Beneficios",
   "core.landing.questions": "Preguntas",
